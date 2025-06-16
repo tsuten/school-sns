@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'ninja_jwt',
     'ninja_extra',
     'polls',
+    'events',
 ]
 
 MIDDLEWARE = [
