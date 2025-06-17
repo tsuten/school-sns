@@ -2,10 +2,12 @@
 // btw thanks claude for writing this code as well
 
 export const API_BASE_URL = "http://localhost:8000/api";
+export const MEDIA_BASE_URL = "http://localhost:8000";
 
 class DjangoAPIClient {
     constructor(baseURL = API_BASE_URL) {
         this.baseURL = baseURL.trim();
+        this.mediaBaseURL = MEDIA_BASE_URL;
         this.defaultHeaders = {
             'Content-Type': 'application/json',
         };
@@ -124,7 +126,7 @@ class DjangoAPIClient {
 
     // 認証関連のメソッド
     async login(credentials) {
-        const response = await this.post('/auth/token/pair', credentials);
+        const response = await this.post('/token/pair', credentials);
         
         if (response.access) {
             localStorage.setItem('access_token', response.access);
@@ -141,7 +143,7 @@ class DjangoAPIClient {
         }
 
         try {
-            const response = await this.post('/auth/token/refresh', {
+            const response = await this.post('/token/refresh', {
                 refresh: refreshToken
             });
             
@@ -157,9 +159,34 @@ class DjangoAPIClient {
         }
     }
 
+    async verifyToken(token = null) {
+        const tokenToVerify = token || this.getAuthToken();
+        if (!tokenToVerify) {
+            throw new APIError(401, 'No token to verify');
+        }
+
+        return this.post('/token/verify', {
+            token: tokenToVerify
+        });
+    }
+
     logout() {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+    }
+
+    // メディアファイルのURLを絶対URLに変換
+    getMediaURL(relativePath) {
+        if (!relativePath) return null;
+        
+        // 既に絶対URLの場合はそのまま返す
+        if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+            return relativePath;
+        }
+        
+        // 相対パスの場合は絶対URLに変換
+        const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+        return `${this.mediaBaseURL}${cleanPath}`;
     }
 }
 
@@ -179,6 +206,11 @@ export const apiClient = new DjangoAPIClient();
 // 便利な関数をエクスポート
 export { DjangoAPIClient, APIError };
 
+// メディアURL処理のヘルパー関数
+export const getMediaURL = (relativePath) => {
+    return apiClient.getMediaURL(relativePath);
+};
+
 // 使用例のための関数
 export const api = {
     // 投稿関連
@@ -196,7 +228,7 @@ export const api = {
         login: (credentials) => apiClient.login(credentials),
         logout: () => apiClient.logout(),
         refreshToken: () => apiClient.refreshToken(),
-        verify: (token) => apiClient.post('/auth/token/verify', { token }),
+        verify: (token) => apiClient.verifyToken(token),
     },
     
     // ユーザー関連
@@ -204,5 +236,10 @@ export const api = {
         getProfile: () => apiClient.get('/users/profile'),
         updateProfile: (profileData) => apiClient.patch('/users/profile', profileData),
         uploadAvatar: (file) => apiClient.uploadFile('/users/avatar', file),
+    },
+    
+    // メディア関連
+    media: {
+        getURL: (relativePath) => apiClient.getMediaURL(relativePath),
     },
 };

@@ -5,7 +5,49 @@
 	import State from './state.svelte';
 	import Modal from '../lib/components/utils/modal.svelte';
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
-	let { children } = $props();
+	import { setUserInfo, clearUserInfo } from '../lib/stores/userInfo.js';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { api } from '../lib/services/django.js';
+	
+	let { children, data } = $props();
+	
+	// サーバーから取得したデータをストアに設定
+	onMount(() => {
+		if (data?.user && data?.authenticated) {
+			console.log('Setting user info from server data:', data.user);
+			setUserInfo(data.user);
+		} else {
+			console.log('No authenticated user data, clearing user info');
+			clearUserInfo();
+		}
+	});
+	
+	// ログアウト処理
+	async function handleLogout() {
+		try {
+			// APIクライアントのログアウト（トークンをクリア）
+			api.auth.logout();
+			
+			// ユーザー情報ストアをクリア
+			clearUserInfo();
+			
+			// Cookieもクリア（サーバーサイドで設定されている場合）
+			document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+			document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+			
+			// ログインページにリダイレクト
+			goto('/login');
+		} catch (error) {
+			console.error('Logout error:', error);
+			// エラーが発生してもログアウト処理は続行
+			clearUserInfo();
+			goto('/login');
+		}
+		
+		show_logout_modal = false;
+	}
+	
 	let trending = ["すげえ祭り", "やべえ祭り", "しょぼい祭り", "キモい祭り", "おもろい祭り"]
 	let trend_updated_at = new Date().toLocaleString();
 
@@ -84,11 +126,11 @@
 			{#each services as service}
 				<SidebarButton icon={service.icon} href={service.href} label={service.label} />
 			{/each}
-			<a href="/" class="flex flex-row items-center w-40 justify-end gap-2 group" onclick={() => show_logout_modal = true}> <p class="text-sm text-gray-500">ログアウト</p>
+			<button class="flex flex-row items-center w-40 justify-end gap-2 group" onclick={() => show_logout_modal = true}> <p class="text-sm text-gray-500">ログアウト</p>
 				<div class="w-13 h-13 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
 					<LogOut />
 				</div>
-			</a>
+			</button>
 		</div>
 		<div class="flex flex-col gap-1 p-2 pb-6">
 			<UserInfo />
@@ -181,7 +223,7 @@
 				</button>
 				<button 
 					class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-					onclick={() => show_logout_modal = false}
+					onclick={handleLogout}
 				>
 					ログアウト
 				</button>

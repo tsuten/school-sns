@@ -6,7 +6,7 @@ export async function load({ cookies }) {
     const accessToken = cookies.get('access_token');
     
     if (!accessToken) {
-        console.log('user not authenticated');
+        console.log('No access token found in cookies');
         return {
             user: null,
             authenticated: false
@@ -14,19 +14,18 @@ export async function load({ cookies }) {
     }
 
     try {
-        // トークンを一時的にlocalStorageの代わりに設定
-        // サーバーサイドではlocalStorageが使えないため、直接ヘッダーに設定
-        const response = await fetch(`${apiClient.baseURL}/auth/token/verify`, {
+        // トークンを検証
+        const verifyResponse = await fetch(`${apiClient.baseURL}/token/verify`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({ token: accessToken })
         });
 
-        if (!response.ok) {
-            console.log('user not authenticated - invalid token');
+        if (!verifyResponse.ok) {
+            const errorData = await verifyResponse.json().catch(() => ({}));
+            console.log('Token verification failed:', verifyResponse.status, errorData);
             return {
                 user: null,
                 authenticated: false
@@ -44,13 +43,14 @@ export async function load({ cookies }) {
 
         if (userResponse.ok) {
             const userData = await userResponse.json();
-            console.log('Authenticated user data:', userData);
+            console.log('Successfully authenticated user:', userData.user_username);
             return {
                 user: userData,
                 authenticated: true
             };
         } else {
-            console.log('user not authenticated - failed to fetch user data');
+            const errorData = await userResponse.json().catch(() => ({}));
+            console.log('Failed to fetch user profile:', userResponse.status, errorData);
             return {
                 user: null,
                 authenticated: false
@@ -58,7 +58,7 @@ export async function load({ cookies }) {
         }
 
     } catch (error) {
-        console.log('user not authenticated - error:', error.message);
+        console.log('Authentication error:', error.message);
         return {
             user: null,
             authenticated: false
