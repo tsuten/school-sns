@@ -1,9 +1,9 @@
+import json
 from django.shortcuts import render
 from ninja import Router
 from .models import UserProfile, UserProfileManager
 from .schemas import UserProfileSchema
 from ninja_jwt.authentication import JWTAuth
-from ninja.security import django_auth
 # Create your views here.
 
 router = Router(tags=['users'])

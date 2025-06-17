@@ -24,10 +24,12 @@ from users.views import router as users_router
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_extra import NinjaExtraAPI
 from polls.views import router as polls_router
+from events.views import router as events_router
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
 api.add_router('posts', posts_router)
 api.add_router('users', users_router)
 api.add_router('polls', polls_router)
+api.add_router('events', events_router)
 api.register_controllers(NinjaJWTDefaultController)
 
 urlpatterns = [
