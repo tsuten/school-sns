@@ -1,5 +1,7 @@
 // Django Backend API Client
 // btw thanks claude for writing this code as well
+// クライアント側で使用するAPIクライアントだからサーバー側で使用する時は注意
+// TODO: サーバー側で使用するAPIクライアントを作成する
 
 export const API_BASE_URL = "http://localhost:8000/api";
 export const MEDIA_BASE_URL = "http://localhost:8000";

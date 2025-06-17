@@ -1,93 +1,73 @@
 <script>
     import { Calendar, Heart, MapPin, User, Bookmark, Plus } from "lucide-svelte";
+    import EventCard from "$lib/components/page-components/eventCard.svelte";
 
-    let events = [
-        {
-            title: "イベント1",
-            description: "イベント1の説明",
-            datetime: "2025-06-09 12:00:00",
-            thumbnail: "https://picsum.photos/150",
-            location: "東京都",
-            organizer: "イベント1の主催者",
-        },
-        {
-            title: "イベント2",
-            description: "イベント2の説明",
-            datetime: "2025-06-09 12:00:00",
-            thumbnail: "https://picsum.photos/100",
-            location: "東京都",
-            organizer: "イベント2の主催者",
-        },
-        
-        {
-            title: "イベント3",
-            description: "イベント3の説明",
-            datetime: "2025-06-09 12:00:00",
-            thumbnail: "https://picsum.photos/200",
-            location: "東京都",
-            organizer: "イベント3の主催者",
-        },
-        {
-            title: "イベント4",
-            description: "イベント4の説明",
-            datetime: "2025-06-09 12:00:00",
-            thumbnail: "https://picsum.photos/300",
-            location: "東京都",
-            organizer: "イベント4の主催者",
-        },
-        {
-            title: "イベント5",
-            description: "イベント5の説明",
-            datetime: "2025-06-09 12:00:00",
-            thumbnail: "https://picsum.photos/400",
-            location: "東京都",
-            organizer: "イベント5の主催者",
-        },
-    ]
+    // サーバーから取得したデータを受け取る
+    export let data;
+    
+    // APIから取得したイベントデータ
+    $: nextEvents = data.nextEvents || [];
+    $: heldEvents = data.heldEvents || [];
+    
+    // 日時をフォーマットする関数
+    function formatDateTime(dateTimeString) {
+        const date = new Date(dateTimeString);
+        return date.toLocaleString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+    
+    // 今後のイベントを取得（APIから直接取得するので不要だが、念のため保持）
+    function getUpcomingEvents() {
+        // nextEventsを開始日時でソート
+        return nextEvents.filter(event => !event.is_cancelled)
+                        .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+    }
+    
+    $: upcomingEvents = getUpcomingEvents();
 </script>
 
-<div class="flex flex-col gap-2 h-full">
-    <div class="flex flex-col gap-2">
-        <p class="text-lg font-bold">現在進行中のイベント</p>
-        <div class="flex flex-row w-full bg-white rounded-lg p-2 gap-4 border border-gray-300 items-center">
-            <img src="https://picsum.photos/150" alt="イベント1" class="w-24 h-24 object-cover rounded-lg" />
-            <div class="flex flex-col justify-center">
-                <p class="text-lg font-bold">イベント1</p>
-                <p class="text-sm text-gray-600 mt-1">イベント1の説明</p>
-            </div>
-            <div class="flex flex-col gap-2 items-end justify-between">
+<div class="flex flex-col gap-2 h-full p-2">
+    <!-- 現在進行中のイベント -->
+    {#if heldEvents.length > 0}
+        <div class="flex flex-col gap-2">
+            <p class="text-lg font-bold">現在進行中のイベント</p>
+            {#each heldEvents as event}
+                <EventCard {event} />
+            {/each}
+        </div>
+        
+        <hr class="border-gray-300 my-4">
+    {:else}
+        <div class="flex flex-col gap-2">
+            <p class="text-lg font-bold">現在進行中のイベント</p>
+            <div class="flex flex-col items-center justify-center py-8 text-gray-500">
+                <Calendar class="w-16 h-16 text-gray-300 mb-4" />
+                <p class="text-lg">現在進行中のイベントはありません</p>
             </div>
         </div>
-    </div>
+        
+        <hr class="border-gray-300 my-4">
+    {/if}
 
-    <hr class="border-gray-300 my-4">
-
+    <!-- 今後のイベント -->
     <div class="flex flex-col gap-2 h-full">
-        {#each events as event}
-            <div class="flex flex-row w-full bg-white rounded-lg p-2 gap-4 border border-gray-300">
-                <img src={event.thumbnail} alt={event.title} class="w-24 h-24 object-cover rounded-lg" />
-                <div class="flex flex-row justify-between w-full">
-                    <div class="flex flex-col justify-center">
-                        <p class="text-lg font-bold">{event.title}</p>
-                        <p class="text-sm text-gray-600 mt-1">{event.description}</p>
-                        </div>
-                    <div class="flex flex-col gap-2 items-end justify-between">
-                        <div class="flex gap-2 items-center">
-                            <Bookmark class="w-6 h-6 text-gray-500" />
-                        </div>
-                        <div class="flex flex-row gap-2 items-center">
-                            <MapPin class="w-4 h-4 text-gray-500" />
-                            <p class="text-xs text-gray-500">{event.location}</p>
-                            <User class="w-4 h-4 text-gray-500" />
-                            <p class="text-xs text-gray-500">{event.organizer}</p>
-                            <Calendar class="w-4 h-4 text-gray-500" />
-                            <p class="text-xs text-gray-500">{event.datetime}</p>
-                        </div>
-                    </div>
-                </div>
+        <p class="text-lg font-bold">今後のイベント</p>
+        
+        {#if upcomingEvents.length === 0}
+            <div class="flex flex-col items-center justify-center py-8 text-gray-500">
+                <Calendar class="w-16 h-16 text-gray-300 mb-4" />
+                <p class="text-lg">今後のイベントはありません</p>
             </div>
-        {/each}
-
+        {:else}
+            {#each upcomingEvents as event}
+                <EventCard {event} />
+            {/each}
+        {/if}
 
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">

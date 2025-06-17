@@ -11,7 +11,13 @@ class EventManager(models.Manager):
         return self.get_queryset().filter(published=True)
     
     def get_held_events(self):
-        return self.get_queryset().filter(start_datetime__lte=timezone.now(), end_datetime__gte=timezone.now(), is_cancelled=False, published=True)
+        return self.get_queryset().filter(start_datetime__lte=timezone.now(), end_datetime__gte=timezone.now(), is_cancelled=False, published=True) # 開催中のイベントを取得
+    
+    def get_previous_events(self, amount = 10):
+        return self.get_queryset().filter(end_datetime__lt=timezone.now()).order_by('-end_datetime')[:amount] # 終了後のイベントを取得
+    
+    def get_next_events(self, amount = 10):
+        return self.get_queryset().filter(start_datetime__gt=timezone.now()).order_by('start_datetime')[:amount] # 開始前のイベントを取得
 
 class Event(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)
