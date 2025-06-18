@@ -18,8 +18,30 @@ class DjangoAPIClient {
     // トークンを取得（localStorage、sessionStorage、またはCookieから）
     getAuthToken() {
         // JWTトークンの取得ロジック
-        return localStorage.getItem('access_token') || 
-               sessionStorage.getItem('access_token');
+        const localStorageToken = localStorage.getItem('access_token');
+        const sessionStorageToken = sessionStorage.getItem('access_token');
+        
+        // Cookieからトークンを取得
+        const cookieToken = this.getCookieValue('access_token');
+        
+        return localStorageToken || sessionStorageToken || cookieToken;
+    }
+
+    // Cookieから指定されたキーの値を取得するヘルパー関数
+    getCookieValue(name) {
+        if (typeof document === 'undefined') {
+            // サーバーサイドの場合はnullを返す
+            return null;
+        }
+        
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        
+        return null;
     }
 
     // 認証ヘッダーを追加
