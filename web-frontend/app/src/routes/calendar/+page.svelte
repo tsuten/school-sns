@@ -5,6 +5,7 @@
     import { ChevronLeft, ChevronRight } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import { apiClient } from '$lib/services/django.js';
+    import { getSchedules, getSchedulesFromMultipleCalendars } from './getSchedules.js';
     
     dayjs.locale('ja');
 
@@ -12,7 +13,9 @@
 
     let currentDate = $state(dayjs());
     let calendars = $state([]);
+    let schedules = $state([]);
     let isLoading = $state(true);
+    let isLoadingSchedules = $state(false);
     let error = $state(null);
     
     // 現在表示中の月の情報を計算
@@ -54,9 +57,56 @@
         }
     }
     
+    // スケジュールデータを取得する関数
+    async function fetchSchedules() {
+        if (!calendars.length) {
+            console.log('カレンダーが設定されていないため、スケジュール取得をスキップします');
+            return;
+        }
+        
+        try {
+            isLoadingSchedules = true;
+            console.log('=== スケジュール取得開始 ===');
+            
+            const year = currentDate.year();
+            const month = currentDate.month() + 1; // dayjs の month() は 0-based なので +1
+            
+            console.log(`対象年月: ${year}年${month}月`);
+            console.log('対象カレンダー:', calendars.map(cal => ({ id: cal.id, name: cal.name })));
+            
+            // 全てのカレンダーからスケジュールを取得
+            const calendarIds = calendars.map(cal => cal.id);
+            const fetchedSchedules = await getSchedulesFromMultipleCalendars(calendarIds, year, month);
+            
+            schedules = fetchedSchedules;
+            console.log('=== スケジュール取得完了 ===');
+            
+        } catch (err) {
+            console.error('スケジュール取得中にエラーが発生しました:', err);
+        } finally {
+            isLoadingSchedules = false;
+        }
+    }
+    
     // コンポーネントマウント時にカレンダーデータを取得
     onMount(() => {
         fetchCalendars();
+    });
+    
+    // 副作用：カレンダーが取得されたらスケジュールを取得
+    $effect(() => {
+        if (calendars.length > 0) {
+            console.log('カレンダーが取得されたので、スケジュールを取得します');
+            fetchSchedules();
+        }
+    });
+    
+    // 副作用：月が変更されたらスケジュールを再取得
+    $effect(() => {
+        console.log('表示月が変更されました:', currentDate.format('YYYY年MM月'));
+        if (calendars.length > 0) {
+            fetchSchedules();
+        }
     });
     
     // 副作用：状態変更時のログ出力
@@ -132,7 +182,7 @@
     <!-- カレンダーヘッダー -->
     <div class="flex items-center justify-between bg-white rounded-lg p-4 border border-gray-300">
         <button 
-            class="p-2 hover:bg-gray-100 rounded-lg"
+            class="p-2 hover:bg-gray-100 rounded-lg hover:cursor-pointer"
             onclick={previousMonth}
             aria-label="前の月"
         >
@@ -144,7 +194,7 @@
         </h2>
         
         <button 
-            class="p-2 hover:bg-gray-100 rounded-lg"
+            class="p-2 hover:bg-gray-100 rounded-lg hover:cursor-pointer "
             onclick={nextMonth}
             aria-label="次の月"
         >
@@ -192,19 +242,25 @@
                 </button>
             </div>
         {:else}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="flex flex-col gap-4">
                 {#each calendars as calendar}
-                    <div class="border border-gray-300 rounded-lg p-4 hover:bg-gray-50">
-                        <h4 class="font-semibold text-lg mb-2">{calendar.name}</h4>
-                        <p class="text-gray-600 text-sm mb-2">{calendar.description}</p>
-                        <div class="text-xs text-gray-400">
-                            <p>作成日: {new Date(calendar.created_at).toLocaleDateString('ja-JP')}</p>
-                            <p>更新日: {new Date(calendar.updated_at).toLocaleDateString('ja-JP')}</p>
-                        </div>
+                    <div class="border border-gray-300 rounded-lg p-4 hover:bg-gray-50 w-1/4 hover:cursor-pointer">
+                        <h4 class="font-semibold text-lg">{calendar.initial}</h4>
                     </div>
                 {/each}
             </div>
         {/if}
     </div>
+    
+    <!-- スケジュール情報（デバッグ用） -->
+    {#if schedules.length > 0}
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+            <h3 class="text-lg font-semibold mb-2">取得したスケジュール（{schedules.length}件）</h3>
+            <p class="text-sm text-gray-600 mb-2">※ 詳細はブラウザのコンソールをご確認ください</p>
+            <div class="text-xs text-gray-500">
+                {schedules.map(s => s.title).join(', ')}
+            </div>
+        </div>
+    {/if}
 </div>
 

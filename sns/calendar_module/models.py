@@ -5,9 +5,11 @@ from django.conf import settings
 class CalendarManager(models.Manager):
     def get_calendar_by_user(self, user):
         return self.get_queryset().filter(user=user)
+    
 
 class Calendar(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    initial = models.CharField(max_length=1, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField()
@@ -20,8 +22,8 @@ class Calendar(models.Model):
         return self.name
     
 class ScheduleManager(models.Manager):
-    def get_schedule_by_calendar(self, calendar):
-        return self.get_queryset().filter(calendar=calendar)
+    def get_schedule_by_calendar(self, calendar_id, year, month):
+        return self.get_queryset().filter(calendar_id=calendar_id, start_time__year=year, start_time__month=month)
     
 class Schedule(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -34,6 +36,8 @@ class Schedule(models.Model):
     location = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ScheduleManager()
 
     def __str__(self):
         return self.title
