@@ -225,7 +225,7 @@
     
     // 日付のスタイルを判定する関数
     function getDayClass(day) {
-        let classes = 'flex flex-col items-center justify-start rounded-none text-sm hover:bg-gray-100 h-24 w-full';
+        let classes = 'flex flex-col items-center justify-start text-sm hover:bg-gray-100 h-24 w-full';
         
         // 今日の日付
         if (day.isSame(today, 'day')) {

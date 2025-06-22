@@ -1,7 +1,11 @@
 from django.db import models
 from django.conf import settings
 import uuid
-# Create your models here.
+
+class CircleManager(models.Manager):
+    def get_circle_by_user(self, user):
+        return self.get_queryset().filter(members__user=user)
+
 class Circle(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
@@ -10,6 +14,8 @@ class Circle(models.Model):
     # もしpublicがfalseだったらwhitelistを設定するカラムを追加
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = CircleManager()
 
     def __str__(self):
         return self.name

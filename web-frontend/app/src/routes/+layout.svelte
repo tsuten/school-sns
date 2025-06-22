@@ -1,10 +1,12 @@
 <script>
 	import '../app.css';
 	import SidebarButton from './sidebar-botton.svelte';
-	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen} from 'lucide-svelte';
+	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation} from 'lucide-svelte';
 	import State from './state.svelte';
 	import Modal from '../lib/components/utils/modal.svelte';
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
+	import WidgetBase from '../lib/components/widgets/widgetBase.svelte';
+	import Notification from '../lib/components/widgets/notification.svelte';
 	import { setUserInfo, clearUserInfo } from '../lib/stores/userInfo.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -96,25 +98,43 @@
 			href: "/calendar",
 			label: "カレンダー"
 		},
-		{
+/*		{
 			icon: Vote,
 			href: "/polls",
 			label: "投票"
-		},
-		{
+		},*/
+/*		{
 			icon: NotebookPen,
 			href: "/post",
 			label: "投稿する"
-		},
+		},*/
 		{
 			icon: User,
 			href: "/profile",
-			label: "プロフィール"
+			label: "あなた"
 		},
 		{
 			icon: Settings,
 			href: "/settings",
 			label: "設定"
+		},
+	]
+
+	let enrollment_services = [
+		{
+			icon: University,
+			href: "/institution",
+			label: "全体"
+		},
+		{
+			icon: School,
+			href: "/school",
+			label: "学校"
+		},
+		{
+			icon: Presentation,
+			href: "/class",
+			label: "クラス"
 		},
 	]
 
@@ -126,6 +146,11 @@
 			{#each services as service}
 				<SidebarButton icon={service.icon} href={service.href} label={service.label} />
 			{/each}
+			<div class="flex flex-col gap-1 p-2 border border-gray-300 rounded-lg w-full">
+				{#each enrollment_services as service}
+					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
+				{/each}
+			</div>
 			<button class="flex flex-row items-center w-40 justify-end gap-2 group" onclick={() => show_logout_modal = true}> <p class="text-sm text-gray-500">ログアウト</p>
 				<div class="w-13 h-13 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
 					<LogOut />
@@ -157,21 +182,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="border border-gray-300 rounded-lg m-3 w-full">
-				<h2 class="text-gray-500 text-sm font-bold text-center py-2">通知</h2>
-				<div class="flex flex-col gap-1 p-2 items-center w-full">
-					<ul class="flex flex-col gap-1 p-2 w-full">
-						<li class="flex items-center gap-1"><MessageCircle class="w-4 h-4" />人間: 調子はどう？</li>
-						<li class="flex items-center gap-1 whitespace-nowrap"><Heart class="w-4 h-4" /><p class="overflow-hidden text-ellipsis w-full">あなたの投稿がいいねされましたよん</p></li>
-						<li class="flex items-center gap-1"><Vote class="w-4 h-4" />投票が終了しました</li>
-						<li class="flex items-center gap-1"><Calendar class="w-4 h-4" />イベントが開催されます</li>
-						<li class="flex items-center gap-1"><Key class="w-4 h-4" />パスワードが変更されました</li>
-					</ul>
-					<div class="flex flex-col text-gray-500 text-sm font-bold text-center">
-						<a href="/notifications" class="border border-gray-300 rounded-lg p-2 text-gray-500 text-sm font-bold text-center">更に通知を見る</a>
-					</div>
-				</div>
-			</div>
+			<Notification />
 			<State />
 		</div>
 		<button class="border border-gray-300 rounded-lg m-3 py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => editing_widget = !editing_widget}>
