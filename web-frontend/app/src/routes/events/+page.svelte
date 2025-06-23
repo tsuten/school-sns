@@ -1,6 +1,8 @@
 <script>
     import { Calendar, Heart, MapPin, User, Bookmark, Plus } from "lucide-svelte";
     import EventCard from "$lib/components/page-components/eventCard.svelte";
+    import EventForm from '$lib/components/page-components/eventForm.svelte';
+
 
     // サーバーから取得したデータを受け取る
     export let data;
@@ -20,6 +22,17 @@
             minute: '2-digit'
         });
     }
+
+    let showForm = false;
+
+  function openForm() {
+    showForm = true;
+  }
+
+  function closeForm() {
+    showForm = false;
+  }
+
     
     // 今後のイベントを取得（APIから直接取得するので不要だが、念のため保持）
     function getUpcomingEvents() {
@@ -71,13 +84,18 @@
 
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
-            <button 
-                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40"
-                onclick={() => console.log('新しいイベントを作成')}
-                aria-label="新しいイベントを作成"
-            >
-                <Plus class="w-6 h-6 text-white" />
-            </button>
-        </div>
+  <button 
+    class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40"
+    onclick={openForm}
+    aria-label="新しいイベントを作成"
+  >
+    <Plus class="w-6 h-6 text-white" />
+  </button>
+
+  {#if showForm}
+    <EventForm onClose={closeForm} />
+  {/if}
+</div>
+
     </div>
 </div>
