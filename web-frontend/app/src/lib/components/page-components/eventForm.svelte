@@ -17,8 +17,11 @@
     let currentCalendarDate = new Date();
     let hour = selectedDateTime.getHours();
     let minute = Math.floor(selectedDateTime.getMinutes() / 5) * 5;
-    let banti = "" ;
-    let building = "" ;
+    let banti = "";
+    let building = "";
+
+    // 表示の制御用の関数
+    export let onClose;
 
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -44,11 +47,10 @@
         updateSelectedDisplay();
     }
 
-     // カレンダーポップアップの開閉を切り替える
+    // カレンダーポップアップの開閉を切り替える
     function toggleCalendar() {
         isCalendarOpen = !isCalendarOpen;
     }
-
 
     function changeMonth(offset) {
         currentCalendarDate = new Date(
@@ -126,199 +128,222 @@
     function getCalendarCells() {
         return 42;
     }
+
+    // ドラッグすると動く魔法
 </script>
 
 <form onsubmit={(e) => e.preventDefault()}>
-    <h1>イベント入力フォーム</h1>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore element_invalid_self_closing_tag -->
+    <div class="overlay" onclick={() => onClose?.()} />
+    <!-- svelte-ignore element_implicitly_closed -->
+    <div class="bottom-sheet open">
+        <button class="close-button" onclick={() => onClose?.()}>✕</button>
 
-    <div>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label>イベント名</label>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <input
-            bind:value={eventName}
-            required
-            placeholder="例: ドキドキマヤ文明鎮魂祭"
-        />
-    </div>
+        <div>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label>イベント名</label>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <input
+                bind:value={eventName}
+                required
+                placeholder="例: ドキドキマヤ文明鎮魂祭"
+            />
+        </div>
 
-    <div>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label>概要</label>
-        <input
-            bind:value={content}
-            required
-            placeholder="例: マヤ文明の魂を鎮魂します"
-        />
-    </div>
+        <div>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label>概要</label>
+            <input
+                bind:value={content}
+                required
+                placeholder="例: マヤ文明の魂を鎮魂します"
+            />
+        </div>
 
-    <div class="calendar-container">
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label>日時</label>
-        <input
-            class="calendar-input"
-            readonly
-            value={selectedDate}
-            onclick={toggleCalendar}
-            placeholder="日時を選択してください"
-        />
+        <div class="calendar-container">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label>日時</label>
+            <input
+                class="calendar-input"
+                readonly
+                value={selectedDate}
+                onclick={toggleCalendar}
+                placeholder="日時を選択してください"
+            />
 
-        <input type="hidden" name="datetime" value={selectedDate} required />
+            <input
+                type="hidden"
+                name="datetime"
+                value={selectedDate}
+                required
+            />
 
-        {#if isCalendarOpen}
-            <div class="calendar-popup">
-                <div class="calendar-header">
-                    <button
-                        type="button"
-                        class="calendar-nav-btn"
-                        onclick={() => changeMonth(-1)}>‹</button
-                    >
-                    <div class="calendar-title">
-                        {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() +
-                            1}月
-                    </div>
-                    <button
-                        type="button"
-                        class="calendar-nav-btn"
-                        onclick={() => changeMonth(1)}>›</button
-                    >
-                </div>
-
-                <div class="calendar-weekdays">
-                    {#each weekdays as day}
-                        <div class="calendar-weekday">{day}</div>
-                    {/each}
-                </div>
-
-                <div class="calendar-days">
-                    {#each Array(getCalendarCells()) as _, index}
-                        {#key index}
-                            {#if index < getFirstDayOfMonth()}
-                                <!-- svelte-ignore a11y_consider_explicit_label -->
-                                <button
-                                    disabled
-                                    class="calendar-day other-month"
-                                >
-                                </button>
-                            {:else if index < getFirstDayOfMonth() + getDaysInMonth()}
-                                <button
-                                    class="calendar-day"
-                                    onclick={() =>
-                                        selectDay(
-                                            index - getFirstDayOfMonth() + 1,
-                                        )}
-                                >
-                                    {index - getFirstDayOfMonth() + 1}
-                                </button>
-                            {:else}
-                                <!-- svelte-ignore a11y_consider_explicit_label -->
-                                <button
-                                    disabled
-                                    class="calendar-day other-month"
-                                >
-                                </button>
-                            {/if}
-                        {/key}
-                    {/each}
-                </div>
-
-                <div class="time-selectors">
-                    <div class="time-selector">
-                        <!-- svelte-ignore a11y_label_has_associated_control -->
-                        <label>時</label>
-                        <select
-                            bind:value={hour}
-                            onchange={updateSelectedDisplay}
+            {#if isCalendarOpen}
+                <div class="calendar-popup">
+                    <div class="calendar-header">
+                        <button
+                            type="button"
+                            class="calendar-nav-btn"
+                            onclick={() => changeMonth(-1)}>‹</button
                         >
-                            {#each Array(24) as _, h}
-                                <option value={h}
-                                    >{String(h).padStart(2, "0")}時</option
-                                >
-                            {/each}
-                        </select>
-                    </div>
-
-                    <div class="time-selector">
-                        <!-- svelte-ignore a11y_label_has_associated_control -->
-                        <label>分</label>
-                        <select
-                            bind:value={minute}
-                            onchange={updateSelectedDisplay}
+                        <div class="calendar-title">
+                            {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() +
+                                1}月
+                        </div>
+                        <button
+                            type="button"
+                            class="calendar-nav-btn"
+                            onclick={() => changeMonth(1)}>›</button
                         >
-                            {#each Array(12) as _, i}
-                                <option value={i * 5}
-                                    >{String(i * 5).padStart(2, "0")}分</option
-                                >
-                            {/each}
-                        </select>
+                    </div>
+
+                    <div class="calendar-weekdays">
+                        {#each weekdays as day}
+                            <div class="calendar-weekday">{day}</div>
+                        {/each}
+                    </div>
+
+                    <div class="calendar-days">
+                        {#each Array(getCalendarCells()) as _, index}
+                            {#key index}
+                                {#if index < getFirstDayOfMonth()}
+                                    <!-- svelte-ignore a11y_consider_explicit_label -->
+                                    <button
+                                        disabled
+                                        class="calendar-day other-month"
+                                    >
+                                    </button>
+                                {:else if index < getFirstDayOfMonth() + getDaysInMonth()}
+                                    <button
+                                        class="calendar-day"
+                                        onclick={() =>
+                                            selectDay(
+                                                index -
+                                                    getFirstDayOfMonth() +
+                                                    1,
+                                            )}
+                                    >
+                                        {index - getFirstDayOfMonth() + 1}
+                                    </button>
+                                {:else}
+                                    <!-- svelte-ignore a11y_consider_explicit_label -->
+                                    <button
+                                        disabled
+                                        class="calendar-day other-month"
+                                    >
+                                    </button>
+                                {/if}
+                            {/key}
+                        {/each}
+                    </div>
+
+                    <div class="time-selectors">
+                        <div class="time-selector">
+                            <!-- svelte-ignore a11y_label_has_associated_control -->
+                            <label>時</label>
+                            <select
+                                bind:value={hour}
+                                onchange={updateSelectedDisplay}
+                            >
+                                {#each Array(24) as _, h}
+                                    <option value={h}
+                                        >{String(h).padStart(2, "0")}時</option
+                                    >
+                                {/each}
+                            </select>
+                        </div>
+
+                        <div class="time-selector">
+                            <!-- svelte-ignore a11y_label_has_associated_control -->
+                            <label>分</label>
+                            <select
+                                bind:value={minute}
+                                onchange={updateSelectedDisplay}
+                            >
+                                {#each Array(12) as _, i}
+                                    <option value={i * 5}
+                                        >{String(i * 5).padStart(
+                                            2,
+                                            "0",
+                                        )}分</option
+                                    >
+                                {/each}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="calendar-confirmation">
+                        <div class="selected-datetime">
+                            選択中: {selectedDate}
+                        </div>
+
+                        <div class="calendar-buttons">
+                            <button
+                                type="button"
+                                class="calendar-btn primary"
+                                onclick={toggleCalendar}>キャンセル</button
+                            >
+                            <button
+                                type="button"
+                                class="calendar-btn primary"
+                                onclick={confirmDate}>決定</button
+                            >
+                        </div>
                     </div>
                 </div>
+            {/if}
+        </div>
+        <hr />
+        <br>
+        <PostalSearch bind:postalCode bind:prefecture bind:city bind:street />
+        <div>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label>番地</label>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <input bind:value={banti} required placeholder="例: 1-19-11" />
+        </div>
 
-                <div class="selected-datetime">
-                    選択中: {selectedDate}
-                </div>
+        <div>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label>建物名・部屋番号</label>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <input
+                bind:value={building}
+                placeholder="例: パークウェルビル5F（任意）"
+            />
+            <small>マンション名や部屋番号がある場合は入力してください</small>
+        </div>
 
-                <div class="calendar-buttons">
-                    <button
-                        type="button"
-                        class="calendar-btn primary"
-                        onclick={toggleCalendar}>キャンセル</button
-                    >
-                    <button
-                        type="button"
-                        class="calendar-btn primary"
-                        onclick={confirmDate}>決定</button
-                    >
-                </div>
-            </div>
-        {/if}
+        <button type="button" id="submitBtn">送信</button>
     </div>
-    <hr />
-    <PostalSearch bind:postalCode bind:prefecture bind:city bind:street />
-    <div>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label>番地</label>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <input
-            bind:value={banti}
-            required
-            placeholder="例: 1-19-11"
-        />
-    </div>
-
-    <div>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label>建物名・部屋番号</label>
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <input
-            bind:value={building}
-            placeholder="例: パークウェルビル5F（任意）"
-        />
-        <small>マンション名や部屋番号がある場合は入力してください</small>
-    </div>
-
-<button type="button" id="submitBtn">送信</button>
-
-    
 </form>
 
 <style>
     /* カレンダー用スタイル */
+    .calendar-confirmation {
+        margin-top: 12px;
+        border-top: 1px solid #ddd;
+        padding-top: 12px;
+    }
+
     .calendar-container {
-        position: relative;
+        position: fixed;
         display: inline-block;
         width: 100%;
+        justify-content: flex-end;
     }
 
     .calendar-input {
-        cursor: pointer;
+        position: absolute;
         background-color: #f8f9fa;
     }
 
     .calendar-popup {
-        position: absolute;
-        top: 100%;
-        left: 0;
+        position: fixed;
+        top: 0;
+        right: 0;
         z-index: 1000;
         background: white;
         border: 1px solid #ddd;
@@ -471,5 +496,40 @@
 
     .calendar-btn.primary:hover {
         background-color: #1976d2;
+    }
+
+    /* フォーム用スタイル(あとで消す) */
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+    }
+
+    .bottom-sheet {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        width: 100%;
+        height: 90vh;
+        margin: 0 auto;
+        background: white;
+        transition: bottom 0.3s ease;
+        z-index: 50;
+    }
+
+    .bottom-sheet.open {
+        bottom: 0;
+    }
+
+    .close-button {
+        position: absolute;
+        top: 10px;
+        right: 16px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
     }
 </style>

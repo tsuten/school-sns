@@ -33,6 +33,7 @@
     showForm = false;
   }
 
+
     
     // 今後のイベントを取得（APIから直接取得するので不要だが、念のため保持）
     function getUpcomingEvents() {
@@ -85,12 +86,13 @@
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
   <button 
-    class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40"
+    class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
     onclick={openForm}
     aria-label="新しいイベントを作成"
   >
     <Plus class="w-6 h-6 text-white" />
   </button>
+
 
   {#if showForm}
     <EventForm onClose={closeForm} />
