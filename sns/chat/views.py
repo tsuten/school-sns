@@ -14,6 +14,7 @@ from .schemas import (
     MessageReadInputSchema,
     MessageReadOutputSchema,
     WhoSentMessage,
+    UsersHaveHistoryWithUserOutputSchema,
 )
 
 # viewsに直接ビジネスロジックを書いているので後々サービス層作ってそこに移行
@@ -182,3 +183,38 @@ def get_unread_count(request):
     except Exception as e:
         from ninja.errors import HttpError
         raise HttpError(400, f"未読メッセージ数の取得に失敗しました: {str(e)}")
+
+@router.post("/send-message", auth=JWTAuth(), response=MessageCreateOutputSchema)
+def send_message(request, payload: MessageCreateInputSchema):
+    """メッセージを送信"""
+    try:
+        receiver = get_object_or_404(User, id=payload.receiver_id)
+        sender = request.user
+        
+        # 自分自身にはメッセージを送れない
+        if sender == receiver:
+            from ninja.errors import HttpError
+            raise HttpError(400, "自分自身にメッセージを送ることはできません")
+        
+        # メッセージを作成
+        message = Message.objects.create(
+            sender=sender,
+            receiver=receiver,
+            content=payload.content
+        )
+        return message
+        
+    except Exception as e:
+        from ninja.errors import HttpError
+        raise HttpError(400, f"メッセージの送信に失敗しました: {str(e)}")
+    
+@router.get("/users-have-history-with-user", auth=JWTAuth(), response=UsersHaveHistoryWithUserOutputSchema)
+def get_users_have_history_with_user(request):
+    """指定ユーザーとメッセージを交信したユーザーのリストを取得"""
+    try:
+        current_user = request.user
+        users = Message.objects.get_list_of_users_have_history_with_user(current_user)
+        return UsersHaveHistoryWithUserOutputSchema(users=users)
+    except Exception as e:
+        from ninja.errors import HttpError
+        raise HttpError(400, f"ユーザーのリストの取得に失敗しました: {str(e)}")

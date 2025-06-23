@@ -42,3 +42,6 @@ class MessageReadInputSchema(Schema):
 class MessageReadOutputSchema(Schema):
     success: bool
     read_at: datetime
+
+class UsersHaveHistoryWithUserOutputSchema(Schema):
+    users: list[uuid.UUID]

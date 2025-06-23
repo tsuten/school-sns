@@ -33,3 +33,11 @@ class UserProfileSchema(Schema):
             created_at=profile.created_at,
             updated_at=profile.updated_at,
         )
+    
+class UserProfileUpdateSchema(Schema):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    birthday: Optional[str] = None
+    location: Optional[str] = None
+    birth_place: Optional[str] = None
+    pfp: Optional[str] = None

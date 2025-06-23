@@ -49,6 +49,26 @@ class UserProfileManager(models.Manager):
         profile = UserProfile.objects.get(user=user)
         return user, profile
     
+    def set_user_profile(self, user_id, display_name=None, pfp=None, bio=None, birthday=None, location=None, birth_place=None, **kwargs):
+        user = User.objects.get(id=user_id)
+        profile = UserProfile.objects.get(user=user)
+        
+        # display_nameが提供されていない場合はユーザー名を使用
+        if display_name is not None:
+            profile.display_name = display_name if display_name.strip() else user.username
+        if pfp is not None:
+            profile.pfp = pfp
+        if bio is not None:
+            profile.bio = bio
+        if birthday is not None:
+            profile.birthday = birthday
+        if location is not None:
+            profile.location = location
+        if birth_place is not None:
+            profile.birth_place = birth_place
+            
+        profile.save()
+        return profile
     
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -62,6 +82,12 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = UserProfileManager()
+
+    def save(self, *args, **kwargs):
+        # display_nameが空の場合、ユーザー名を設定
+        if not self.display_name:
+            self.display_name = self.user.username
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.user.username

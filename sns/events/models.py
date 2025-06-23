@@ -18,6 +18,17 @@ class EventManager(models.Manager):
     
     def get_next_events(self, amount = 10):
         return self.get_queryset().filter(start_datetime__gt=timezone.now()).order_by('start_datetime')[:amount] # 開始前のイベントを取得
+    
+    def create_event(self, organizer, title, description, start_datetime, end_datetime, location, published):
+        return self.create(
+            organizer=organizer,
+            title=title,
+            description=description,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            location=location,
+            published=published
+        )
 
 class Event(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)

@@ -40,4 +40,5 @@
 - 縁は gray-300
 - アイコンはlucideで統一
 - CSSは一元的に管理します（web-frontend/app/app.css）
+- padidngは4
 #### TODO: 文字色を追記

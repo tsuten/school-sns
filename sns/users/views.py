@@ -2,7 +2,7 @@ import json
 from django.shortcuts import render
 from ninja import Router
 from .models import UserProfile, UserProfileManager, User
-from .schemas import UserProfileSchema
+from .schemas import UserProfileSchema, UserProfileUpdateSchema
 from ninja_jwt.authentication import JWTAuth
 from .services import get_user_permission
 # Create your views here.
@@ -29,3 +29,8 @@ def get_random_users(request, amount):
     amount = int(amount)
     users = User.objects.get_users_randomly(amount)
     return [UserProfileSchema.from_profile(user.profile) for user in users]
+
+@router.post('/profile', auth=JWTAuth(), response=UserProfileSchema)
+def set_user_profile(request, payload: UserProfileUpdateSchema):
+    profile = UserProfile.objects.set_user_profile(request.user.id, **payload.dict())
+    return UserProfileSchema.from_profile(profile)

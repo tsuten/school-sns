@@ -20,3 +20,11 @@ class EventSchema(Schema):
     @staticmethod
     def resolve_organizer(obj):
         return obj.organizer.username
+    
+class EventCreateInputSchema(Schema):
+    title: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    location: str
+    published: bool

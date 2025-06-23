@@ -31,6 +31,25 @@ class MessageManager(models.Manager):
             Q(sender=user1, receiver=user2) | Q(sender=user2, receiver=user1),
             is_deleted=False
         ).order_by('-created_at').first()
+    
+    def get_list_of_users_have_history_with_user(self, user):
+        """指定ユーザーとメッセージを交信したユーザーのリストを取得"""
+        # 送信したメッセージの受信者を取得
+        sent_to_users = self.filter(
+            sender=user, is_deleted=False
+        ).values_list('receiver', flat=True).distinct()
+        
+        # 受信したメッセージの送信者を取得
+        received_from_users = self.filter(
+            receiver=user, is_deleted=False
+        ).values_list('sender', flat=True).distinct()
+        
+        # 重複を除いてユーザーIDのセットを作成し、Noneと現在のユーザーを除外
+        user_ids = set(sent_to_users) | set(received_from_users)
+        user_ids.discard(None)  # null値を除外
+        user_ids.discard(user.id)  # 現在のユーザーを除外
+        
+        return list(user_ids)
 
 
 # Create your models here.

@@ -83,11 +83,11 @@
 			href: "/bookmark",
 			label: "ブックマーク"
 		},
-		{
+/*		{
 			icon: TrendingUp,
 			href: "/trending",
 			label: "トレンド"
-		},
+		},*/
 		{
 			icon: Tickets,
 			href: "/events",
@@ -165,9 +165,9 @@
 	<div class="w-full border-x border-gray-300 h-screen">
 		{@render children()}
 	</div>
-	<div class="flex flex-col w-3/7 w-70 h-full justify-between">
+	<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
 		<div>
-			<div class="border border-gray-300 rounded-lg m-3">
+		<!--<div class="border border-gray-300 rounded-lg m-3">
 				<h2 class="text-gray-500 text-sm font-bold text-center py-2">トレンド<p>{trend_updated_at}</p></h2>
 				<div class="flex flex-col gap-1 p-2 items-center">
 					<ul class="flex flex-col gap-1 p-2">
@@ -181,11 +181,10 @@
 						<a href="/trending" class="border border-gray-300 rounded-lg p-2 text-gray-500 text-sm font-bold text-center">更にトレンドを見る</a>
 					</div>
 				</div>
-			</div>
+			</div>-->
 			<Notification />
-			<State />
 		</div>
-		<button class="border border-gray-300 rounded-lg m-3 py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => editing_widget = !editing_widget}>
+		<button class="border border-gray-300 rounded-lg py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => editing_widget = !editing_widget}>
 			ウィジェットの設定
 		</button>
 	</div>
