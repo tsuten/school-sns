@@ -5,7 +5,7 @@
     import { ChevronLeft, ChevronRight } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import { apiClient } from '$lib/services/django.js';
-    import { getSchedules, getSchedulesFromMultipleCalendars } from './getSchedules.js';
+    import { getSchedulesFromMultipleCalendars } from './getSchedules.js';
     
     dayjs.locale('ja');
 
@@ -15,7 +15,6 @@
     let calendars = $state([]);
     let schedules = $state([]);
     let isLoading = $state(true);
-    let isLoadingSchedules = $state(false);
     let error = $state(null);
     
     // 現在表示中の月の情報を計算
@@ -38,6 +37,10 @@
             calendars = response || [];
             
             console.log('カレンダーデータを取得しました:', calendars);
+            
+            // カレンダー取得後、スケジュールも取得
+            await fetchSchedules();
+            
         } catch (err) {
             console.error('カレンダーデータの取得に失敗しました:', err);
             error = err.message || 'カレンダーデータの取得に失敗しました';
@@ -57,34 +60,110 @@
         }
     }
     
-    // スケジュールデータを取得する関数
+    // スケジュールを取得する関数
     async function fetchSchedules() {
-        if (!calendars.length) {
-            console.log('カレンダーが設定されていないため、スケジュール取得をスキップします');
-            return;
+        try {
+            const calendarIds = calendars.map(calendar => calendar.id);
+            const year = currentDate.year();
+            const month = currentDate.month() + 1; // dayjsは0ベースなので+1
+            
+            console.log('スケジュール取得開始:', { calendarIds, year, month });
+            
+            const fetchedSchedules = await getSchedulesFromMultipleCalendars(calendarIds, year, month);
+            schedules = fetchedSchedules;
+            
+            console.log('取得したスケジュール:', schedules);
+        } catch (err) {
+            console.error('スケジュールの取得に失敗しました:', err);
+            schedules = [];
+        }
+    }
+    
+    // 指定した日のスケジュールを取得する関数（開始日のスケジュールのみ）
+    function getSchedulesForDay(day) {
+        return schedules.filter(schedule => {
+            const scheduleStartDate = dayjs(schedule.start_time);
+            return scheduleStartDate.isSame(day, 'day');
+        });
+    }
+    
+    // 指定した日がスケジュールの継続日かどうかを判定する関数
+    function isScheduleContinuationDay(day, schedule) {
+        const scheduleStartDate = dayjs(schedule.start_time);
+        const scheduleEndDate = schedule.end_time ? dayjs(schedule.end_time) : scheduleStartDate;
+        
+        // 開始日より後で、終了日以前の日かどうか
+        return day.isAfter(scheduleStartDate, 'day') && 
+               (day.isSame(scheduleEndDate, 'day') || day.isBefore(scheduleEndDate, 'day'));
+    }
+    
+    // 指定した日に継続中のスケジュールを取得する関数
+    function getContinuationSchedulesForDay(day) {
+        return schedules.filter(schedule => isScheduleContinuationDay(day, schedule));
+    }
+    
+    // 指定した日の全てのスケジュール（開始日+継続中）のインデックスを計算する関数
+    function getScheduleIndex(day, targetSchedule) {
+        const daySchedules = getSchedulesForDay(day);
+        const continuationSchedules = getContinuationSchedulesForDay(day);
+        
+        // 開始日のスケジュールのインデックスをチェック
+        const startIndex = daySchedules.findIndex(schedule => schedule.id === targetSchedule.id);
+        if (startIndex !== -1) {
+            return startIndex;
         }
         
-        try {
-            isLoadingSchedules = true;
-            console.log('=== スケジュール取得開始 ===');
-            
-            const year = currentDate.year();
-            const month = currentDate.month() + 1; // dayjs の month() は 0-based なので +1
-            
-            console.log(`対象年月: ${year}年${month}月`);
-            console.log('対象カレンダー:', calendars.map(cal => ({ id: cal.id, name: cal.name })));
-            
-            // 全てのカレンダーからスケジュールを取得
-            const calendarIds = calendars.map(cal => cal.id);
-            const fetchedSchedules = await getSchedulesFromMultipleCalendars(calendarIds, year, month);
-            
-            schedules = fetchedSchedules;
-            console.log('=== スケジュール取得完了 ===');
-            
-        } catch (err) {
-            console.error('スケジュール取得中にエラーが発生しました:', err);
-        } finally {
-            isLoadingSchedules = false;
+        // 継続中のスケジュールのインデックスをチェック（開始日スケジュール数を加算）
+        const continuationIndex = continuationSchedules.findIndex(schedule => schedule.id === targetSchedule.id);
+        if (continuationIndex !== -1) {
+            return daySchedules.length + continuationIndex;
+        }
+        
+        return 0;
+    }
+    
+    // スケジュールの表示期間を計算する関数
+    function getScheduleDuration(schedule) {
+        const startDate = dayjs(schedule.start_time);
+        const endDate = schedule.end_time ? dayjs(schedule.end_time) : startDate;
+        return endDate.diff(startDate, 'day') + 1;
+    }
+    
+    // スケジュールの位置タイプを判定する関数
+    function getSchedulePositionType(day, schedule) {
+        const scheduleStartDate = dayjs(schedule.start_time);
+        const scheduleEndDate = schedule.end_time ? dayjs(schedule.end_time) : scheduleStartDate;
+        
+        if (day.isSame(scheduleStartDate, 'day') && day.isSame(scheduleEndDate, 'day')) {
+            return 'single'; // 1日のみのスケジュール
+        } else if (day.isSame(scheduleStartDate, 'day')) {
+            return 'start'; // 開始日
+        } else if (day.isSame(scheduleEndDate, 'day')) {
+            return 'end'; // 終了日
+        } else {
+            return 'middle'; // 中間日
+        }
+    }
+    
+    // スケジュールバーのスタイルクラスを取得する関数
+    function getScheduleBarClass(day, schedule, index = 0) {
+        const positionType = getSchedulePositionType(day, schedule);
+        let baseClass = 'w-full text-xs text-white px-1 py-0.5 mb-0.5 truncate relative hover:cursor-pointer';
+        
+        // インデックスに基づいて色の濃淡を決定（偶数は濃い色、奇数は薄い色）
+        const isDark = index % 2 === 0;
+        
+        switch (positionType) {
+            case 'single':
+                return baseClass + (isDark ? ' bg-blue-500 rounded' : ' bg-blue-300 rounded');
+            case 'start':
+                return baseClass + (isDark ? ' bg-blue-500 rounded-l' : ' bg-blue-300 rounded-l');
+            case 'end':
+                return baseClass + (isDark ? ' bg-blue-500 rounded-r' : ' bg-blue-300 rounded-r');
+            case 'middle':
+                return baseClass + (isDark ? ' bg-blue-500' : ' bg-blue-300');
+            default:
+                return baseClass + (isDark ? ' bg-blue-500 rounded' : ' bg-blue-300 rounded');
         }
     }
     
@@ -93,17 +172,8 @@
         fetchCalendars();
     });
     
-    // 副作用：カレンダーが取得されたらスケジュールを取得
+    // 月が変更されたときにスケジュールを再取得
     $effect(() => {
-        if (calendars.length > 0) {
-            console.log('カレンダーが取得されたので、スケジュールを取得します');
-            fetchSchedules();
-        }
-    });
-    
-    // 副作用：月が変更されたらスケジュールを再取得
-    $effect(() => {
-        console.log('表示月が変更されました:', currentDate.format('YYYY年MM月'));
         if (calendars.length > 0) {
             fetchSchedules();
         }
@@ -155,24 +225,71 @@
     
     // 日付のスタイルを判定する関数
     function getDayClass(day) {
-        let classes = 'w-10 h-10 flex items-center justify-center rounded-lg text-sm cursor-pointer hover:bg-gray-100 ';
+        let classes = 'flex flex-col items-center justify-start text-sm hover:bg-gray-100 h-24 w-full';
         
         // 今日の日付
         if (day.isSame(today, 'day')) {
-            classes += 'bg-blue-500 text-white hover:bg-blue-600 ';
+            classes += ' bg-blue-50 border-blue-300';
         }
         // 当月以外の日付
         else if (!day.isSame(currentDate, 'month')) {
-            classes += 'text-gray-400 ';
+            classes += ' text-gray-400 bg-gray-50';
         }
         // 当月の日付
         else {
-            classes += 'text-gray-900 ';
+            classes += ' text-gray-900 bg-white';
         }
         
         return classes;
     }
 </script>
+
+<style>
+    .schedule-bar {
+        position: relative;
+        margin: 0 -1px; /* セル間のギャップを埋める */
+    }
+    
+    .schedule-bar.start::after {
+        content: '';
+        position: absolute;
+        right: -1px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: inherit;
+    }
+    
+    .schedule-bar.middle::before {
+        content: '';
+        position: absolute;
+        left: -1px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: inherit;
+    }
+    
+    .schedule-bar.middle::after {
+        content: '';
+        position: absolute;
+        right: -1px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: inherit;
+    }
+    
+    .schedule-bar.end::before {
+        content: '';
+        position: absolute;
+        left: -1px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: inherit;
+    }
+</style>
 
 <div class="flex flex-col gap-4 p-4">
     <div class="flex flex-col gap-2">
@@ -203,21 +320,44 @@
     </div>
     
     <!-- カレンダー本体 -->
-    <div class="bg-white rounded-lg p-4 border border-gray-300">
+    <div class="bg-white rounded-lg border border-gray-300">
         <!-- 曜日ヘッダー -->
         <div class="grid grid-cols-7 gap-1 mb-2">
             {#each weekdays as weekday}
-                <div class="w-10 h-10 flex items-center justify-center text-sm font-semibold text-gray-600">
+                <div class="h-10 flex items-center justify-center text-sm font-semibold text-gray-600">
                     {weekday}
                 </div>
             {/each}
         </div>
         
         <!-- 日付グリッド -->
-        <div class="grid grid-cols-7 gap-1">
+        <div class="grid grid-cols-7 w-full">
             {#each calendarDays as day}
                 <div class={getDayClass(day)}>
-                    {day.format('D')}
+                    <!-- 日付 -->
+                    <div class="font-semibold mb-1 {day.isSame(today, 'day') ? 'text-blue-600' : ''}">
+                        {day.format('D')}
+                    </div>
+                    
+                    <!-- 開始日のスケジュール表示 -->
+                    {#each getSchedulesForDay(day) as schedule, index}
+                        <div class="{getScheduleBarClass(day, schedule, index)} schedule-bar start" title={`${schedule.title} (${getScheduleDuration(schedule)}日間)`}>
+                            {schedule.title}
+                        </div>
+                    {/each}
+                    
+                    <!-- 継続中のスケジュール表示 -->
+                    {#each getContinuationSchedulesForDay(day) as schedule}
+                        {@const positionType = getSchedulePositionType(day, schedule)}
+                        {@const scheduleIndex = getScheduleIndex(day, schedule)}
+                        <div class="{getScheduleBarClass(day, schedule, scheduleIndex)} schedule-bar {positionType}" title={`${schedule.title} (継続中)`}>
+                            {#if positionType === 'end'}
+                                &nbsp;
+                            {:else}
+                                &nbsp;
+                            {/if}
+                        </div>
+                    {/each}
                 </div>
             {/each}
         </div>
@@ -242,10 +382,15 @@
                 </button>
             </div>
         {:else}
-            <div class="flex flex-col gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {#each calendars as calendar}
-                    <div class="border border-gray-300 rounded-lg p-4 hover:bg-gray-50 w-1/4 hover:cursor-pointer">
-                        <h4 class="font-semibold text-lg">{calendar.initial}</h4>
+                    <div class="border border-gray-300 rounded-lg p-4 hover:bg-gray-50">
+                        <h4 class="font-semibold text-lg mb-2">{calendar.name}</h4>
+                        <p class="text-gray-600 text-sm mb-2">{calendar.description}</p>
+                        <div class="text-xs text-gray-400">
+                            <p>作成日: {new Date(calendar.created_at).toLocaleDateString('ja-JP')}</p>
+                            <p>更新日: {new Date(calendar.updated_at).toLocaleDateString('ja-JP')}</p>
+                        </div>
                     </div>
                 {/each}
             </div>

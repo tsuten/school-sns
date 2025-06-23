@@ -81,7 +81,7 @@
     </div>
 
     <!-- ユーザー情報概要 -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <!-- <div class="bg-white rounded-lg border border-gray-200 p-6">
         <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
             <User class="w-5 h-5" />
             ユーザー情報
@@ -109,6 +109,7 @@
             </div>
         </div>
     </div>
+    -->
 
     <!-- 設定項目 -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
@@ -137,6 +138,7 @@
     </div>
 
     <!-- 危険な操作 -->
+    <!--
     <div class="bg-white rounded-lg border border-red-200 p-6">
         <h2 class="text-xl font-semibold mb-4 text-red-700">危険な操作</h2>
         <div class="space-y-3">
@@ -161,6 +163,7 @@
             {/each}
         </div>
     </div>
+    -->
 
     <!-- フッター情報 -->
     <div class="bg-gray-50 rounded-lg p-4 text-center text-sm text-gray-600">

@@ -24,6 +24,9 @@ class UserManager(BaseUserManager):
             raise ValueError('superuser must have is_superuser=True')
         
         return self.create_user(username, password, **extra_fields)
+    
+    def get_users_randomly(self, amount: int):
+        return self.order_by('?')[:amount]
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)

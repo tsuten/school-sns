@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'polls',
     'events',
     'calendar_module',
+    'chat',
 ]
 
 MIDDLEWARE = [
