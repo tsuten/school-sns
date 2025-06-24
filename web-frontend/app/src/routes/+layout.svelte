@@ -1,7 +1,7 @@
 <script>
 	import '../app.css';
 	import SidebarButton from './sidebar-botton.svelte';
-	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation} from 'lucide-svelte';
+	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake} from 'lucide-svelte';
 	import State from './state.svelte';
 	import Modal from '../lib/components/utils/modal.svelte';
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
@@ -97,6 +97,11 @@
 			icon: Calendar,
 			href: "/calendar",
 			label: "カレンダー"
+		},
+		{
+			icon: HeartHandshake,
+			href: "/",
+			label: "サークル"
 		},
 /*		{
 			icon: Vote,
