@@ -5,4 +5,4 @@
     import ProfileCard from "$lib/components/page-components/profileCard.svelte";
 </script>
 
-<ProfileCard user={data.user} />
+<ProfileCard aiueo="aiueo" />

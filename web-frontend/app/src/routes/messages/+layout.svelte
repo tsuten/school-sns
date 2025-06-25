@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex flex-row gap-2 h-full w-full">
-    <div class="flex flex-col gap-2 h-full p-2 w-full">
+    <div class="flex flex-col gap-4 h-full p-4 w-full">
         <div class="flex flex-col gap-2">
             <div class="relative">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -31,7 +31,7 @@
                 />
             </div>
         </div>
-        <div class="flex flex-col gap-2 h-full w-full">
+        <div class="flex flex-col gap-4 h-full w-full">
             {#each users as user}
                 <a href={`/messages/${user.user_id}`}>
                     <Button class="flex flex-row justify-between items-center gap-2 border border-gray-300 hover:cursor-pointer p-3 w-full relative" color="light">

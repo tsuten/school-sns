@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'events',
     'calendar_module',
     'chat',
+    'circle',
 ]
 
 MIDDLEWARE = [
