@@ -100,7 +100,7 @@
 		},
 		{
 			icon: HeartHandshake,
-			href: "/",
+			href: "/circles",
 			label: "サークル"
 		},
 /*		{

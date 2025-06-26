@@ -292,9 +292,6 @@
 </style>
 
 <div class="flex flex-col gap-4 p-4">
-    <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold">カレンダー</h1>
-    </div>
     
     <!-- カレンダーヘッダー -->
     <div class="flex items-center justify-between bg-white rounded-lg p-4 border border-gray-300">

@@ -3,7 +3,7 @@
     import { ChevronRight } from 'lucide-svelte';
 </script>
 
-<div class="border border-gray-300 rounded-lg p-4 w-full">
+<div class="border border-gray-300 rounded-sm p-4 w-full">
     <div class="flex flex-row justify-between gap-1 items-center">
         <div class="flex items-center justify-center gap-1">
             <svelte:component this={icon} class="w-6 h-6 text-gray-500" />

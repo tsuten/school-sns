@@ -27,6 +27,7 @@ from polls.views import router as polls_router
 from events.views import router as events_router
 from calendar_module.views import router as calendar_router
 from chat.views import router as chat_router
+from circle.views import router as circle_router
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
 api.add_router('posts', posts_router)
 api.add_router('users', users_router)
@@ -34,6 +35,7 @@ api.add_router('polls', polls_router)
 api.add_router('events', events_router)
 api.add_router('calendar', calendar_router)
 api.add_router('chat', chat_router)
+api.add_router('circle', circle_router)
 api.register_controllers(NinjaJWTDefaultController)
 
 urlpatterns = [
