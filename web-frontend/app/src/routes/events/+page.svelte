@@ -92,7 +92,7 @@
   >
     <Plus class="w-6 h-6 text-white" />
   </button>
-
+  <a href="/login">ログインテスト用</a>
 
   {#if showForm}
     <EventForm onClose={closeForm} />

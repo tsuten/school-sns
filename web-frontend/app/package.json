@@ -20,6 +20,7 @@
 	},
 	"dependencies": {
 		"dayjs": "^1.11.13",
+		"emojibase-data": "^16.0.3",
 		"flowbite": "^3.1.2",
 		"flowbite-svelte": "^1.7.1",
 		"lucide-svelte": "^0.513.0"
