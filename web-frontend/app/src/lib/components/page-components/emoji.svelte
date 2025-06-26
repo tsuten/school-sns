@@ -7,13 +7,10 @@
     function getGroupName(groupId: number) {
         return groupsSubgroups.groups?.[groupId] || `Group ${groupId}`;
     }
-
-    // サブグループIDからサブグループ名を取得
-    function getSubgroupName(subgroupId: number) {
-        return (
-            groupsSubgroups.subgroups?.[subgroupId] || `Subgroup ${subgroupId}`
-        );
-    }
+    const excludedKeys = ['component', 'flags'];
+    const filteredGroups = groupsSubgroups.groups.filter(group => 
+  !excludedKeys.includes(group.key)
+);
 
     // グループごとに絵文字を分類
     let groupedEmojis: Record<number, Record<number, typeof emojis>> = {};
@@ -31,14 +28,13 @@
 
     let selectedGroup: number = 0;
     let selectedSubgroup: number | null = null;
-
-    console.log(groupsSubgroups);
+    
 </script>
 
 <div>
     <h2>絵文字カテゴリ</h2>
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        {#each Object.entries(groupsSubgroups.groups || {}) as [groupId, groupName]}
+        {#each Object.entries(filteredGroups || {}) as [groupId, groupName]}
             <button
                 on:click={() => {
                     selectedGroup = +groupId;
