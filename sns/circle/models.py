@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 import uuid
+from .schemas import ResponseSchema
 
 class CircleCategory(models.TextChoices):
     STUDY = 'study', '学習'
@@ -29,10 +30,56 @@ class Tag(models.Model):
 class CircleManager(models.Manager):
     def get_circles_by_user(self, user):
         return self.get_queryset().filter(members=user)
+    
     def get_public_circles(self):
         return self.get_queryset().filter(is_public=True)
+    
     def get_circles_by_category(self, category):
         return self.get_queryset().filter(category=category)
+    
+    def join_circle(self, user, circle):
+        if circle.founder == user:
+            return ResponseSchema(status="error", error_code="founder", message="あなたはこのサークルの創始者です")
+        
+        if not circle.is_public:
+            return ResponseSchema(status="error", error_code="not_public", message="このサークルは非公開です")
+        
+        if circle.members.filter(id=user.id).exists():
+            return ResponseSchema(status="error", error_code="already_member", message="あなたはすでにこのサークルのメンバーです")
+        
+        circle.members.add(user)
+        circle.save()
+        return ResponseSchema(status="success", message="サークルに参加しました")
+                
+    def leave_circle(self, user, circle):
+        if circle.founder == user:
+            return ResponseSchema(status="error", error_code="cannot_leave_own_circle", message="あなたが建てたサークルを退会することはできません")
+        
+        if not circle.members.filter(id=user.id).exists():
+            return ResponseSchema(status="error", error_code="not_member", message="あなたはこのサークルのメンバーではありません")
+
+        circle.members.remove(user)
+        circle.save()
+        return ResponseSchema(status="success", message="サークルから退会しました")
+    
+    def delete_circle(self, user, circle):
+        if circle.founder != user:
+            return ResponseSchema(status="error", error_code="not_founder", message="あなたはこのサークルの創始者ではありません")
+        
+        circle.delete()
+        return ResponseSchema(status="success", message="サークルを削除しました")  
+
+    def ban_user(self, user, target_user, circle):
+        if circle.founder != user:
+            return ResponseSchema(status="error", error_code="not_founder", message="あなたはこのサークルの創始者ではありません")
+        
+        if not circle.members.filter(id=target_user.id).exists():
+            return ResponseSchema(status="error", error_code="not_member", message="対象のユーザーはこのサークルのメンバーではありません")
+        
+        circle.members.remove(target_user)
+        circle.save()
+        return ResponseSchema(status="success", message="ユーザーをサークルから退会しました")
+    
 class Circle(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     founder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='founded_circles', null=True, blank=True)
@@ -43,6 +90,9 @@ class Circle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='circle_members', blank=True)
+    banned_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='banned_circles', blank=True)
+    invited_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='invited_circles', blank=True)
+    moderators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='moderated_circles', blank=True)
     category = models.CharField(max_length=255, choices=CircleCategory.choices, default=CircleCategory.OTHER)
     tags = models.ManyToManyField(Tag, related_name='circles', blank=True)
 
@@ -70,9 +120,41 @@ class Circle(models.Model):
             'username'
         )
 
+    def add_member(self, user):
+        """メンバーを追加（BANチェック付き）"""
+        if self.banned_users.filter(id=user.id).exists():
+            raise ValueError(f"ユーザー '{user.username}' はこのサークルからBANされているため、メンバーに追加できません。")
+        self.members.add(user)
+
+    def add_moderator(self, user):
+        """モデレーターを追加（BANチェック付き）"""
+        if self.banned_users.filter(id=user.id).exists():
+            raise ValueError(f"ユーザー '{user.username}' はこのサークルからBANされているため、モデレーターに追加できません。")
+        self.moderators.add(user)
+        # モデレーターは自動的にメンバーにもなる
+        if not self.members.filter(id=user.id).exists():
+            self.members.add(user)
+
     def __str__(self):
         return self.name
 
+class CircleMessageManager(models.Manager):
+    def get_messages_by_circle(self, circle):
+        return self.get_queryset().filter(circle=circle).order_by('created_at')
+    
+    def get_messages_by_user(self, user):
+        return self.get_queryset().filter(user=user)
+    
+    def create_message(self, circle, user, content):
+        message = self.model(circle=circle, user=user, content=content)
+        message.save()
+        return message
+    
+    def delete_message(self, message):
+        message.is_deleted = True
+        message.save()
+        return message
+    
 class CircleMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     circle = models.ForeignKey(Circle, on_delete=models.CASCADE)
@@ -85,6 +167,8 @@ class CircleMessage(models.Model):
     pinned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='pinned_messages')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = CircleMessageManager()
 
     def clean(self):
         # ユーザーがサークルのメンバーかどうかをチェック

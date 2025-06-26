@@ -42,3 +42,12 @@
 - CSSは一元的に管理します（web-frontend/app/app.css）
 - padidngは4
 #### TODO: 文字色を追記
+
+# レスポンススキーマ
+{
+  "status": "success" / "error",
+  "error_code": {str},
+  "message": {str}
+}
+- error_codeにUIの条件分岐で使用するエラーコードを記載
+- messageに日本語でわかりやすいエラーの原因を記載

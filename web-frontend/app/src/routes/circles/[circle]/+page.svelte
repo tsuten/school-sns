@@ -1,5 +1,5 @@
 <script>
-    import { Users, Tag, User, Calendar, Settings, MessageCircle, UserPlus, Crown, ChevronLeft } from 'lucide-svelte';
+    import { Users, Tag, User, Calendar, Settings, MessageCircle, UserPlus, Crown, ArrowLeft } from 'lucide-svelte';
     import { Button, Badge, Card } from 'flowbite-svelte';
     import { apiClient } from '$lib/services/django';
     import { page } from '$app/stores';
@@ -78,12 +78,12 @@
     <div class="container mx-auto p-4 max-w-4xl">
         <!-- ヘッダー部分 -->
         <a href="/circles/discover">
-            <Button pill={true} color="light" class="hover:cursor-pointer">
-                <ChevronLeft class="w-4 h-4" />
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer mb-4">
+                <ArrowLeft class="h-5 w-5 text-gray-500" />
             </Button>
         </a>
         <div class="bg-white rounded-sm border border-gray-300 p-6 mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-3">
                         <h1 class="text-3xl font-bold text-gray-800">{circle.name}</h1>
@@ -120,29 +120,8 @@
                 </div>
 
                 <!-- アクションボタン -->
-                <div class="flex flex-col gap-2 min-w-fit">
-                    <Button color="blue" size="sm" class="flex items-center gap-2 rounded-sm">
-                        <UserPlus class="w-4 h-4" />
-                        参加する
-                    </Button>
-                    <Button color="light" size="sm" class="flex items-center gap-2 rounded-sm">
-                        <MessageCircle class="w-4 h-4" />
-                        チャット
-                    </Button>
-                    <Button color="light" size="sm" class="flex items-center gap-2 rounded-sm">
-                        <Settings class="w-4 h-4" />
-                        設定
-                    </Button>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- メインコンテンツエリア -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- タグ情報 -->
-                {#if circle.tags && circle.tags.length > 0}
-                    <Card class="rounded-sm">
+                <div class="flex flex-col gap-2">
+                    {#if circle.tags && circle.tags.length > 0}
                         <div class="p-4">
                             <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                                 <Tag class="w-5 h-5" />
@@ -156,11 +135,21 @@
                                 {/each}
                             </div>
                         </div>
-                    </Card>
-                {/if}
+                    {/if}
+                    <a href="/circles/{circle.id}/chat">
+                        <Button color="blue" size="sm" class="flex items-center gap-2 rounded-sm hover:cursor-pointer">
+                            <UserPlus class="w-4 h-4" />
+                            参加する
+                        </Button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- 最近の活動 -->
-                <Card class="rounded-sm">
+                <Card class="rounded-sm shadow-none border-gray-300">
                     <div class="p-4">
                         <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                             <MessageCircle class="w-5 h-5" />
@@ -172,12 +161,11 @@
                         </div>
                     </div>
                 </Card>
-            </div>
 
             <!-- サイドバー -->
             <div class="space-y-6">
                 <!-- メンバーリスト -->
-                <Card class="rounded-sm">
+                <Card class="rounded-sm shadow-none border-gray-300">
                     <div class="p-4">
                         <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                             <Users class="w-5 h-5" />
@@ -205,7 +193,7 @@
                 </Card>
 
                 <!-- サークル情報 -->
-                <Card class="rounded-sm">
+                <Card class="rounded-sm shadow-none border-gray-300">
                     <div class="p-4">
                         <h3 class="text-lg font-bold text-gray-800 mb-3">サークル情報</h3>
                         <div class="space-y-2 text-sm">

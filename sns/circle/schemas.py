@@ -1,7 +1,7 @@
 from ninja import Schema
 from datetime import datetime
 import uuid
-from typing import Optional
+from typing import Optional, Literal
 
 class UserSchema(Schema):
     id: uuid.UUID
@@ -26,3 +26,19 @@ class CircleSchema(Schema):
 class CircleCategorySchema(Schema):
     category: str
     circle_count: int
+
+class ResponseSchema(Schema):
+    status: Literal["success", "error"]
+    error_code: Optional[str] = None
+    message: str
+
+class CircleMessageSchema(Schema):
+    id: uuid.UUID
+    circle: str
+    user: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+class CircleMessageCreateSchema(Schema):
+    content: str

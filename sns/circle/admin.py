@@ -77,11 +77,11 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Circle)
 class CircleAdmin(admin.ModelAdmin):
     form = CircleAdminForm
-    list_display = ('name', 'founder', 'is_public', 'category', 'tags_display', 'member_count', 'created_at', 'updated_at')
+    list_display = ('name', 'founder', 'is_public', 'category', 'tags_display', 'member_count', 'banned_count', 'moderator_count', 'created_at', 'updated_at')
     list_filter = ('is_public', 'created_at', 'updated_at', 'category', 'tags')
-    search_fields = ('name', 'description', 'founder__username', 'tags__name')
+    search_fields = ('name', 'description', 'founder__username', 'tags__name', 'members__username', 'banned_users__username', 'moderators__username')
     readonly_fields = ('id', 'created_at', 'updated_at', 'tags_display_readonly')
-    filter_horizontal = ('members',)
+    filter_horizontal = ('members', 'banned_users', 'moderators')
     
     fieldsets = (
         ('基本情報', {
@@ -91,8 +91,14 @@ class CircleAdmin(admin.ModelAdmin):
             'fields': ('tags_input', 'tags_display_readonly'),
             'description': 'サークルに関連するタグを設定できます。検索やフィルタリングに使用されます。'
         }),
-        ('メンバー', {
-            'fields': ('members',)
+        ('メンバー管理', {
+            'fields': ('members',),
+            'description': 'サークルの通常メンバーを管理します。'
+        }),
+        ('モデレーション', {
+            'fields': ('moderators', 'banned_users'),
+            'description': 'モデレーション権限を持つユーザーとBANされたユーザーを管理します。',
+            'classes': ('collapse',)
         }),
         ('システム情報', {
             'fields': ('id', 'created_at', 'updated_at'),
@@ -104,6 +110,22 @@ class CircleAdmin(admin.ModelAdmin):
         """メンバー数を表示"""
         return obj.members.count()
     member_count.short_description = 'メンバー数'
+    
+    def banned_count(self, obj):
+        """BANされたユーザー数を表示"""
+        count = obj.banned_users.count()
+        if count > 0:
+            return format_html('<span style="color: #d32f2f; font-weight: bold;">{}</span>', count)
+        return count
+    banned_count.short_description = 'BAN数'
+    
+    def moderator_count(self, obj):
+        """モデレーター数を表示"""
+        count = obj.moderators.count()
+        if count > 0:
+            return format_html('<span style="color: #1976d2; font-weight: bold;">{}</span>', count)
+        return count
+    moderator_count.short_description = 'モデレーター数'
     
     def tags_display(self, obj):
         """タグを見やすく表示（一覧用）"""
@@ -136,7 +158,42 @@ class CircleAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         """クエリセットの最適化"""
-        return super().get_queryset(request).select_related('founder').prefetch_related('members', 'tags')
+        return super().get_queryset(request).select_related('founder').prefetch_related('members', 'banned_users', 'moderators', 'tags')
+    
+    # カスタムアクション
+    actions = ['ban_selected_members', 'unban_selected_users', 'promote_to_moderator', 'demote_from_moderator']
+    
+    def ban_selected_members(self, request, queryset):
+        """選択されたサークルのメンバーをBANする（一括操作用のプレースホルダー）"""
+        self.message_user(request, 'この機能は個別のサークル編集画面で実行してください。')
+    ban_selected_members.short_description = '選択されたサークルでメンバー管理を行う'
+    
+    def unban_selected_users(self, request, queryset):
+        """選択されたサークルのBANユーザーを解除する"""
+        total_unbanned = 0
+        for circle in queryset:
+            banned_count = circle.banned_users.count()
+            circle.banned_users.clear()
+            total_unbanned += banned_count
+        
+        self.message_user(request, f'{total_unbanned}人のBANを解除しました。')
+    unban_selected_users.short_description = '選択されたサークルの全BANを解除する'
+    
+    def promote_to_moderator(self, request, queryset):
+        """メンバー管理の詳細情報を表示"""
+        self.message_user(request, 'モデレーター昇格は個別のサークル編集画面で実行してください。')
+    promote_to_moderator.short_description = 'モデレーター管理画面へ'
+    
+    def demote_from_moderator(self, request, queryset):
+        """選択されたサークルの全モデレーターを解除する"""
+        total_demoted = 0
+        for circle in queryset:
+            moderator_count = circle.moderators.count()
+            circle.moderators.clear()
+            total_demoted += moderator_count
+        
+        self.message_user(request, f'{total_demoted}人のモデレーター権限を解除しました。')
+    demote_from_moderator.short_description = '選択されたサークルの全モデレーター権限を解除する'
 
 @admin.register(CircleMessage)
 class CircleMessageAdmin(admin.ModelAdmin):

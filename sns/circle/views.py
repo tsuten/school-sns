@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
-from .models import Circle, CircleCategory
-from .schemas import CircleSchema, CircleCategorySchema
+from .models import Circle, CircleCategory, CircleMessage
+from .schemas import CircleSchema, CircleCategorySchema, ResponseSchema, CircleMessageSchema, CircleMessageCreateSchema
 
 # Create your views here.
 router = Router(tags=['circle'])
@@ -60,3 +60,23 @@ def get_circle_detail(request, circle_id: str):
     except Circle.DoesNotExist:
         from ninja.errors import HttpError
         raise HttpError(404, "サークルが見つかりません")
+    
+@router.post("/{circle_id}/join", auth=JWTAuth(), response=ResponseSchema)
+def join_circle(request, circle_id: str):
+    circle = Circle.objects.get(id=circle_id)
+    return Circle.objects.join_circle(request.user, circle)
+
+@router.post("/{circle_id}/leave", auth=JWTAuth(), response=ResponseSchema)
+def leave_circle(request, circle_id: str):
+    circle = Circle.objects.get(id=circle_id)
+    return Circle.objects.leave_circle(request.user, circle)
+
+@router.post("/{circle_id}/messages", auth=JWTAuth(), response=CircleMessageSchema)
+def send_message(request, circle_id: str, data: CircleMessageCreateSchema):
+    circle = Circle.objects.get(id=circle_id)
+    return CircleMessage.objects.create_message(circle, request.user, data.content)
+
+@router.get("/{circle_id}/messages", response=list[CircleMessageSchema])
+def get_messages(request, circle_id: str):
+    circle = Circle.objects.get(id=circle_id)
+    return CircleMessage.objects.get_messages_by_circle(circle)
