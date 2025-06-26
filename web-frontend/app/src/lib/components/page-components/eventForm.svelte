@@ -129,7 +129,6 @@
         return 42;
     }
 
-    // ドラッグすると動く魔法
 </script>
 
 <form onsubmit={(e) => e.preventDefault()}>
