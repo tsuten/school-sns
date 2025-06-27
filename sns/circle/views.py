@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
-from .models import Circle, CircleCategory, CircleMessage
-from .schemas import CircleSchema, CircleCategorySchema, ResponseSchema, CircleMessageSchema, CircleMessageCreateSchema
+from .models import Circle, CircleCategory, CircleMessage, CircleMedia
+from .schemas import CircleSchema, CircleCategorySchema, ResponseSchema, CircleMessageSchema, CircleMessageCreateSchema, CircleMediaCreateSchema, CircleMediaSchema
+from ninja.files import UploadedFile
 
 # Create your views here.
 router = Router(tags=['circle'])
@@ -74,9 +75,47 @@ def leave_circle(request, circle_id: str):
 @router.post("/{circle_id}/messages", auth=JWTAuth(), response=CircleMessageSchema)
 def send_message(request, circle_id: str, data: CircleMessageCreateSchema):
     circle = Circle.objects.get(id=circle_id)
-    return CircleMessage.objects.create_message(circle, request.user, data.content)
+    message = CircleMessage.objects.create_message(circle, request.user, data.content)
+    
+    return {
+        'id': message.id,
+        'circle': message.circle.name,
+        'user': message.user.username,
+        'content': message.content,
+        'created_at': message.created_at,
+        'updated_at': message.updated_at
+    }
 
-@router.get("/{circle_id}/messages", response=list[CircleMessageSchema])
+@router.get("/{circle_id}/messages", auth=JWTAuth(), response=list[CircleMessageSchema])
 def get_messages(request, circle_id: str):
     circle = Circle.objects.get(id=circle_id)
-    return CircleMessage.objects.get_messages_by_circle(circle)
+    messages = CircleMessage.objects.get_messages_by_circle(circle).select_related('user', 'circle')
+    
+    return [
+        {
+            'id': message.id,
+            'circle': message.circle.name,
+            'user': message.user.username,
+            'content': message.content,
+            'created_at': message.created_at,
+            'updated_at': message.updated_at
+        }
+        for message in messages
+    ]
+
+@router.post("/{circle_id}/media", auth=JWTAuth(), response=CircleMediaSchema)
+def upload_media(request, circle_id: str, file: UploadedFile):
+    circle = Circle.objects.get(id=circle_id)
+    media = CircleMedia.objects.create_media(circle, request.user, file)
+    
+    return {
+        'id': media.id,
+        'media': media.media.name,
+        'circle': media.circle.name,
+        'user': media.user.username,
+        'path': media.media.url,
+        'type': media.type,
+        'label': media.label,
+        'created_at': media.created_at,
+        'updated_at': media.updated_at
+    }

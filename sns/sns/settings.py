@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'calendar_module',
     'chat',
     'circle',
+    'emojis',
 ]
 
 MIDDLEWARE = [
