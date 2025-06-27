@@ -5,13 +5,22 @@
     let password = $state();
     let username = $state();
 
+    let valuesError_1 = $state();
+    valuesError_1 = false;
+    let valuesError_2 = $state();
+    valuesError_2 = false;
     // $inspect(username);
     // $inspect(password);
 
-    function onSend() {
+    function HandleLogin() {
+        valuesError_1 = false;
+        valuesError_2 = false;
+        if (username == null || password == null) {
+            valuesError_1 = true;      
+            return;
+        }
         // ここでAPIに送信する処理を追加
-        let getIsLogin;
-        let response = apiClient.post("/token/pair", {
+        const response = apiClient.post("/token/pair", {
             password: password,
             username: username,
         });
@@ -19,11 +28,14 @@
             .then((result) => {
                 // fulfilled のときの処理
                 console.log("成功:", result);
-                console.log(result.access)
+                const access_token =result.access;
+                document.cookie = `access_token=${JSON.stringify(access_token)}; path=/`;
             })
             .catch((error) => {
                 // rejected のときの処理
                 console.error("失敗:", error);
+                valuesError_2 = true;
+                return;
             })
             .finally(() => {
                 // どちらでも共通で実行する処理
@@ -34,6 +46,12 @@
 
 <div>
     <h1>ログイン</h1>
+    {#if valuesError_1 === true}
+        <p>ユーザー名またはパスワードを入力してください</p>
+    {/if}
+    {#if valuesError_2 === true}
+        <p>ログインに失敗しました。ユーザー名とパスワードを再確認してください</p>
+    {/if}
     <form>
         <div>
             <!-- svelte-ignore a11y_label_has_associated_control -->
@@ -42,8 +60,7 @@
                 type="text"
                 id="username"
                 bind:value={username}
-                required
-                placeholder="例: 武田信玄"
+                placeholder="例: 長曾我部元親"
             />
         </div>
         <br />
@@ -54,10 +71,9 @@
                 type="password"
                 id="password"
                 bind:value={password}
-                required
             />
         </div>
-        <button type="submit" id="submitBtn" onclick={() => onSend?.()}
+        <button type="submit" id="submitBtn" onclick={() => HandleLogin?.()}
             >送信</button
         >
     </form>
