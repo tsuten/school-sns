@@ -42,3 +42,18 @@ class CircleMessageSchema(Schema):
 
 class CircleMessageCreateSchema(Schema):
     content: str
+
+class CircleMediaSchema(Schema):
+    id: uuid.UUID
+    media: str
+    circle: str
+    user: str
+    path: str
+    type: str
+    label: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+class CircleMediaCreateSchema(Schema):
+    media: str
+    label: Optional[str] = None

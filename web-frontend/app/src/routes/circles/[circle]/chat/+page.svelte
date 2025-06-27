@@ -5,6 +5,7 @@
     import { page } from '$app/stores';
     import Input from '$lib/components/utils/chat/input.svelte';
 
+    import { onMount } from 'svelte';
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
 
@@ -84,6 +85,18 @@
             loading = false;
         }
     }
+
+    async function fetchMessages(circleId) {
+        const response = await apiClient.get(`/circle/${circleId}/messages`);
+        console.log(response);
+        messages = response;
+    }
+
+    $effect(() => {
+        if (circle) {
+            fetchMessages(circle.id);
+        }
+    });
 
     function sendMessage() {
         if (messageInput.trim()) {

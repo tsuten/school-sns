@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 import uuid
 from .schemas import ResponseSchema
+import mimetypes
 
 class CircleCategory(models.TextChoices):
     STUDY = 'study', '学習'
@@ -179,6 +180,43 @@ class CircleMessage(models.Model):
         # cleanメソッドを呼び出してバリデーションを実行
         self.clean()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.circle.name}"
+    
+class CircleMediaManager(models.Manager):
+    def create_media(self, circle, user, media):
+        media = self.model(circle=circle, user=user, media=media)
+        media.clean()
+        media.save()
+        return media
+
+class CircleMedia(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    label = models.CharField(max_length=255, null=True, blank=True)
+    circle = models.ForeignKey(Circle, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    media = models.FileField(upload_to='circle_media/')
+    type = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = CircleMediaManager()
+
+    def clean(self):
+        mime_type = mimetypes.guess_type(self.media.name)[0]
+        if mime_type is None:
+            raise ValidationError("Invalid media type")
+        
+        if "image" in mime_type:
+            self.type = "image"
+        elif "video" in mime_type:
+            self.type = "video"
+        elif "audio" in mime_type:
+            self.type = "audio"
+        else:
+            raise ValidationError("Invalid media type")
+        
 
     def __str__(self):
         return f"{self.user.username} - {self.circle.name}"

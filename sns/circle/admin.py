@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
-from .models import Circle, CircleMessage, Tag
+from .models import Circle, CircleMessage, Tag, CircleMedia
 
 class TagsWidget(forms.Textarea):
     """タグ入力用のカスタムウィジェット"""
@@ -256,3 +256,10 @@ class CircleMessageAdmin(admin.ModelAdmin):
         updated = queryset.update(is_pinned=False, pinned_at=None, pinned_by=None)
         self.message_user(request, f'{updated}件のメッセージのピンを解除しました。')
     unpin_messages.short_description = '選択したメッセージのピンを解除する'
+
+@admin.register(CircleMedia)
+class CircleMediaAdmin(admin.ModelAdmin):
+    list_display = ('circle', 'user', 'media', 'type', 'created_at', 'updated_at')
+    list_filter = ('type', 'created_at', 'updated_at', 'circle')
+    search_fields = ('media', 'user__username', 'circle__name')
+    readonly_fields = ('id', 'created_at', 'updated_at')
