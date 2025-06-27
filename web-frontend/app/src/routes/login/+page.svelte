@@ -29,7 +29,7 @@
                 // fulfilled のときの処理
                 console.log("成功:", result);
                 const access_token =result.access;
-                document.cookie = `access_token=${JSON.stringify(access_token)}; path=/`;
+                document.cookie = `access_token=${access_token}; path=/`;
             })
             .catch((error) => {
                 // rejected のときの処理
