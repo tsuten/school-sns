@@ -68,6 +68,10 @@
         <hr class="border-gray-300 my-4">
     {/if}
 
+    {#if showForm}
+        <EventForm onClose={closeForm} />
+    {/if}
+
     <!-- 今後のイベント -->
     <div class="flex flex-col gap-2 h-full">
         <p class="text-lg font-bold">今後のイベント</p>
@@ -83,21 +87,18 @@
             {/each}
         {/if}
 
+
+
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
-  <button 
-    class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
-    onclick={openForm}
-    aria-label="新しいイベントを作成"
-  >
-    <Plus class="w-6 h-6 text-white" />
-  </button>
-  <a href="/login">ログインテスト用</a>
-
-  {#if showForm}
-    <EventForm onClose={closeForm} />
-  {/if}
-</div>
+            <button 
+                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
+                onclick={openForm}
+                aria-label="新しいイベントを作成"
+            >
+                <Plus class="w-6 h-6 text-white" />
+            </button>
+        </div>
 
     </div>
 </div>

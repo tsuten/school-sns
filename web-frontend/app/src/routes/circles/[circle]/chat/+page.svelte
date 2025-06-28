@@ -1,8 +1,9 @@
 <script>
-    import { Send, ArrowLeft, MoreVertical, Smile, Paperclip, Crown, User } from 'lucide-svelte';
-    import { Button, Badge, Card} from 'flowbite-svelte';
+    import { Send, ArrowLeft, MoreVertical, Smile, Paperclip, Crown, User, Settings, UserMinus, Flag, Info, Reply, Copy, Trash2, Edit } from 'lucide-svelte';
+    import { Button, Badge, Card, Dropdown, DropdownItem, DropdownDivider} from 'flowbite-svelte';
     import { apiClient } from '$lib/services/django';
     import { page } from '$app/stores';
+    import { userInfo } from '$lib/stores/userInfo';
     import Input from '$lib/components/utils/chat/input.svelte';
 
     import { onMount } from 'svelte';
@@ -14,51 +15,7 @@
     let messageInput = $state('');
     let messagesContainer;
 
-    // ダミーメッセージデータ
-    let messages = $state([
-        {
-            id: 1,
-            user: { id: 'user1', username: 'alice' },
-            content: 'みなさん、おつかれさまです！',
-            timestamp: '2024-01-15T09:00:00Z',
-            isOwn: false
-        },
-        {
-            id: 2,
-            user: { id: 'user2', username: 'bob' },
-            content: 'おつかれさまです！今日の勉強会の件ですが、資料の共有ありがとうございました。',
-            timestamp: '2024-01-15T09:15:00Z',
-            isOwn: false
-        },
-        {
-            id: 3,
-            user: { id: 'current-user', username: 'you' },
-            content: 'どういたしまして！みんなで頑張りましょう！',
-            timestamp: '2024-01-15T09:30:00Z',
-            isOwn: true
-        },
-        {
-            id: 4,
-            user: { id: 'user3', username: 'charlie' },
-            content: '次回の予定はいつごろになりそうですか？',
-            timestamp: '2024-01-15T10:00:00Z',
-            isOwn: false
-        },
-        {
-            id: 5,
-            user: { id: 'user1', username: 'alice' },
-            content: '来週の土曜日はどうでしょうか？',
-            timestamp: '2024-01-15T10:15:00Z',
-            isOwn: false
-        },
-        {
-            id: 6,
-            user: { id: 'current-user', username: 'you' },
-            content: '土曜日いいですね！参加します🙋‍♀️',
-            timestamp: '2024-01-15T10:20:00Z',
-            isOwn: true
-        }
-    ]);
+    let messages = $state([]);
 
     $effect(() => {
         const circleId = $page.params.circle;
@@ -87,9 +44,24 @@
     }
 
     async function fetchMessages(circleId) {
-        const response = await apiClient.get(`/circle/${circleId}/messages`);
-        console.log(response);
-        messages = response;
+        try {
+            const response = await apiClient.get(`/circle/${circleId}/messages`);
+            console.log('Messages response:', response);
+            
+            // 現在のユーザー名を取得
+            const currentUsername = $userInfo.username;
+            console.log('Current username:', currentUsername);
+            
+            // APIレスポンスを適切に処理
+            messages = response.map(message => ({
+                ...message,
+                timestamp: message.created_at,
+                isOwn: message.user === currentUsername // 現在のユーザーのメッセージかどうか判定
+            }));
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+            messages = [];
+        }
     }
 
     $effect(() => {
@@ -98,17 +70,33 @@
         }
     });
 
-    function sendMessage() {
-        if (messageInput.trim()) {
-            const newMessage = {
-                id: messages.length + 1,
-                user: { id: 'current-user', username: 'you' },
-                content: messageInput.trim(),
-                timestamp: new Date().toISOString(),
-                isOwn: true
-            };
-            messages = [...messages, newMessage];
-            messageInput = '';
+    async function sendMessage() {
+        console.log('sendMessage called, messageInput:', messageInput);
+        console.log('circle:', circle);
+        
+        if (messageInput.trim() && circle) {
+            const messageContent = messageInput.trim();
+            messageInput = ''; // 先に入力をクリア
+            
+            try {
+                console.log('Sending message to API...');
+                const response = await apiClient.post(`/circle/${circle.id}/messages`, {
+                    content: messageContent
+                });
+                
+                console.log('API response:', response);
+                
+                // 送信成功後、メッセージリストを再取得
+                await fetchMessages(circle.id);
+                console.log('Message sent successfully');
+            } catch (err) {
+                console.error('Error sending message:', err);
+                // エラー時は入力を復元
+                messageInput = messageContent;
+                alert('メッセージの送信に失敗しました: ' + err.message);
+            }
+        } else {
+            console.log('Message not sent - messageInput or circle is null');
         }
     }
 
@@ -156,33 +144,54 @@
                     <p class="text-sm text-gray-600">{circle.members.length} メンバー</p>
                 </div>
             </div>
-            <Button pill={true} color="light" class="p-2! hover:cursor-pointer">
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
                 <MoreVertical class="h-5 w-5 text-gray-500" />
             </Button>
+            <Dropdown triggeredBy="#chat-menu-button" class="w-44" simple>
+                <DropdownItem class="flex items-center gap-2">
+                    <Info class="w-4 h-4" />
+                    サークル情報
+                </DropdownItem>
+                <DropdownItem class="flex items-center gap-2">
+                    <Settings class="w-4 h-4" />
+                    チャット設定
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem class="flex items-center gap-2">
+                    <UserMinus class="w-4 h-4" />
+                    サークルを退会
+                </DropdownItem>
+                <DropdownItem class="flex items-center gap-2 text-red-600">
+                    <Flag class="w-4 h-4" />
+                    サークルを報告
+                </DropdownItem>
+            </Dropdown>
         </div>
 
         <!-- メッセージエリア -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4" bind:this={messagesContainer}>
-            {#each messages as message (message.id)}
-                <div class="flex {message.isOwn ? 'justify-end' : 'justify-start'}">
-                    <div class="flex {message.isOwn ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 max-w-sm lg:max-w-md">
-                        <!-- アバター -->
-                        {#if !message.isOwn}
+        <div class="flex-1 overflow-y-auto space-y-4 p-4" bind:this={messagesContainer}>
+            {#each messages as message, index (message.id)}
+                {@const shouldShowTime = index === 0 || 
+                    (new Date(message.created_at || message.timestamp) - new Date(messages[index - 1].created_at || messages[index - 1].timestamp)) >= 300000}
+                <div class="flex {message.isOwn ? 'justify-end' : 'justify-start'} group items-center gap-2">
+                    {#if !message.isOwn}
                             <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                {#if message.user.id === circle.founder.id}
+                                {#if (message.user?.username || message.user) === circle.founder.username}
                                     <Crown class="w-4 h-4 text-yellow-600" />
                                 {:else}
                                     <User class="w-4 h-4 text-blue-600" />
                                 {/if}
                             </div>
                         {/if}
+                    
+                    <div class="flex {message.isOwn ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 max-w-sm lg:max-w-md relative">
 
                         <!-- メッセージバブル -->
                         <div class="flex flex-col {message.isOwn ? 'items-end' : 'items-start'}">
                             {#if !message.isOwn}
                                 <div class="flex items-center gap-1 mb-1">
-                                    <span class="text-xs font-medium text-gray-700">{message.user.username}</span>
-                                    {#if message.user.id === circle.founder.id}
+                                    <span class="text-xs font-medium text-gray-700">{message.user?.username || message.user || 'Unknown'}</span>
+                                    {#if (message.user?.username || message.user) === circle.founder.username}
                                         <Crown class="w-3 h-3 text-yellow-500" />
                                     {/if}
                                 </div>
@@ -190,17 +199,19 @@
                             
                             <div class="
                                 {message.isOwn 
-                                    ? 'bg-blue-500 text-white rounded-l-lg rounded-tr-lg' 
-                                    : 'bg-white text-gray-800 rounded-r-lg rounded-tl-lg border border-gray-200'
+                                    ? 'bg-blue-500 text-white rounded-sm' 
+                                    : 'bg-white text-gray-800 rounded-sm border border-gray-200'
                                 } 
                                 px-4 py-2 max-w-full break-words
                             ">
                                 <p class="text-sm whitespace-pre-wrap">{message.content}</p>
                             </div>
                             
-                            <span class="text-xs text-gray-500 mt-1">
-                                {formatTime(message.timestamp)}
-                            </span>
+                            {#if shouldShowTime}
+                                <span class="text-xs text-gray-500 mt-1">
+                                    {formatTime(message.created_at || message.timestamp)}
+                                </span>
+                            {/if}
                         </div>
                     </div>
                 </div>

@@ -132,18 +132,12 @@
 </script>
 
 <form onsubmit={(e) => e.preventDefault()}>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <!-- svelte-ignore element_invalid_self_closing_tag -->
     <div class="overlay" onclick={() => onClose?.()} />
-    <!-- svelte-ignore element_implicitly_closed -->
     <div class="bottom-sheet open">
         <button class="close-button" onclick={() => onClose?.()}>✕</button>
 
         <div>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>イベント名</label>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <input
                 bind:value={eventName}
                 required
@@ -152,7 +146,6 @@
         </div>
 
         <div>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>概要</label>
             <input
                 bind:value={content}
@@ -162,7 +155,6 @@
         </div>
 
         <div class="calendar-container">
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>日時</label>
             <input
                 class="calendar-input"
@@ -208,7 +200,6 @@
                         {#each Array(getCalendarCells()) as _, index}
                             {#key index}
                                 {#if index < getFirstDayOfMonth()}
-                                    <!-- svelte-ignore a11y_consider_explicit_label -->
                                     <button
                                         disabled
                                         class="calendar-day other-month"
@@ -227,7 +218,6 @@
                                         {index - getFirstDayOfMonth() + 1}
                                     </button>
                                 {:else}
-                                    <!-- svelte-ignore a11y_consider_explicit_label -->
                                     <button
                                         disabled
                                         class="calendar-day other-month"
@@ -240,7 +230,6 @@
 
                     <div class="time-selectors">
                         <div class="time-selector">
-                            <!-- svelte-ignore a11y_label_has_associated_control -->
                             <label>時</label>
                             <select
                                 bind:value={hour}
@@ -255,7 +244,6 @@
                         </div>
 
                         <div class="time-selector">
-                            <!-- svelte-ignore a11y_label_has_associated_control -->
                             <label>分</label>
                             <select
                                 bind:value={minute}
@@ -298,16 +286,12 @@
         <br>
         <PostalSearch bind:postalCode bind:prefecture bind:city bind:street />
         <div>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>番地</label>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <input bind:value={banti} required placeholder="例: 1-19-11" />
         </div>
 
         <div>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>建物名・部屋番号</label>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <input
                 bind:value={building}
                 placeholder="例: パークウェルビル5F（任意）"
