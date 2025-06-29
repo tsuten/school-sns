@@ -119,3 +119,12 @@ def upload_media(request, circle_id: str, file: UploadedFile):
         'created_at': media.created_at,
         'updated_at': media.updated_at
     }
+
+@router.get("/{circle_id}/is-member", auth=JWTAuth())
+def is_member(request, circle_id: str):
+    is_member = Circle.objects.is_member(request.user, circle_id)
+    return {
+        "circle_id": circle_id,
+        "user_id": request.user.id,
+        "is_member": is_member
+    }

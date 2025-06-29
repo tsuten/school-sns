@@ -3,6 +3,7 @@
     import { Button, Badge, Card } from 'flowbite-svelte';
     import { apiClient } from '$lib/services/django';
     import { page } from '$app/stores';
+    import toast from '$lib/utils/toast.js';
 
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
@@ -10,6 +11,7 @@
     let circle = $state(null);
     let loading = $state(true);
     let error = $state(null);
+    let isMember = $state(null);
 
     // カテゴリーの日本語表示マッピング
     const categoryLabels = {
@@ -26,6 +28,7 @@
         const circleId = $page.params.circle;
         if (circleId) {
             fetchCircleDetail(circleId);
+            fetchIsMember(circleId);
         }
     });
 
@@ -49,6 +52,28 @@
             month: 'long',
             day: 'numeric'
         });
+    }
+
+    async function JoinCircle(circleId) {
+        try {
+            const response = await apiClient.post(`/circle/${circleId}/join`);
+            if (response.status === 'success') {
+                toast.success('サークルに参加しました');
+                // 参加成功後、データを再取得してページを更新
+                await fetchCircleDetail(circleId);
+                await fetchIsMember(circleId);
+            } else {
+                toast.error('サークルに参加できませんでした');
+            }
+        } catch (error) {
+            console.error('Error joining circle:', error);
+            toast.error('サークルに参加できませんでした');
+        }
+    }
+
+    async function fetchIsMember(circleId) {
+        const response = await apiClient.get(`/circle/${circleId}/is-member`);
+        isMember = response.is_member;
     }
 
     $inspect(circle);
@@ -136,12 +161,19 @@
                             </div>
                         </div>
                     {/if}
-                    <a href="/circles/{circle.id}/chat">
-                        <Button color="blue" size="sm" class="flex items-center gap-2 rounded-sm hover:cursor-pointer">
+                    {#if !isMember}
+                        <Button color="blue" size="sm" class="flex items-center gap-2 rounded-sm hover:cursor-pointer" onclick={() => JoinCircle(circle.id)}>
                             <UserPlus class="w-4 h-4" />
                             参加する
                         </Button>
+                    {:else}
+                    <a href="/circles/{circle.id}/chat">
+                        <Button color="light" size="sm" class="flex items-center gap-2 rounded-sm hover:cursor-pointer">
+                            <MessageCircle class="w-4 h-4" />
+                            チャット
+                        </Button>
                     </a>
+                    {/if}
                 </div>
             </div>
         </div>

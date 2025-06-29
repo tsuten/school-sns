@@ -81,6 +81,25 @@ class CircleManager(models.Manager):
         circle.save()
         return ResponseSchema(status="success", message="ユーザーをサークルから退会しました")
     
+    def is_member(self, user, circle_id):
+        try:
+            circle = self.get(id=circle_id)
+            return circle.members.filter(id=user.id).exists()
+        except Circle.DoesNotExist:
+            return False
+        
+    def get_history(self, user, circle_id, from_date=None, to_date=None):
+        try:
+            circle = self.get(id=circle_id)
+            messages = circle.messages.filter(user=user)
+            if from_date:
+                messages = messages.filter(created_at__gte=from_date)
+            if to_date:
+                messages = messages.filter(created_at__lte=to_date)
+            return messages.order_by('-created_at')
+        except CircleMessage.DoesNotExist:
+            return []
+    
 class Circle(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     founder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='founded_circles', null=True, blank=True)
@@ -220,3 +239,13 @@ class CircleMedia(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.circle.name}"
+    
+class CircleNotification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    circle = models.ForeignKey(Circle, on_delete=models.CASCADE)
+    message = models.TextField(editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.circle.name} - {self.message}"

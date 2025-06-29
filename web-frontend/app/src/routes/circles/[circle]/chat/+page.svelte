@@ -5,8 +5,9 @@
     import { page } from '$app/stores';
     import { userInfo } from '$lib/stores/userInfo';
     import Input from '$lib/components/utils/chat/input.svelte';
-
+    import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
+    import toast from '$lib/utils/toast.js';
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
 
@@ -23,6 +24,24 @@
             fetchCircleDetail(circleId);
         }
     });
+
+    onMount(async () => {
+        const circleId = $page.params.circle;
+        await fetchIsMember(circleId);
+    });
+
+    async function fetchIsMember(circleId) {
+        try {
+            const response = await apiClient.get(`/circle/${circleId}/is-member`);
+            if (!response.is_member) {
+                toast.error('あなたはこのサークルのメンバーではありません');
+                goto(`/circles/${circleId}`);
+            }
+        } catch (error) {
+            toast.error('メンバーシップの確認に失敗しました');
+            goto(`/circles/${circleId}`);
+        }
+    }
 
     $effect(() => {
         // メッセージが更新されたら自動スクロール
