@@ -52,11 +52,6 @@ def handle_banned_users_change(sender, instance, action, pk_set, **kwargs):
     elif action == 'post_remove':
         print(f"ユーザー {pk_set} のBAN解除がサークル '{instance.name}' で実行されました")
 
-@receiver(post_save, sender=CircleMessage)
-def send_message_to_circle(sender, instance, created, **kwargs):
-    """メッセージが作成された時にサークルのメンバーに通知を送信"""
-    if created:
-        print(f"メッセージが作成されました: {instance.content}")
 
 @receiver(m2m_changed, sender=Circle.members.through)
 def send_member_notification_to_circle(sender, instance, action, pk_set, **kwargs):
@@ -68,7 +63,7 @@ def send_member_notification_to_circle(sender, instance, action, pk_set, **kwarg
         for user in users:
             CircleNotification.objects.create(
                 circle=instance,
-                message=f"ユーザー {user.username} がサークル '{instance.name}' に参加しました"
+                message=f"ユーザー {user.username} が参加しました"
             )
     elif action == 'post_remove' and pk_set:
         from django.contrib.auth import get_user_model
@@ -77,5 +72,31 @@ def send_member_notification_to_circle(sender, instance, action, pk_set, **kwarg
         for user in users:
             CircleNotification.objects.create(
                 circle=instance,
-                message=f"ユーザー {user.username} がサークル '{instance.name}' から退出しました"
+                message=f"ユーザー {user.username} が退出しました"
             )
+
+# channels
+@receiver(post_save, sender=CircleMessage)
+def send_message_to_circle(sender, instance, created, **kwargs):
+    """メッセージが作成された時にサークルのメンバーにWebSocket経由で送信"""
+    if created:
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        
+        channel_layer = get_channel_layer()
+        circle_group_name = f'circle_chat_{instance.circle.id}'
+        
+        # WebSocketグループにメッセージを送信
+        async_to_sync(channel_layer.group_send)(
+            circle_group_name,
+            {
+                'type': 'chat_message',
+                'message_id': str(instance.id),
+                'message': instance.content,
+                'user_id': str(instance.user.id),
+                'username': instance.user.username,
+                'timestamp': instance.created_at.isoformat(),
+            }
+        )
+        
+        print(f"メッセージをWebSocketで送信しました: {instance.content}")

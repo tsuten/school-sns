@@ -34,7 +34,15 @@ def get_categories(request):
 
 @router.get("/{circle_id}", response=CircleSchema)
 def get_circle_detail(request, circle_id: str):
+    import uuid
     try:
+        # circle_idのUUID形式をバリデーション
+        try:
+            uuid.UUID(circle_id)
+        except ValueError:
+            from ninja.errors import HttpError
+            raise HttpError(400, "サークルIDの形式が正しくありません")
+            
         circle = Circle.objects.select_related('founder').prefetch_related('tags', 'members').get(id=circle_id)
         
         # 創始者を含む全メンバーを取得
@@ -128,3 +136,73 @@ def is_member(request, circle_id: str):
         "user_id": request.user.id,
         "is_member": is_member
     }
+
+@router.get("/{circle_id}/activity", auth=JWTAuth())
+def get_circle_activity(request, circle_id: str, limit: int = 50, until: str = None):
+    """サークルのメッセージ、メディア、通知を統合して取得（ポインターページネーション対応）"""
+    from datetime import datetime
+    from django.utils import timezone
+    from django.core.exceptions import ValidationError
+    import uuid
+    
+    try:
+        # circle_idのUUID形式をバリデーション
+        try:
+            uuid.UUID(circle_id)
+        except ValueError:
+            from ninja.errors import HttpError
+            raise HttpError(400, "サークルIDの形式が正しくありません")
+        
+        # メンバーシップ確認
+        if not Circle.objects.is_member(request.user, circle_id):
+            from ninja.errors import HttpError
+            raise HttpError(403, "このサークルのメンバーではありません")
+        
+        # untilパラメータをdatetimeに変換
+        until_datetime = None
+        if until:
+            try:
+                # ISO形式の文字列をdatetimeに変換
+                until_datetime = datetime.fromisoformat(until.replace('Z', '+00:00'))
+                if until_datetime.tzinfo is None:
+                    until_datetime = timezone.make_aware(until_datetime)
+            except ValueError:
+                from ninja.errors import HttpError
+                raise HttpError(400, "untilパラメータの形式が正しくありません")
+        
+        result = Circle.objects.get_circle_activity(circle_id, limit, until_datetime)
+        
+        # レスポンス形式を統一
+        formatted_activities = []
+        for activity in result['activities']:
+            formatted_activity = {
+                'id': activity['id'],
+                'type': activity['activity_type'],
+                'content': activity['activity_content'],
+                'user': activity['activity_user'],
+                'timestamp': activity['activity_timestamp'],
+            }
+            
+            # メッセージの場合、追加情報を含める
+            if activity['activity_type'] == 'message':
+                formatted_activity.update({
+                    'user_id': activity.get('user__id'),
+                    'username': activity.get('user__username'),
+                })
+            
+            formatted_activities.append(formatted_activity)
+        
+        return {
+            'circle_id': circle_id,
+            'activities': formatted_activities,
+            'has_next': result['has_next'],
+            'next_until': result['next_until'].isoformat() if result['next_until'] else None,
+            'count': result['count']
+        }
+        
+    except Circle.DoesNotExist:
+        from ninja.errors import HttpError
+        raise HttpError(404, "サークルが見つかりません")
+    except ValidationError:
+        from ninja.errors import HttpError
+        raise HttpError(400, "サークルIDの形式が正しくありません")

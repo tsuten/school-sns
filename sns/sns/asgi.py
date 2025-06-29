@@ -19,15 +19,13 @@ from circle.consumers import CircleChatConsumer, CircleNotificationConsumer
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sns.settings')
 
 websocket_urlpatterns = [
-    path('ws/circle/<int:circle_id>/chat/', CircleChatConsumer.as_asgi()),
-    path('ws/circle/notifications/', CircleNotificationConsumer.as_asgi()),
+    path('ws/circle/<circle_id>/chat/', CircleChatConsumer.as_asgi()),
+    path('ws/circle/<circle_id>/notifications/', CircleNotificationConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
-        URLRouter(
-            websocket_urlpatterns
-        )
+        URLRouter(websocket_urlpatterns)
     ),
 })

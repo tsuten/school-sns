@@ -30,7 +30,7 @@
 
 <div class="flex h-screen">
     <!-- 左サイドバー: 参加サークル一覧 -->
-    <div class="w-16 hover:w-64 bg-gray-50 border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out group">
+    <div class="w-16 hover:w-64 border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out group">
         <!-- ヘッダー -->
         <div class="p-4 border-b border-gray-300 bg-white">
             <div class="flex items-center gap-2">

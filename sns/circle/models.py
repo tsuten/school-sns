@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 import uuid
 from .schemas import ResponseSchema
 import mimetypes
+from django.utils import timezone
 
 class CircleCategory(models.TextChoices):
     STUDY = 'study', '学習'
@@ -83,22 +84,108 @@ class CircleManager(models.Manager):
     
     def is_member(self, user, circle_id):
         try:
+            # circle_idのUUID形式をバリデーション
+            import uuid
+            try:
+                uuid.UUID(circle_id)
+            except ValueError:
+                return False
+                
             circle = self.get(id=circle_id)
             return circle.members.filter(id=user.id).exists()
         except Circle.DoesNotExist:
             return False
         
-    def get_history(self, user, circle_id, from_date=None, to_date=None):
+    def get_history(self, user, circle_id, until=timezone.now()):
         try:
             circle = self.get(id=circle_id)
             messages = circle.messages.filter(user=user)
-            if from_date:
-                messages = messages.filter(created_at__gte=from_date)
-            if to_date:
-                messages = messages.filter(created_at__lte=to_date)
+            if until:
+                messages = messages.filter(created_at__lte=until)
             return messages.order_by('-created_at')
         except CircleMessage.DoesNotExist:
             return []
+    
+    def get_circle_activity(self, circle_id, limit=50, until=None):
+        """サークルのメッセージ、メディア、通知を統合して取得（ポインターページネーション対応）"""
+        from django.utils import timezone
+        
+        if until is None:
+            until = timezone.now()
+        
+        try:
+            circle = self.get(id=circle_id)
+            
+            # メッセージを取得（untilより前のもの）
+            messages = CircleMessage.objects.filter(
+                circle=circle,
+                created_at__lt=until
+            ).select_related('user').values(
+                'id', 'content', 'user__id', 'user__username', 'created_at'
+            )
+            
+            # 通知を取得（untilより前のもの）
+            notifications = CircleNotification.objects.filter(
+                circle=circle,
+                created_at__lt=until
+            ).values(
+                'id', 'message', 'created_at'
+            )
+            
+            # メッセージを統一形式に変換
+            message_activities = []
+            for msg in messages:
+                message_activities.append({
+                    'id': msg['id'],
+                    'activity_type': 'message',
+                    'activity_content': msg['content'] or '',
+                    'activity_user': msg['user__username'] or 'Unknown',
+                    'activity_timestamp': msg['created_at'],
+                    'user__id': msg['user__id'],
+                    'user__username': msg['user__username']
+                })
+            
+            # 通知を統一形式に変換
+            notification_activities = []
+            for notif in notifications:
+                notification_activities.append({
+                    'id': notif['id'],
+                    'activity_type': 'notification',
+                    'activity_content': notif['message'] or '',
+                    'activity_user': 'System',
+                    'activity_timestamp': notif['created_at']
+                })
+            
+            # 全てを統合してタイムスタンプでソート
+            all_activities = message_activities + notification_activities
+            all_activities.sort(key=lambda x: x['activity_timestamp'], reverse=True)
+            
+            # limit+1個取得して、次のページがあるかチェック
+            activities = all_activities[:limit + 1]
+            has_next = len(activities) > limit
+            
+            if has_next:
+                activities = activities[:limit]
+            
+            # 次のページのポインター（最後のアイテムのタイムスタンプ）
+            next_until = None
+            if has_next and activities:
+                next_until = activities[-1]['activity_timestamp']
+            
+            return {
+                'activities': activities,
+                'has_next': has_next,
+                'next_until': next_until,
+                'count': len(activities)
+            }
+            
+        except Circle.DoesNotExist:
+            return {
+                'activities': [],
+                'has_next': False,
+                'next_until': None,
+                'count': 0
+            }
     
 class Circle(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
