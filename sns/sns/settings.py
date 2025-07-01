@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'calendar_module',
     'chat',
     'circle',
+    'emojis',
 ]
 
 MIDDLEWARE = [
@@ -199,3 +200,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Channels configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}

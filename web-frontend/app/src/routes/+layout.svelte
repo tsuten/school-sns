@@ -7,6 +7,7 @@
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
 	import WidgetBase from '../lib/components/widgets/widgetBase.svelte';
 	import Notification from '../lib/components/widgets/notification.svelte';
+	import ToastContainer from '../lib/components/utils/ToastContainer.svelte';
 	import { setUserInfo, clearUserInfo } from '../lib/stores/userInfo.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -246,3 +247,6 @@
 		{/snippet}
 	</Modal>
 </div>
+
+<!-- Toast Container -->
+<ToastContainer />
