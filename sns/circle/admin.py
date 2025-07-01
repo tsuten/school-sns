@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
-from .models import Circle, CircleMessage, Tag, CircleMedia
+from .models import Circle, CircleMessage, Tag, CircleMedia, CircleNotification
 
 class TagsWidget(forms.Textarea):
     """タグ入力用のカスタムウィジェット"""
@@ -263,3 +263,56 @@ class CircleMediaAdmin(admin.ModelAdmin):
     list_filter = ('type', 'created_at', 'updated_at', 'circle')
     search_fields = ('media', 'user__username', 'circle__name')
     readonly_fields = ('id', 'created_at', 'updated_at')
+
+@admin.register(CircleNotification)
+class CircleNotificationAdmin(admin.ModelAdmin):
+    list_display = ('circle', 'message_preview', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at', 'circle')
+    search_fields = ('message', 'circle__name')
+    readonly_fields = ('id', 'circle', 'message', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('⚠️ 重要な注意', {
+            'fields': (),
+            'description': '<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin-bottom: 15px;"><strong>注意:</strong> この通知はシステムによって自動生成されます。手動での作成や編集はできません。閲覧専用です。</div>'
+        }),
+        ('通知情報', {
+            'fields': ('circle', 'message')
+        }),
+        ('システム情報', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def message_preview(self, obj):
+        """メッセージ内容のプレビューを表示（最初の100文字）"""
+        if len(obj.message) > 100:
+            return obj.message[:100] + '...'
+        return obj.message
+    message_preview.short_description = 'メッセージ内容'
+    
+    def get_queryset(self, request):
+        """関連オブジェクトを事前に取得してクエリを最適化"""
+        return super().get_queryset(request).select_related('circle')
+    
+    def has_add_permission(self, request):
+        """追加画面は表示するが、実際の保存は無効化"""
+        return True
+    
+    def has_change_permission(self, request, obj=None):
+        """変更画面は表示するが、実際の保存は無効化"""
+        return True
+    
+    def save_model(self, request, obj, form, change):
+        """保存処理を無効化（システム自動生成のため手動保存を防ぐ）"""
+        from django.contrib import messages
+        if change:
+            messages.error(request, 'この通知は編集できません。システムによって自動生成されます。')
+        else:
+            messages.error(request, 'この通知は手動で作成できません。システムによって自動生成されます。')
+        return  # 実際の保存は行わない
+    
+    def has_delete_permission(self, request, obj=None):
+        """削除権限は管理者のみ許可"""
+        return request.user.is_superuser
