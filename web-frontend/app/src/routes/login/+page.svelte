@@ -1,6 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import { apiClient } from "$lib/services/django";
+    import Emoji from '$lib/components/page-components/emoji.svelte';
     //
     let password = $state();
     let username = $state();
@@ -78,3 +79,4 @@
         >
     </form>
 </div>
+<Emoji />
