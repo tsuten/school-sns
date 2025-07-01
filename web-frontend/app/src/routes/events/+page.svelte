@@ -93,11 +93,7 @@
     {/if}
 
     {#if showForm}
-        <EventForm onClose={closeForm} />
-    {/if}
-
-    {#if showForm}
-        <EventForm onClose={closeForm} />
+        <EventForm on:added={handleDataAdded} onClose={closeForm} />
     {/if}
 
     <!-- 今後のイベント -->

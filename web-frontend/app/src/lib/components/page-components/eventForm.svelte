@@ -230,8 +230,6 @@
     }
 </script>
 
-<Child on:added={handleDataAdded} />
-
 {#if valuesError_1 === true}
         <p>建物名・部屋番号以外の項目は全て入力してください</p>
     {/if}
