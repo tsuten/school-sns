@@ -121,7 +121,6 @@
     oninput={(e) => (postalCode = e.target.value)}
     placeholder="例: 123-4567"
     maxlength="8"
-    required
   />
   {#if suggestions.length > 0}
     <div style="border: 1px solid #ccc; padding: 4px;">
