@@ -92,3 +92,11 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
     
+class UserActivityManager(models.Manager):
+    def get_user_activity(self, user_id):
+        user = User.objects.get(id=user_id)
+        activity = UserActivity.objects.get(user=user)
+        return activity
+    
+class UserActivity(models.Model):
+    objects = UserActivityManager()

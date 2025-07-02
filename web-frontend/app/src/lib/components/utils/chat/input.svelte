@@ -1,6 +1,7 @@
 <script>
     import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
     import { Plus, Smile, ArrowUp, Image, Video, File, Camera } from 'lucide-svelte';
+    import Emoji from '$lib/components/page-components/emoji.svelte';
 
     let { 
         value = $bindable(''), 

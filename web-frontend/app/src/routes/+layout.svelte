@@ -12,7 +12,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '../lib/services/django.js';
-	
+	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
+	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
@@ -146,7 +147,7 @@
 
 </script>
 
-<div class="flex justify-between h-screen">
+<div class="flex justify-between h-full">
 	<div class="flex items-start flex-col justify-between">
 		<div class="flex flex-col gap-1 p-2">
 			{#each services as service}
@@ -171,8 +172,8 @@
 	<div class="w-full border-x border-gray-300 h-screen">
 		{@render children()}
 	</div>
-	<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
-		<div>
+	<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4 h-full">
+		<div class="h-full">
 		<!--<div class="border border-gray-300 rounded-lg m-3">
 				<h2 class="text-gray-500 text-sm font-bold text-center py-2">トレンド<p>{trend_updated_at}</p></h2>
 				<div class="flex flex-col gap-1 p-2 items-center">
@@ -188,7 +189,10 @@
 					</div>
 				</div>
 			</div>-->
-			<Notification />
+			<div class="flex flex-col gap-4 mb-4 h-full overflow-y-auto">
+				<Notification />
+				<CalendarWidget />
+			</div>
 		</div>
 		<button class="border border-gray-300 rounded-lg py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => editing_widget = !editing_widget}>
 			ウィジェットの設定

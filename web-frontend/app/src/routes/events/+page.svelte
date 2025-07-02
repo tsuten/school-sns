@@ -31,6 +31,15 @@
     }
 
     let showForm = false;
+    let showEventForm = false;
+
+    function openEventForm() {
+        showEventForm = true;
+    }
+
+    function closeEventForm() {
+        showEventForm = false;
+    }
 
     function openForm() {
         showForm = true;
@@ -96,8 +105,8 @@
         <EventForm onClose={closeForm} />
     {/if}
 
-    {#if showForm}
-        <EventForm onClose={closeForm} />
+    {#if showEventForm}
+        <EventForm onClose={closeEventForm} />
     {/if}
 
     {#if showForm}
@@ -125,6 +134,13 @@
 
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
+            <button 
+                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
+                onclick={openEventForm}
+                aria-label="新しいイベントを作成"
+            >
+                うんこ
+            </button>
             <button 
                 class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
                 onclick={openForm}
