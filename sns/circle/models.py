@@ -79,6 +79,9 @@ class CircleManager(models.Manager):
             return ResponseSchema(status="error", error_code="not_member", message="対象のユーザーはこのサークルのメンバーではありません")
         
         circle.members.remove(target_user)
+        circle.banned_users.add(target_user)
+        circle.moderators.remove(target_user)
+        circle.whitelist.remove(target_user)
         circle.save()
         return ResponseSchema(status="success", message="ユーザーをサークルから退会しました")
     
