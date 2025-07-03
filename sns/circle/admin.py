@@ -77,11 +77,11 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Circle)
 class CircleAdmin(admin.ModelAdmin):
     form = CircleAdminForm
-    list_display = ('name', 'founder', 'is_public', 'category', 'tags_display', 'member_count', 'banned_count', 'moderator_count', 'created_at', 'updated_at')
+    list_display = ('name', 'founder', 'is_public', 'category', 'tags_display', 'member_count', 'whitelist_count', 'banned_count', 'moderator_count', 'created_at', 'updated_at')
     list_filter = ('is_public', 'created_at', 'updated_at', 'category', 'tags')
-    search_fields = ('name', 'description', 'founder__username', 'tags__name', 'members__username', 'banned_users__username', 'moderators__username')
+    search_fields = ('name', 'description', 'founder__username', 'tags__name', 'members__username', 'banned_users__username', 'moderators__username', 'whitelist__username')
     readonly_fields = ('id', 'created_at', 'updated_at', 'tags_display_readonly')
-    filter_horizontal = ('members', 'banned_users', 'moderators')
+    filter_horizontal = ('members', 'banned_users', 'moderators', 'whitelist')
     
     fieldsets = (
         ('基本情報', {
@@ -94,6 +94,11 @@ class CircleAdmin(admin.ModelAdmin):
         ('メンバー管理', {
             'fields': ('members',),
             'description': 'サークルの通常メンバーを管理します。'
+        }),
+        ('ホワイトリスト', {
+            'fields': ('whitelist',),
+            'description': 'プライベートサークルで招待可能なユーザーのホワイトリストを管理します。',
+            'classes': ('collapse',)
         }),
         ('モデレーション', {
             'fields': ('moderators', 'banned_users'),
@@ -127,6 +132,14 @@ class CircleAdmin(admin.ModelAdmin):
         return count
     moderator_count.short_description = 'モデレーター数'
     
+    def whitelist_count(self, obj):
+        """ホワイトリスト数を表示"""
+        count = obj.whitelist.count()
+        if count > 0:
+            return format_html('<span style="color: #388e3c; font-weight: bold;">{}</span>', count)
+        return count
+    whitelist_count.short_description = 'ホワイトリスト数'
+    
     def tags_display(self, obj):
         """タグを見やすく表示（一覧用）"""
         tags = obj.tags.all()
@@ -158,10 +171,10 @@ class CircleAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         """クエリセットの最適化"""
-        return super().get_queryset(request).select_related('founder').prefetch_related('members', 'banned_users', 'moderators', 'tags')
+        return super().get_queryset(request).select_related('founder').prefetch_related('members', 'banned_users', 'moderators', 'whitelist', 'tags')
     
     # カスタムアクション
-    actions = ['ban_selected_members', 'unban_selected_users', 'promote_to_moderator', 'demote_from_moderator']
+    actions = ['ban_selected_members', 'unban_selected_users', 'promote_to_moderator', 'demote_from_moderator', 'clear_whitelist', 'manage_whitelist']
     
     def ban_selected_members(self, request, queryset):
         """選択されたサークルのメンバーをBANする（一括操作用のプレースホルダー）"""
@@ -194,6 +207,22 @@ class CircleAdmin(admin.ModelAdmin):
         
         self.message_user(request, f'{total_demoted}人のモデレーター権限を解除しました。')
     demote_from_moderator.short_description = '選択されたサークルの全モデレーター権限を解除する'
+    
+    def clear_whitelist(self, request, queryset):
+        """選択されたサークルのホワイトリストをクリアする"""
+        total_cleared = 0
+        for circle in queryset:
+            whitelist_count = circle.whitelist.count()
+            circle.whitelist.clear()
+            total_cleared += whitelist_count
+        
+        self.message_user(request, f'{total_cleared}人をホワイトリストから削除しました。')
+    clear_whitelist.short_description = '選択されたサークルのホワイトリストをクリアする'
+    
+    def manage_whitelist(self, request, queryset):
+        """ホワイトリスト管理のための情報を表示"""
+        self.message_user(request, 'ホワイトリストの管理は個別のサークル編集画面で実行してください。')
+    manage_whitelist.short_description = 'ホワイトリスト管理画面へ'
 
 @admin.register(CircleMessage)
 class CircleMessageAdmin(admin.ModelAdmin):

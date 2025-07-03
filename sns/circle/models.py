@@ -186,6 +186,20 @@ class CircleManager(models.Manager):
                 'next_until': None,
                 'count': 0
             }
+        
+    def make_circle_public(self, circle, user):
+        """サークルを公開"""
+        if circle.founder != user:
+            raise ValueError("あなたはこのサークルの創始者ではありません。")
+        circle.make_circle_public()
+        return ResponseSchema(status="success", message="サークルを公開しました")
+    
+    def make_circle_private(self, circle, user):
+        """サークルを非公開"""
+        if circle.founder != user:
+            raise ValueError("あなたはこのサークルの創始者ではありません。")
+        circle.make_circle_private()
+        return ResponseSchema(status="success", message="サークルを非公開しました")
     
 class Circle(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -199,6 +213,7 @@ class Circle(models.Model):
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='circle_members', blank=True)
     banned_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='banned_circles', blank=True)
     invited_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='invited_circles', blank=True)
+    whitelist = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='whitelisted_circles', blank=True)
     moderators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='moderated_circles', blank=True)
     category = models.CharField(max_length=255, choices=CircleCategory.choices, default=CircleCategory.OTHER)
     tags = models.ManyToManyField(Tag, related_name='circles', blank=True)
@@ -242,6 +257,40 @@ class Circle(models.Model):
         if not self.members.filter(id=user.id).exists():
             self.members.add(user)
 
+    def make_circle_public(self):
+        """サークルを公開"""
+        if self.is_public:
+            raise ValueError("すでに公開されているサークルです。")
+        self.is_public = True
+        self.save()
+    
+    def make_circle_private(self):
+        """サークルを非公開"""
+        if not self.is_public:
+            raise ValueError("すでに非公開のサークルです。")
+        self.is_public = False
+        self.save()
+    
+    def add_to_whitelist(self, user):
+        """ホワイトリストにユーザーを追加"""
+        if self.is_public:
+            raise ValueError("公開のサークルです。")
+        if self.founder == user:
+            raise ValueError("あなたはこのサークルの創始者です。")
+        if self.whitelist.filter(id=user.id).exists():
+            raise ValueError("すでにホワイトリストに追加されています。")
+        self.whitelist.add(user)
+    
+    def remove_from_whitelist(self, user):
+        """ホワイトリストからユーザーを削除"""
+        if self.is_public:
+            raise ValueError("公開のサークルです。")
+        if self.founder == user:
+            raise ValueError("あなたはこのサークルの創始者です。")
+        if not self.whitelist.filter(id=user.id).exists():
+            raise ValueError("ホワイトリストに追加されていません。")
+        self.whitelist.remove(user)
+    
     def __str__(self):
         return self.name
 
