@@ -130,8 +130,6 @@
             {/each}
         {/if}
 
-
-
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
             <button 
@@ -149,6 +147,5 @@
                 <Plus class="w-6 h-6 text-white" />
             </button>
         </div>
-
     </div>
 </div>
