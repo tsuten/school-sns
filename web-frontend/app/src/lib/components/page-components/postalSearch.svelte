@@ -113,45 +113,41 @@
   }
 </script>
 
-<div>
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>郵便番号</label>
-  <input
-    value={formattedPostal}
-    oninput={(e) => (postalCode = e.target.value)}
-    placeholder="例: 123-4567"
-    maxlength="8"
-  />
-  {#if suggestions.length > 0}
-    <div style="border: 1px solid #ccc; padding: 4px;">
-      {#each suggestions as s}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          onclick={() => selectSuggestion(s)}
-          style="padding: 4px; cursor: pointer;"
-        >
-          〒{s.zipcode} {s.prefecture}{s.city}{s.town}
-        </div>
-      {/each}
+<div class="flex flex-col gap-2 w-full max-w-md mx-auto">
+  <div class="flex items-center gap-2 mb-2">
+    <label class="block text-sm font-semibold min-w-[5.5rem]">郵便番号</label>
+    <input
+      class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-sm w-[8.5rem] min-w-0"
+      value={formattedPostal}
+      oninput={(e) => (postalCode = e.target.value)}
+      placeholder="例: 123-4567"
+      maxlength="8"
+    />
+    {#if suggestions.length > 0}
+      <div class="absolute mt-10 left-0 w-[18rem] bg-white border border-gray-300 rounded shadow z-50">
+        {#each suggestions as s}
+          <div
+            class="px-3 py-1 hover:bg-blue-50 cursor-pointer text-sm"
+            onclick={() => selectSuggestion(s)}
+          >
+            〒{s.zipcode} {s.prefecture}{s.city}{s.town}
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </div>
+  <div class="flex gap-2 mb-2 ml-[5.5rem] w-[calc(100%-5.5rem-1.5rem)] min-w-0 pr-6">
+    <div class="flex-1">
+      <label class="block text-xs font-semibold mb-0.5">都道府県</label>
+      <input class="px-2 py-0.5 border border-gray-300 rounded bg-gray-50 text-xs w-full min-w-0" value={prefecture} readonly />
     </div>
-  {/if}
-</div>
-
-<div>
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>都道府県</label>
-  <input value={prefecture} readonly />
-</div>
-
-<div>
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>市区町村</label>
-  <input value={city} readonly />
-</div>
-
-<div>
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label>町名</label>
-  <input bind:value={street} placeholder="例: 神南" />
+    <div class="flex-1">
+      <label class="block text-xs font-semibold mb-0.5">市区町村</label>
+      <input class="px-2 py-0.5 border border-gray-300 rounded bg-gray-50 text-xs w-full min-w-0" value={city} readonly />
+    </div>
+    <div class="flex-1">
+      <label class="block text-xs font-semibold mb-0.5">町名</label>
+      <input class="px-2 py-0.5 border border-gray-300 rounded bg-gray-50 text-xs w-full min-w-0" bind:value={street} placeholder="例: 神南" />
+    </div>
+  </div>
 </div>

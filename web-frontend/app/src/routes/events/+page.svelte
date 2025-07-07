@@ -113,18 +113,15 @@
             {/each}
         {/if}
 
-
-
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
-            <button 
-                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
+            <button
+                class="fixed bottom-4 right-90 w-12 h-12 bg-sky-500 text-white rounded-full hover:bg-sky-600 hover:cursor-pointer flex items-center justify-center z-50 shadow-lg transition-colors duration-200"
                 onclick={openForm}
                 aria-label="新しいイベントを作成"
             >
                 <Plus class="w-6 h-6 text-white" />
             </button>
         </div>
-
     </div>
 </div>
