@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "sns-for-u22",
+			"path": "../../../../../../.."
+		},
+		{
+			"name": "lib",
+			"path": "../../../../lib"
+		},
+		{
+			"name": "circles",
+			"path": "../.."
+		},
+		{
+			"name": "circle",
+			"path": "../../../../../../../sns/circle"
+		}
+	],
+	"settings": {}
+}
