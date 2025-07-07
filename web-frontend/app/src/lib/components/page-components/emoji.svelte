@@ -2,15 +2,24 @@
     // ロケールを定義
     import emojis from "emojibase-data/ja/data.json";
     import groupsSubgroups from "emojibase-data/ja/messages.json";
+    import { 
+        Smile, 
+        Hand, 
+        Dog, 
+        Apple, 
+        Map, 
+        Zap, 
+        Glasses 
+    } from "lucide-svelte";
 
     let emoji_group = {
-        "0": "😊",
-        "1": "✌️",
-        "3": "🐶",
-        "4": "🍉",
-        "5": "🗾",
-        "6": "🥎",
-        "7": "🕶",
+        "0": Smile,
+        "1": Hand,
+        "3": Dog,
+        "4": Apple,
+        "5": Map,
+        "6": Zap,
+        "7": Glasses,
     };
 
     // 除外するキーを定義
@@ -79,35 +88,35 @@
     }
 </script>
 
-<div id="emoji-picker">
-    <h2>絵文字カテゴリ</h2>
-    <div>
+<div id="emoji-picker" class="w-80 flex flex-col items-center p-4 box-border border border-gray-300 rounded-sm">
+    <h2 class="mb-2 text-sm font-semibold text-gray-600">絵文字カテゴリ</h2>
+    <div class="flex gap-2 overflow-x-auto pb-2">
         {#each filteredGroups as group}
             <button
                 on:click={() => {
                     selectedGroup = group.id;
                     selectedSubgroup = null;
                 }}
-                class:selected={selectedGroup === group.id}
+                class={`w-8 h-8 flex items-center justify-center rounded-md transition-colors select-none ${selectedGroup === group.id ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:cursor-pointer'}`}
                 title={group.name}
             >
-                {emoji_group[group.id.toString()]}
+                <svelte:component this={emoji_group[group.id.toString()]} strokeWidth={1.5} />
             </button>
         {/each}
     </div>
 
-    <div id="emoji-list">
-        <div>
+    <div id="emoji-list" class="overflow-y-auto h-52 w-full">
+        <div class="grid grid-cols-7 gap-2">
             {#if selectedSubgroup !== null}
                 {#each groupedEmojis[selectedGroup][selectedSubgroup] as emoji}
-                    <span class="emoji">
+                    <span class="text-2xl flex items-center justify-center hover:cursor-pointer select-none">
                         {emoji.emoji}
                     </span>
                 {/each}
             {:else}
                 {#each Object.values(groupedEmojis[selectedGroup] || {}) as emojis}
                     {#each emojis as emoji}
-                        <span class="emoji">
+                        <span class="text-2xl flex items-center justify-center hover:cursor-pointer select-none">
                             {emoji.emoji}
                         </span>
                     {/each}
@@ -116,59 +125,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    #emoji-list {
-        overflow-y: auto;
-        height: 200px;
-        align-content: flex-start;
-    }
-
-    #emoji-list > div {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .emoji {
-        font-size: 1.5rem;
-        display: inline-block;
-        margin: 0.2rem;
-        line-height: 1;
-    }
-    #emoji-picker {
-        width: 40%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1em;
-        box-sizing: border-box;
-    }
-    button.selected {
-        background: #0078d4;
-        color: white;
-    }
-    button {
-        border: 1px solid #ccc;
-        background: #f9f9f9;
-        padding: 0.3em 0.8em;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    button:not(.selected):hover {
-        background: #eee;
-    }
-
-    #emoji-list::-webkit-scrollbar {
-        width: 10px;
-        background: #f1f1f1;
-    }
-
-    #emoji-list::-webkit-scrollbar-thumb {
-        background: #bdbdbd;
-        border-radius: 0; /* ← 角丸をなくして四角に */
-    }
-
-    #emoji-list::-webkit-scrollbar-thumb:hover {
-        background: #888;
-    }
-</style>

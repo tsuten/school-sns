@@ -31,6 +31,15 @@
     }
 
     let showForm = false;
+    let showEventForm = false;
+
+    function openEventForm() {
+        showEventForm = true;
+    }
+
+    function closeEventForm() {
+        showEventForm = false;
+    }
 
     function openForm() {
         showForm = true;
@@ -93,7 +102,15 @@
     {/if}
 
     {#if showForm}
-        <EventForm on:added={handleDataAdded} onClose={closeForm} />
+        <EventForm onClose={closeForm} />
+    {/if}
+
+    {#if showEventForm}
+        <EventForm onClose={closeEventForm} />
+    {/if}
+
+    {#if showForm}
+        <EventForm onClose={closeForm} />
     {/if}
 
     <!-- 今後のイベント -->
@@ -115,8 +132,15 @@
 
         <!-- フローティングボタン -->
         <div class="flex justify-end items-end h-full p-2">
-            <button
-                class="fixed bottom-4 right-90 w-12 h-12 bg-sky-500 text-white rounded-full hover:bg-sky-600 hover:cursor-pointer flex items-center justify-center z-50 shadow-lg transition-colors duration-200"
+            <button 
+                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
+                onclick={openEventForm}
+                aria-label="新しいイベントを作成"
+            >
+                うんこ
+            </button>
+            <button 
+                class="w-12 h-12 bg-sky-500 text-white rounded-full hover:cursor-pointer flex items-center justify-center z-40 "
                 onclick={openForm}
                 aria-label="新しいイベントを作成"
             >
