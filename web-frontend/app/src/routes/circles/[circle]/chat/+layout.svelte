@@ -30,7 +30,7 @@
 
 <div class="flex h-screen">
     <!-- 左サイドバー: 参加サークル一覧 -->
-    <div class="w-16 hover:w-64 border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out group">
+    <div class="w-16 hover:w-64 border border-gray-300 flex flex-col transition-all duration-300 ease-in-out group m-4 rounded-sm">
         <!-- ヘッダー -->
         <div class="p-4 border-b border-gray-300 bg-white">
             <div class="flex items-center gap-2">
@@ -93,12 +93,3 @@
         {@render children()}
     </div>
 </div>
-
-<style>
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
