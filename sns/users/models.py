@@ -100,3 +100,24 @@ class UserActivityManager(models.Manager):
     
 class UserActivity(models.Model):
     objects = UserActivityManager()
+
+class UserSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
+
+    #theme settings
+    is_dark_mode_enabled = models.BooleanField(default=False)
+
+    #notification settings
+    is_notification_enabled = models.BooleanField(default=True)
+
+    #privacy settings
+    is_profile_public = models.BooleanField(default=True)
+    is_birthday_public = models.BooleanField(default=True)
+    is_location_public = models.BooleanField(default=True)
+    is_activity_public = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.username

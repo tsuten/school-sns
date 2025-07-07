@@ -1,5 +1,5 @@
 <script>
-    import { Send, ArrowLeft, MoreVertical, Smile, Paperclip, Crown, User, Settings, UserMinus, Flag, Info, Reply, Copy, Trash2, Edit, Clock } from 'lucide-svelte';
+    import { Send, ArrowLeft, MoreVertical, Smile, Paperclip, Crown, User, Settings, UserMinus, Flag, Info, Reply, Copy, Trash2, Edit, Clock, Ellipsis, LogOut, Siren, DoorOpen } from 'lucide-svelte';
     import { Button, Badge, Card, Dropdown, DropdownItem, DropdownDivider} from 'flowbite-svelte';
     import { apiClient } from '$lib/services/django';
     import { page } from '$app/stores';
@@ -21,6 +21,7 @@
     let onlineUsers = $state(new Set());
     let typingUsers = $state(new Set());
     let circleId = $state(null);
+    let showMenu = $state(false);
 
     let messages = $state([]);
     let hasNextPage = $state(false);
@@ -342,6 +343,7 @@
     }
 </script>
 
+<div class="flex flex-col m-4 border border-gray-300 rounded-sm">
 {#if loading}
     <div class="flex justify-center items-center h-64">
         <div class="text-center">
@@ -369,28 +371,22 @@
                     </div>
                 </div>
             </div>
-            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
-                <MoreVertical class="h-5 w-5 text-gray-500" />
-            </Button>
-            <Dropdown triggeredBy="#chat-menu-button" class="w-44" simple>
-                <DropdownItem class="flex items-center gap-2">
-                    <Info class="w-4 h-4" />
-                    サークル情報
-                </DropdownItem>
-                <DropdownItem class="flex items-center gap-2">
-                    <Settings class="w-4 h-4" />
-                    チャット設定
-                </DropdownItem>
-                <DropdownDivider />
-                <DropdownItem class="flex items-center gap-2">
-                    <UserMinus class="w-4 h-4" />
-                    サークルを退会
-                </DropdownItem>
-                <DropdownItem class="flex items-center gap-2 text-red-600">
-                    <Flag class="w-4 h-4" />
-                    サークルを報告
-                </DropdownItem>
-            </Dropdown>
+            <div class="flex items-center gap-2">
+                {#if showMenu}
+                    <Button pill={true} color="light" class="p-2! hover:cursor-pointer bg-red-100 hover:bg-red-200 border-none" id="chat-menu-button">
+                        <LogOut class="h-5 w-5 text-red-500" />
+                    </Button>
+                    <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
+                        <Siren class="h-5 w-5 text-gray-500" />
+                    </Button>
+                    <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
+                        <DoorOpen class="h-5 w-5 text-gray-500" />
+                    </Button>
+                {/if}
+                <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button" onclick={() => showMenu = !showMenu}>
+                    <Ellipsis class="h-5 w-5 text-gray-500" />
+                </Button>
+            </div>
         </div>
 
         <!-- メッセージエリア -->
@@ -571,4 +567,5 @@
         </div>
     </div>
 {/if}
+</div>
 
