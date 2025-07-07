@@ -1,8 +1,8 @@
 import json
 from django.shortcuts import render
 from ninja import Router
-from .models import UserProfile, UserProfileManager, User
-from .schemas import UserProfileSchema, UserProfileUpdateSchema
+from .models import UserProfile, UserProfileManager, User, UserActivity
+from .schemas import UserProfileSchema, UserProfileUpdateSchema, UserAffiliationSchema
 from ninja_jwt.authentication import JWTAuth
 from .services import get_user_permission
 # Create your views here.
@@ -34,3 +34,8 @@ def get_random_users(request, amount):
 def set_user_profile(request, payload: UserProfileUpdateSchema):
     profile = UserProfile.objects.set_user_profile(request.user.id, **payload.dict())
     return UserProfileSchema.from_profile(profile)
+
+@router.get('/affiliation', auth=JWTAuth(), response=UserAffiliationSchema)
+def get_user_affiliation(request):
+    classes, schools = UserActivity.objects.get_user_affiliation(request.user.id)
+    return UserAffiliationSchema.from_affiliation(classes, schools)

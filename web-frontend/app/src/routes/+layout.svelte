@@ -8,7 +8,7 @@
 	import WidgetBase from '../lib/components/widgets/widgetBase.svelte';
 	import Notification from '../lib/components/widgets/notification.svelte';
 	import ToastContainer from '../lib/components/utils/ToastContainer.svelte';
-	import { setUserInfo, clearUserInfo } from '../lib/stores/userInfo.js';
+	import { setUserFromServerData, logout as authLogout, isAuthenticated, currentUser } from '../lib/stores/auth.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '../lib/services/django.js';
@@ -19,34 +19,29 @@
 	
 	// サーバーから取得したデータをストアに設定
 	onMount(() => {
+		console.log('Layout onMount - data:', data);
 		if (data?.user && data?.authenticated) {
 			console.log('Setting user info from server data:', data.user);
-			setUserInfo(data.user);
+			// サーバーデータの構造を確認してからストアに設定
+			setUserFromServerData(data.user, data.authenticated);
 		} else {
 			console.log('No authenticated user data, clearing user info');
-			clearUserInfo();
+			setUserFromServerData(null, false);
 		}
 	});
 	
 	// ログアウト処理
 	async function handleLogout() {
 		try {
-			// APIクライアントのログアウト（トークンをクリア）
-			api.auth.logout();
-			
-			// ユーザー情報ストアをクリア
-			clearUserInfo();
-			
-			// Cookieもクリア（サーバーサイドで設定されている場合）
-			document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-			document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+			// auth.jsストアのログアウト関数を使用
+			authLogout();
 			
 			// ログインページにリダイレクト
 			goto('/login');
 		} catch (error) {
 			console.error('Logout error:', error);
 			// エラーが発生してもログアウト処理は続行
-			clearUserInfo();
+			authLogout();
 			goto('/login');
 		}
 		
@@ -66,7 +61,7 @@
 		{
 			icon: House,
 			href: "/",
-			label: "ver 0.0.1"
+			label: "あなた"
 		},
 		{
 			icon: Bell,
@@ -94,6 +89,11 @@
 			label: "トレンド"
 		},*/
 		{
+			icon: School,
+			href: "/school",
+			label: "学校"
+		},
+		{
 			icon: Tickets,
 			href: "/events",
 			label: "イベント"
@@ -118,33 +118,26 @@
 			href: "/post",
 			label: "投稿する"
 		},*/
-		{
+/*		{
 			icon: User,
 			href: "/profile",
 			label: "あなた"
-		},
-		{
-			icon: Settings,
-			href: "/settings",
-			label: "設定"
-		},
+		},*/
 	]
 
 	let enrollment_services = [
 		{
-			icon: University,
-			href: "/institution",
-			label: "全体"
-		},
-		{
-			icon: School,
-			href: "/school",
-			label: "学校"
-		},
-		{
 			icon: Presentation,
 			href: "/class",
 			label: "クラス"
+		},
+	]
+
+	let bottom_services = [
+		{
+			icon: Settings,
+			href: "/settings",
+			label: "設定"
 		},
 	]
 
@@ -161,11 +154,15 @@
 			{#each services as service}
 				<SidebarButton icon={service.icon} href={service.href} label={service.label} />
 			{/each}
-			<div class="flex flex-col gap-1 p-2 border border-gray-300 rounded-lg w-full">
-				{#each enrollment_services as service}
-					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
-				{/each}
-			</div>
+			<h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
+			{#each enrollment_services as service}
+				<SidebarButton icon={service.icon} href={service.href} label={service.label} />
+			{/each}
+		</div>
+		<div class="flex flex-col gap-1 p-2">
+			{#each bottom_services as service}
+				<SidebarButton icon={service.icon} href={service.href} label={service.label} />
+			{/each}
 			<button class="flex flex-row items-center w-40 justify-end gap-2 group" onclick={() => show_logout_modal = true}> <p class="text-sm text-gray-500">ログアウト</p>
 				<div class="w-13 h-13 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
 					<LogOut />

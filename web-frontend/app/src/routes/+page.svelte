@@ -1,26 +1,25 @@
 <script>
-	import UserInfoCard from '$lib/components/page-components/userInfoCard.svelte';
-	
-	const user = {
-		id: '123',
-		username: 'john_doe',
-		display_name: '田中太郎',
-		bio: 'プログラマーです。\nよろしくお願いします！',
-		location: '東京都',
-		birth_place: '大阪府',
-		birthday: '1990-05-15',
-		pfp: '/path/to/image.jpg',
-		created_at: '2023-01-01T00:00:00Z',
-		posts_count: 42,
-		followers_count: 150,
-		following_count: 89
-	};
+	import ProfileCard from '$lib/components/card/profileCard.svelte';
+	import { currentUser, isAuthenticated } from '$lib/stores/auth';
+	import { browser } from '$app/environment';
+	import Page from '$lib/components/utils/page.svelte';
+	import AffiliationInfo from '$lib/components/card/user/affiliationInfo.svelte';
+	import CircleAffiliationInfo from '$lib/components/card/user/circleAffiliationInfo.svelte';
+	// サーバーサイドレンダリング時の安全なアクセス
+	const user = $derived(browser ? ($currentUser?.user || null) : null);
 </script>
 
-<!-- 自分のプロフィール -->
-<UserInfoCard 
-	{user} 
-	isOwnProfile={true}
-	showEditButton={true}
-	onEdit={() => console.log('編集')}
-/>
+<Page>
+	{#if user}
+		<!-- 自分のプロフィール -->
+		<ProfileCard {user} />
+	{:else}
+		<div class="flex items-center justify-center p-8 text-gray-500">
+			<p>ユーザー情報を読み込み中...</p>
+		</div>
+	{/if}
+	<div class="grid grid-cols-2 gap-4 h-full">
+		<AffiliationInfo {user} />
+		<CircleAffiliationInfo {user} />
+	</div>
+</Page>

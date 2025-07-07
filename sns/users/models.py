@@ -97,6 +97,15 @@ class UserActivityManager(models.Manager):
         user = User.objects.get(id=user_id)
         activity = UserActivity.objects.get(user=user)
         return activity
+
+    def get_user_affiliation(self, user_id):
+        # 遅延インポートで循環インポートを回避
+        from enrollments.models import Class
+        
+        user = User.objects.get(id=user_id)
+        classes = Class.objects.filter(students=user)
+        schools = [class_obj.school for class_obj in classes if class_obj.school]
+        return classes, schools
     
 class UserActivity(models.Model):
     objects = UserActivityManager()
