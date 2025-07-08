@@ -113,16 +113,32 @@ class UserActivity(models.Model):
 class UserSettingsManager(models.Manager):
     def get_user_settings(self, user_id):
         user = User.objects.get(id=user_id)
-        settings = UserSettings.objects.get(user=user)
+        settings, created = UserSettings.objects.get_or_create(user=user)
         return settings
     
     def set_theme_settings(self, user_id, darkmode: bool):
         user = User.objects.get(id=user_id)
-        settings = UserSettings.objects.get(user=user)
+        settings, created = UserSettings.objects.get_or_create(user=user)
         settings.is_dark_mode_enabled = darkmode
         settings.save()
         return settings
     
+    def set_notification_settings(self, user_id, notification: bool):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings.is_notification_enabled = notification
+        settings.save()
+        return settings
+    
+    def set_privacy_settings(self, user_id, profile: bool, birthday: bool, location: bool, activity: bool):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings.is_profile_public = profile
+        settings.is_birthday_public = birthday
+        settings.is_location_public = location
+        settings.is_activity_public = activity
+        settings.save()
+        return settings
 
 class UserSettings(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')

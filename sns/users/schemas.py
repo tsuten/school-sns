@@ -88,3 +88,12 @@ class UserAffiliationSchema(Schema):
     
 class UserThemeSettingsSchema(Schema):
     darkmode: bool
+
+class UserNotificationSettingsSchema(Schema):
+    notification: bool
+
+class UserPrivacySettingsSchema(Schema):
+    profile: Optional[bool] = None
+    birthday: Optional[bool] = None
+    location: Optional[bool] = None
+    activity: Optional[bool] = None
