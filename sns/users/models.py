@@ -110,6 +110,20 @@ class UserActivityManager(models.Manager):
 class UserActivity(models.Model):
     objects = UserActivityManager()
 
+class UserSettingsManager(models.Manager):
+    def get_user_settings(self, user_id):
+        user = User.objects.get(id=user_id)
+        settings = UserSettings.objects.get(user=user)
+        return settings
+    
+    def set_theme_settings(self, user_id, darkmode: bool):
+        user = User.objects.get(id=user_id)
+        settings = UserSettings.objects.get(user=user)
+        settings.is_dark_mode_enabled = darkmode
+        settings.save()
+        return settings
+    
+
 class UserSettings(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
 
@@ -127,6 +141,8 @@ class UserSettings(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserSettingsManager()
 
     def __str__(self):
         return self.user.username
