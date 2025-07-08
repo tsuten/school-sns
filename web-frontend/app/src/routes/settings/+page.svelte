@@ -267,11 +267,15 @@
                             </div>
                         </div>
                     </div>
-                    <button
-                        type="submit"
-                        id="submitBtn"
-                        onclick={() => HandlePrivacySave?.()}>save</button
-                    >
+                    <div class="flex justify-end mt-8">
+                        <button
+                            type="submit"
+                            class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                            onclick={() => HandlePrivacySave?.()}
+                        >
+                            save
+                        </button>
+                    </div>
                 </form>
             {/if}
 
@@ -354,11 +358,15 @@
                                 </label>
                             </div>
                         </div>
-                        <button
-                        type="submit"
-                        id="submitBtn"
-                        onclick={() => HandleThemeSave?.()}>save</button
-                    >
+                        <div class="flex justify-end mt-8">
+                            <button
+                                type="submit"
+                                class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                                onclick={() => HandleThemeSave?.()}
+                            >
+                                save
+                            </button>
+                        </div>
                     </form>
                 </div>
             {/if}
@@ -410,11 +418,15 @@
                             </div>
                         </div>
                     </div>
-                    <button
-                        type="submit"
-                        id="submitBtn"
-                        onclick={() => HandleNotificationSave?.()}>save</button
-                    >
+                    <div class="flex justify-end mt-8">
+                        <button
+                            type="submit"
+                            class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                            onclick={() => HandleNotificationSave?.()}
+                        >
+                            save
+                        </button>
+                    </div>
                     </form>
                 </div>
             {/if}
