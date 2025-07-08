@@ -85,3 +85,6 @@ class UserAffiliationSchema(Schema):
             ))
         
         return cls(classes=class_schemas, schools=school_schemas)
+    
+class UserThemeSettingsSchema(Schema):
+    darkmode: bool

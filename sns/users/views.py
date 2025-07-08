@@ -1,8 +1,8 @@
 import json
 from django.shortcuts import render
 from ninja import Router
-from .models import UserProfile, UserProfileManager, User, UserActivity
-from .schemas import UserProfileSchema, UserProfileUpdateSchema, UserAffiliationSchema
+from .models import UserProfile, UserProfileManager, User, UserActivity, UserSettings
+from .schemas import UserProfileSchema, UserProfileUpdateSchema, UserAffiliationSchema, UserThemeSettingsSchema
 from ninja_jwt.authentication import JWTAuth
 from .services import get_user_permission
 # Create your views here.
@@ -39,3 +39,8 @@ def set_user_profile(request, payload: UserProfileUpdateSchema):
 def get_user_affiliation(request):
     classes, schools = UserActivity.objects.get_user_affiliation(request.user.id)
     return UserAffiliationSchema.from_affiliation(classes, schools)
+
+@router.post('/settings/theme', auth=JWTAuth(), response=UserThemeSettingsSchema)
+def set_user_theme(request, payload: UserThemeSettingsSchema):
+    settings_changed = UserSettings.objects.set_theme_settings(request.user.id, payload.darkmode)
+    return {"settings_changed": settings_changed, "darkmode": payload.darkmode}
