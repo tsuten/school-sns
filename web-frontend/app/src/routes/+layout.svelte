@@ -1,7 +1,7 @@
 <script>
 	import '../app.css';
 	import SidebarButton from './sidebar-botton.svelte';
-	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake} from 'lucide-svelte';
+	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip} from 'lucide-svelte';
 	import State from './state.svelte';
 	import Modal from '../lib/components/utils/modal.svelte';
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
@@ -14,7 +14,8 @@
 	import { api } from '../lib/services/django.js';
 	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
 	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
-	import { Button, Input } from 'flowbite-svelte';
+	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import ServicesGridMenu from '../lib/components/card/topbar/servicesGridMenu.svelte';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
@@ -78,6 +79,11 @@
 			href: "/messages",
 			label: "メッセージ"
 		},
+		{
+			icon: HeartHandshake,
+			href: "/circles",
+			label: "サークル"
+		},
 /*		{
 			icon: Bookmark,
 			href: "/bookmark",
@@ -93,20 +99,15 @@
 			href: "/school",
 			label: "学校"
 		},
-		{
+/*		{
 			icon: Tickets,
 			href: "/events",
 			label: "イベント"
-		},
+		},*/
 		{
 			icon: Calendar,
 			href: "/calendar",
 			label: "カレンダー"
-		},
-		{
-			icon: HeartHandshake,
-			href: "/circles",
-			label: "サークル"
 		},
 /*		{
 			icon: Vote,
@@ -126,11 +127,11 @@
 	]
 
 	let enrollment_services = [
-		{
+/*		{
 			icon: Presentation,
 			href: "/class",
 			label: "クラス"
-		},
+		},*/
 	]
 
 	let bottom_services = [
@@ -144,9 +145,21 @@
 </script>
 
 <div class="flex flex-col h-screen w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-center border-gray-300 p-4 border-b h-16">
-		<Input type="text" placeholder="検索" class="w-full mx-96" />
-		<UserInfo />
+	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-4 border-b h-16">
+		<div>
+		</div>
+		<div class="flex flex-row items-center gap-2">
+			<Input type="text" placeholder="検索" class="w-full" />
+		</div>
+		<div class="flex flex-row items-center gap-4">
+			<Button color="light" size="sm" class="hover:cursor-pointer border-none !p-2" pill>
+				<Grip class="w-6 h-6 text-gray-500" />
+			</Button>
+			<Dropdown simple>
+				<ServicesGridMenu />
+			</Dropdown>
+			<UserInfo />
+		</div>
 	</div>
 	<div class="flex justify-between flex-1">
 		<div class="flex items-start flex-col justify-between">
@@ -159,10 +172,10 @@
 				{#each services as service}
 					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
 				{/each}
-				<h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
+				<!--<h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
 				{#each enrollment_services as service}
 					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
-				{/each}
+				{/each>-->
 			</div>
 			<div class="flex flex-col gap-1 p-2">
 				{#each bottom_services as service}

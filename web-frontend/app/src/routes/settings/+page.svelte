@@ -97,7 +97,7 @@
     }
 </script>
 
-<div class="flex">
+<div class="flex h-full">
     <!-- 左側メニュー -->
     <div class="w-50 bg-white border-r border-gray-200 shadow-sm">
         <div class="p-6 border-b border-gray-100">
