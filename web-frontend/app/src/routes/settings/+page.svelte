@@ -26,6 +26,7 @@
         Moon,
         Monitor,
     } from "lucide-svelte";
+    import { Toggle, Button } from "flowbite-svelte";
 
     // 設定項目の定義
     let settingsItems = [
@@ -96,7 +97,7 @@
     }
 </script>
 
-<div class="flex h-screen">
+<div class="flex">
     <!-- 左側メニュー -->
     <div class="w-50 bg-white border-r border-gray-200 shadow-sm">
         <div class="p-6 border-b border-gray-100">
@@ -165,19 +166,7 @@
                                                 誰でもあなたのプロフィールを見ることができます
                                             </p>
                                         </div>
-                                        <label
-                                            class="relative inline-flex items-center cursor-pointer"
-                                        >
-                                            <input
-                                                id="profile"
-                                                type="checkbox"
-                                                class="sr-only peer"
-                                                bind:checked={profile}
-                                            />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-mint-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"
-                                            />
-                                        </label>
+                                        <Toggle bind:checked={profile} class="hover:cursor-pointer" />
                                     </div>
                                     <!-- 誕生日を公開 -->
                                     <div
@@ -193,19 +182,7 @@
                                                 誕生日を他のユーザーに表示します
                                             </p>
                                         </div>
-                                        <label
-                                            class="relative inline-flex items-center cursor-pointer"
-                                        >
-                                            <input
-                                                id="birthday"
-                                                type="checkbox"
-                                                class="sr-only peer"
-                                                bind:checked={birthday}
-                                            />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-mint-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"
-                                            />
-                                        </label>
+                                        <Toggle bind:checked={birthday} class="hover:cursor-pointer" />
                                     </div>
                                     <!-- 出身地を公開 -->
                                     <div
@@ -221,19 +198,7 @@
                                                 出身地を他のユーザーに表示します
                                             </p>
                                         </div>
-                                        <label
-                                            class="relative inline-flex items-center cursor-pointer"
-                                        >
-                                            <input
-                                                id="location"
-                                                type="checkbox"
-                                                class="sr-only peer"
-                                                bind:checked={location}
-                                            />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-mint-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"
-                                            />
-                                        </label>
+                                        <Toggle bind:checked={location} class="hover:cursor-pointer" />
                                     </div>
                                     <!-- アクティビティを公開 -->
                                     <div
@@ -249,32 +214,22 @@
                                                 誰でもあなたのアクティビティを見ることができます
                                             </p>
                                         </div>
-                                        <label
-                                            class="relative inline-flex items-center cursor-pointer"
-                                        >
-                                            <input
-                                                id="activity"
-                                                type="checkbox"
-                                                class="sr-only peer"
-                                                bind:checked={activity}
-                                            />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-mint-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"
-                                            />
-                                        </label>
+                                        <Toggle bind:checked={activity} class="hover:cursor-pointer" />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-end mt-8">
-                        <button
+                        <Button
                             type="submit"
-                            class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                            class="px-6 py-3 hover:cursor-pointer"
+                            color="green"
+                            size="lg"
                             onclick={() => HandlePrivacySave?.()}
                         >
                             save
-                        </button>
+                        </Button>
                     </div>
                 </form>
             {/if}
@@ -359,13 +314,15 @@
                             </div>
                         </div>
                         <div class="flex justify-end mt-8">
-                            <button
+                            <Button
                                 type="submit"
-                                class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                                class="px-6 py-3 hover:cursor-pointer"
+                                color="green"
+                                size="lg"
                                 onclick={() => HandleThemeSave?.()}
                             >
                                 save
-                            </button>
+                            </Button>
                         </div>
                     </form>
                 </div>
@@ -400,32 +357,22 @@
                                                 通知を全部切れます　切れるナイフだw
                                             </p>
                                         </div>
-                                        <label
-                                            class="relative inline-flex items-center cursor-pointer"
-                                        >
-                                            <input
-                                                id="notification"
-                                                type="checkbox"
-                                                class="sr-only peer"
-                                                bind:checked={notification}
-                                            />
-                                            <div
-                                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-mint-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"
-                                            />
-                                        </label>
+                                        <Toggle bind:checked={notification} class="hover:cursor-pointer" />
                                       
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-end mt-8">
-                        <button
+                        <Button
                             type="submit"
-                            class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+                            class="px-6 py-3 hover:cursor-pointer"
+                            color="green"
+                            size="lg"
                             onclick={() => HandleNotificationSave?.()}
                         >
                             save
-                        </button>
+                        </Button>
                     </div>
                     </form>
                 </div>

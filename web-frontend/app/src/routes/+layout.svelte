@@ -143,12 +143,12 @@
 
 </script>
 
-<div class="flex flex-col h-full w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-center border-gray-300 p-4 border-b">
+<div class="flex flex-col h-screen w-full">
+	<div name="topbar" class="text-center flex flex-row items-center justify-center border-gray-300 p-4 border-b h-16">
 		<Input type="text" placeholder="検索" class="w-full mx-96" />
 		<UserInfo />
 	</div>
-	<div class="flex justify-between h-full">
+	<div class="flex justify-between flex-1">
 		<div class="flex items-start flex-col justify-between">
 			<button class="border border-gray-300 rounded-lg py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => showSidebar = !showSidebar}>
 				サイドバーを{showSidebar ? "閉じる" : "開く"}
@@ -174,15 +174,12 @@
 					</div>
 				</button>
 			</div>
-			<div class="flex flex-col gap-1 p-2 pb-6">
-				<UserInfo />
-			</div>
 		</div>
 
-		<div class="w-full border-x border-gray-300 h-screen">
+		<div class="w-full border-x border-gray-300 h-full">
 			{@render children()}
 		</div>
-		<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4 h-full">
+		<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
 			<div class="h-full">
 			<!--<div class="border border-gray-300 rounded-lg m-3">
 					<h2 class="text-gray-500 text-sm font-bold text-center py-2">トレンド<p>{trend_updated_at}</p></h2>
