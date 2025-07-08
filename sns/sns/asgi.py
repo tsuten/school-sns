@@ -14,13 +14,14 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
 from circle.consumers import CircleChatConsumer, CircleNotificationConsumer
-
+from notifications.consumers import TestConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sns.settings')
 
 websocket_urlpatterns = [
     path('ws/circle/<circle_id>/chat/', CircleChatConsumer.as_asgi()),
     path('ws/circle/<circle_id>/notifications/', CircleNotificationConsumer.as_asgi()),
+    path('ws/test/', TestConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({
