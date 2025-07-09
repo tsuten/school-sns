@@ -4,7 +4,33 @@ from django.db import models
 from users.models import User
 from enrollments.models import School, Class
 
-# Create your models here.
+class AnnouncementManager(models.Manager):
+    def post_announcement(self, title, content, posted_by, post_to, target, priority):
+        # ManyToManyフィールドの関連付け前にバリデーションを回避するため、
+        # 一時的にsave()をオーバーライドしてfull_clean()をスキップ
+        announcement = Announcement(
+            title=title,
+            content=content,
+            posted_by=posted_by,
+            priority=priority,
+        )
+        
+        # バリデーションをスキップしてオブジェクトを保存
+        super(Announcement, announcement).save()
+        
+        # ManyToManyフィールドに関連付けを追加
+        if post_to == 'school':
+            school = School.objects.get(id=target)
+            announcement.posted_to_school.add(school)
+        elif post_to == 'class':
+            class_obj = Class.objects.get(id=target)
+            announcement.posted_to_class.add(class_obj)
+        
+        # 関連付け後にバリデーションを実行
+        announcement.full_clean()
+        
+        return announcement
+
 class Announcement(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
@@ -18,6 +44,8 @@ class Announcement(models.Model):
     read = models.ManyToManyField(User, related_name='read_announcements', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = AnnouncementManager()
 
     def __str__(self):
         return self.title

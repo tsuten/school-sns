@@ -1,3 +1,25 @@
 from django.shortcuts import render
+from django.http import Http404
+from .models import Announcement
+from .schemas import AnnouncementPostSchema, AnnouncementResponseSchema
+from ninja import Router
+from ninja_jwt.authentication import JWTAuth
+from enrollments.models import School, Class
 
-# Create your views here.
+router = Router(tags=['announcement'])
+
+@router.post('/announcement/post', response=AnnouncementResponseSchema, auth=JWTAuth())
+def post_announcement(request, announcement: AnnouncementPostSchema):
+    print("うんこ:", announcement.post_to)
+    try:
+        announcement_obj = Announcement.objects.post_announcement(
+            title=announcement.title,
+            content=announcement.content,
+            posted_by=request.user,
+            post_to=announcement.post_to,
+            target=announcement.target,
+            priority=announcement.priority,
+        )
+        return AnnouncementResponseSchema.from_announcement(announcement_obj)
+    except (School.DoesNotExist, Class.DoesNotExist):
+        raise Http404("指定されたターゲットが見つかりません")
