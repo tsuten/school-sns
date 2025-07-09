@@ -15,7 +15,7 @@ export const connectTestWS = () => {
             {
                 name: data.name,
                 title: data.title,
-                read: data.read,
+                is_read: data.is_read,
                 createdAt: data.createdAt
             }
         ]);
