@@ -2,12 +2,9 @@
     import { onMount } from "svelte";
     import {
         Bell,
-        User,
-        Settings,
-        Calendar,
         Sun,
         Moon,
-        Monitor,
+        Shield,
     } from "lucide-svelte";
     import { Toggle, Button } from "flowbite-svelte";
 
