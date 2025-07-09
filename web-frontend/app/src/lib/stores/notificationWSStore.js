@@ -7,9 +7,9 @@ export const notification = writable();
 // イベント通知を処理する
 export const connectTestWS = () => {
     // 通知を受信するためにDjango WebSocketクライアントを接続
-    djangoWsClient.connectApp('/events/', {});
+    djangoWsClient.connectApp('/notification/', {});
      // イベントを監視
-    djangoWsClient.onApp('/events/', 'message', (data) => {
+    djangoWsClient.onApp('/notification/', 'message', (data) => {
         notification.update(state => [
             ...state,
             {
