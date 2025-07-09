@@ -1,21 +1,29 @@
 <script>
-    import BaseCard from '$lib/components/utils/baseCard.svelte';
-    import { getCurrentDateNormalized } from '$lib/utils/datetimeNormalize';
-    import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip} from 'lucide-svelte';
+    import BaseCard from "$lib/components/utils/baseCard.svelte";
+    import { getCurrentDateNormalized } from "$lib/utils/datetimeNormalize";
+    import {
+        MessageCircle,
+        OctagonAlert
+    } from "lucide-svelte";
+    import { apiClient } from "$lib/services/django";
+    import { onMount } from "svelte";
+    import { datetimeNormalize } from "$lib/utils/datetimeNormalize";
 
-    const nowDate = getCurrentDateNormalized();
-    const time = new Date();
-    
-
+    let { notification } = $props()
 </script>
-
 <BaseCard>
-    <MessageCircle />
-    <div>
-        mashiko100% さんが あなたにチャットしました
-    </div>
-    <div>
-        {nowDate} {time.getHours()}:{time.getMinutes()}
-    </div>
+    <div class="">
+        {#if notification.type == "message"}
+            <MessageCircle />
+        {:else if notification.type == "announcement"}
+            <OctagonAlert />
+        {/if}
 
+    </div>
+    <div class="">
+        {datetimeNormalize(notification.created_at)}
+    </div>
+    <div>
+        {notification.content}
+    </div>
 </BaseCard>
