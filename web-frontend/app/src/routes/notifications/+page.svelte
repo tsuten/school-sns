@@ -5,9 +5,10 @@
     import { apiClient } from "$lib/services/django";
     import { MessageCircle, OctagonAlert } from "lucide-svelte";
     import Page from "$lib/components/utils/page.svelte";
+    import { connectTestWS, notification as wsNotifications } from "$lib/stores/notificationWSStore.js";
     let { data } = $props();
 
-    let notifications = $state();
+    let notifications = $state([]);
     let filterType = $state();
 
     const filtered = $derived(() => {
@@ -17,23 +18,11 @@
     });
 
     onMount(async () => {
-        const response = await apiClient.get(
-            "/notifications/notifications",
-            {},
-        );
+        const response = await apiClient.get("/notifications/notifications");
 
-        notifications = response;
+        notifications = response.reverse();
 
-        // for (let i = 0; i < response.length; i++) {
-        //     console.log(response[i].id);
-        //     console.log(response[i].content);
-        //     console.log(response[i].is_read);
-        //     console.log(response[i].created_at);
-        //     console.log(response[i].type);
-        //     console.log(
-        //         "--------------------------------------------------------------",
-        //     );
-        // }
+        connectTestWS();
     });
 
 </script>
@@ -53,6 +42,9 @@
         </div>
 
         {#if filterType == null}
+        {#each wsNotifications as i}
+            <NotificationCard notification={i} />
+        {/each}
         {#each notifications as i}
             <NotificationCard notification={i} />
         {/each}
