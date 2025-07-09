@@ -149,10 +149,10 @@
 		<div>
 		</div>
 		<div class="flex flex-row items-center gap-2">
-			<Input type="text" placeholder="検索" class="w-full" />
+			<Input type="text" placeholder="検索" class="w-full h-8 rounded-sm"/>
 		</div>
 		<div class="flex flex-row items-center gap-4">
-			<Button color="light" size="sm" class="hover:cursor-pointer border-none !p-2" pill>
+			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill>
 				<Grip class="w-6 h-6 text-gray-500" />
 			</Button>
 			<Dropdown simple>
