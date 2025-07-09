@@ -2,7 +2,6 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
-"""
 class NotificationConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
@@ -50,7 +49,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'system_notification',
             'data': event['data']
         }))
-"""
 
 class TestConsumer(AsyncWebsocketConsumer):
     async def connect(self):
