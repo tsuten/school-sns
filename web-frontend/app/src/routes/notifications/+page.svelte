@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { apiClient } from "$lib/services/django";
     import { MessageCircle, OctagonAlert } from "lucide-svelte";
+    import Page from "$lib/components/utils/page.svelte";
     let { data } = $props();
 
     let notifications = $state();
@@ -37,29 +38,28 @@
 
 </script>
 
-<div class="flex flex-col gap-4">
-    <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold">通知</h1>
-    </div>
-    <div class="flex gap-4 justify-center">
-        <button
-            class="hover:scale-110 transition text-center"
-            onclick={() => (filterType = "message")}
-        >
-            <MessageCircle />
-        </button>
-        <div class="hover:scale-110 transition text-center">
-            <OctagonAlert />
+<Page>
+    <div class="flex flex-col gap-4">
+        <div class="flex gap-4 justify-center">
+            <button
+                class="hover:scale-110 transition text-center"
+                onclick={() => (filterType = "message")}
+            >
+                <MessageCircle />
+            </button>
+            <div class="hover:scale-110 transition text-center">
+                <OctagonAlert />
+            </div>
         </div>
-    </div>
 
-    {#if filterType == null}
-    {#each notifications as i}
-        <NotificationCard notification={i} />
-    {/each}
-    {:else}
-    {#each filtered as i}
-        <NotificationCard notification={i} />
-    {/each}
-    {/if}
-</div>
+        {#if filterType == null}
+        {#each notifications as i}
+            <NotificationCard notification={i} />
+        {/each}
+        {:else}
+        {#each filtered as i}
+            <NotificationCard notification={i} />
+        {/each}
+        {/if}
+    </div>
+</Page>
