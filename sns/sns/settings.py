@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'emojis',
     'enrollments',
     'announcement',
+    'notifications',
 ]
 
 MIDDLEWARE = [
