@@ -3,10 +3,14 @@
     // それを基にボタンでタブを切り替える処理を書く
     let { tabsData } = $props();
 </script>
+
 <div class="flex justify-around">
     {#each tabsData as t}
-        <a href="{t.href}"><button>{t.label}</button></a>
+        <a href={t.href} class="flex items-center space-x-2">
+            <button class="flex gap-2">
+                <t.icon />
+                {t.label}
+            </button>
+        </a>
     {/each}
-
-    
 </div>

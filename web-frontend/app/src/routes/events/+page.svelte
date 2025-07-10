@@ -6,9 +6,13 @@
         User,
         Bookmark,
         Plus,
+        Bird,
+        TicketPlus ,
+        TicketCheck ,
     } from "lucide-svelte";
     import EventCard from "$lib/components/page-components/eventCard.svelte";
     import EventForm from "$lib/components/page-components/eventForm.svelte";
+    import Tab from "$lib/components/page-components/tab.svelte"
     import { apiClient } from "$lib/services/django";
 
     // サーバーから取得したデータを受け取る
@@ -17,6 +21,19 @@
     // APIから取得したイベントデータ
     $: nextEvents = data.nextEvents || [];
     $: heldEvents = data.heldEvents || [];
+
+    let tabdata = [
+                   {
+                        label:"現在・未来のイベント",
+                        href:"/test",
+                        icon:TicketPlus
+                   },
+                   {
+                        label:"過去のイベント",
+                        href:"/test2",
+                        icon:TicketCheck
+                   }
+                ]
 
     // 日時をフォーマットする関数
     function formatDateTime(dateTimeString) {
@@ -67,6 +84,8 @@
     $: upcomingEvents = getUpcomingEvents();
 </script>
 
+<Tab tabsData={tabdata}/>
+
 <div class="flex flex-col gap-2 h-full p-2">
     <!-- 現在進行中のイベント -->
     {#if heldEvents.length > 0}
@@ -92,8 +111,13 @@
         <hr class="border-gray-300 my-4" />
     {/if}
 
+    <!-- EventForm を最上位レイヤーに配置 -->
     {#if showForm}
-        <EventForm on:added={handleDataAdded} onClose={closeForm} />
+        <div class="fixed inset-0 bg-gray bg-opacity-80 flex items-center justify-center z-[100]">
+            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <EventForm on:added={handleDataAdded} onClose={closeForm} />
+            </div>
+        </div>
     {/if}
 
     <!-- 今後のイベント -->
