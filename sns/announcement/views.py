@@ -5,6 +5,7 @@ from .schemas import AnnouncementPostSchema, AnnouncementResponseSchema
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
 from enrollments.models import School, Class
+from typing import List
 
 router = Router(tags=['announcement'])
 
@@ -23,3 +24,8 @@ def post_announcement(request, announcement: AnnouncementPostSchema):
         return AnnouncementResponseSchema.from_announcement(announcement_obj)
     except (School.DoesNotExist, Class.DoesNotExist):
         raise Http404("指定されたターゲットが見つかりません")
+
+@router.get('/announcements/{posted_to}/{id}', response=List[AnnouncementResponseSchema])
+def get_announcements(request, posted_to: str, id: str):
+    announcements = Announcement.objects.get_announcements(posted_to, id)
+    return [AnnouncementResponseSchema.from_announcement(announcement) for announcement in announcements]
