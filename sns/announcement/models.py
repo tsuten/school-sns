@@ -5,6 +5,15 @@ from users.models import User
 from enrollments.models import School, Class
 
 class AnnouncementManager(models.Manager):
+
+    def get_announcements(self, posted_to, id):
+        if posted_to == 'school':
+            return self.get_queryset().filter(is_deleted=False, posted_to_school=id).order_by('-created_at')
+        elif posted_to == 'class':
+            return self.get_queryset().filter(is_deleted=False, posted_to_class=id).order_by('-created_at')
+        else:
+            raise ValueError("posted_toが無効です")
+    
     def post_announcement(self, title, content, posted_by, post_to, target, priority):
         # ManyToManyフィールドの関連付け前にバリデーションを回避するため、
         # 一時的にsave()をオーバーライドしてfull_clean()をスキップ
@@ -51,7 +60,7 @@ class Announcement(models.Model):
         return self.title
 
     def clean(self):
-        if not self.posted_to_school.exists() and not self.posted_to_class.exists():
+        if not self.posted_to_school and not self.posted_to_class:
             raise ValidationError({
                 'posted_to_school': '学校かクラスのどちらかを選択してください。',
                 'posted_to_class': '学校かクラスのどちらかを選択してください。'
