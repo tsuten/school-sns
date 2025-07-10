@@ -16,19 +16,32 @@
     });
 
     let notifications = $state([]);
-    let filterType = $state();
+    let isFilter = $state(false);
+    let filteredNotifications = $state([]);
 
-    // 何をしているのかわからない -> 消していいすか？
-    const filtered = $derived(() => {
-        return filterType
-            ? notifications.filter((n) => n.type === filterType)
-            : notifications;
-    });
+    // 何をしているのかわからない関数
+    function notificationsFilter(type){
+        // filteredを初期化
+        filteredNotifications = []
+        // for文で中身を一個づつ取り出す
+        for (const notification of notifications) {
+            // 気合でフィルタリング
+            if (notification.type == type){
+                filteredNotifications.push(notification)
+                console.log("if処理行われています")
+            } 
+        }
+        console.log(filteredNotifications)
+        // フィルタリングが行われたので表示のためにtrue
+        isFilter = true
+    }
+    
 
     onMount(async () => {
         const response = await apiClient.get("/notifications/notifications");
 
         notifications = response.reverse();
+        console.log(notifications)
 
         connectTestWS();
     });
@@ -40,20 +53,28 @@
         <div class="flex gap-4 justify-center">
             <button
                 class="hover:scale-110 transition text-center"
-                onclick={() => (filterType = "message")}
+                onclick={() => (notificationsFilter("message"))}
             >
                 <MessageCircle />
             </button>
-            <div class="hover:scale-110 transition text-center">
+            <button class="hover:scale-110 transition text-center" onclick={() => (notificationsFilter("announcement"))}>
                 <OctagonAlert />
-            </div>
+            </button>
         </div>
         
-        {#if filterType == null}
+
+        {#if isFilter == false}
             {#each wsNotificationsReversed as i}
                 <NotificationCard notification={i} />
             {/each}
             {#each notifications as i}
+                <NotificationCard notification={i} />
+            {/each}
+        {:else}
+            {#each wsNotificationsReversed as i}
+                <NotificationCard notification={i} />
+            {/each}
+            {#each filteredNotifications as i}
                 <NotificationCard notification={i} />
             {/each}
         {/if}
