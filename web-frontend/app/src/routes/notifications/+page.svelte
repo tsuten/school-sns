@@ -21,21 +21,23 @@
 
     // 何をしているのかわからない関数
     function notificationsFilter(type){
+        if (isFilter) {
+            isFilter = false;
+            return;
+        }
+        
         // filteredを初期化
         filteredNotifications = []
-        // for文で中身を一個づつ取り出す
         for (const notification of notifications) {
             // 気合でフィルタリング
             if (notification.type == type){
                 filteredNotifications.push(notification)
-                console.log("if処理行われています")
-            } 
-        }
+            }
+         }
         console.log(filteredNotifications)
         // フィルタリングが行われたので表示のためにtrue
         isFilter = true
     }
-    
 
     onMount(async () => {
         const response = await apiClient.get("/notifications/notifications");
@@ -45,7 +47,6 @@
 
         connectTestWS();
     });
-
 </script>
 
 <Page>
@@ -61,8 +62,7 @@
                 <OctagonAlert />
             </button>
         </div>
-        
-
+                 
         {#if isFilter == false}
             {#each wsNotificationsReversed as i}
                 <NotificationCard notification={i} />
