@@ -17,11 +17,12 @@
 
     let notifications = $state([]);
     let isFilter = $state(false);
+    let filterTyped = $state();
     let filteredNotifications = $state([]);
 
     // 何をしているのかわからない関数
     function notificationsFilter(type){
-        if (isFilter) {
+        if (isFilter == true && filterTyped == type ) {
             isFilter = false;
             return;
         }
@@ -37,6 +38,7 @@
         console.log(filteredNotifications)
         // フィルタリングが行われたので表示のためにtrue
         isFilter = true
+        filterTyped = type
     }
 
     onMount(async () => {
