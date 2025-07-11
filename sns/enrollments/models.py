@@ -10,6 +10,17 @@ class EnrollmentManager(models.Manager):
         classes = Class.objects.filter(students=user)
         schools = [class_obj.school for class_obj in classes if class_obj.school]
         return classes, schools
+    
+    def get_members(self, class_id):
+        class_obj = Class.objects.get(id=class_id)
+        return class_obj.students.all()
+    
+    def get_user_classes(self, user_id):
+        from users.models import User
+        
+        user = User.objects.get(id=user_id)
+        classes = Class.objects.filter(students=user)
+        return classes
 
 class School(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

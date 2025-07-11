@@ -34,6 +34,27 @@ class UserProfileSchema(Schema):
             updated_at=profile.updated_at,
         )
     
+    @classmethod
+    def from_user(cls, user):
+        """UserインスタンスからUserProfileを取得してスキーマを作成"""
+        try:
+            profile = user.profile
+            return cls.from_profile(profile)
+        except:
+            # プロフィールが存在しない場合のデフォルト値
+            return cls(
+                user_id=str(user.id),
+                user_username=user.username,
+                display_name=None,
+                bio=None,
+                birthday=None,
+                location=None,
+                birth_place=None,
+                pfp=None,
+                created_at=user.date_joined,
+                updated_at=user.date_joined,
+            )
+    
 class UserProfileUpdateSchema(Schema):
     display_name: Optional[str] = None
     bio: Optional[str] = None
@@ -50,6 +71,18 @@ class ClassSchema(Schema):
     school_id: Optional[str] = None
     school_name: Optional[str] = None
 
+    @classmethod
+    def from_class(cls, class_obj):
+        """ClassオブジェクトからClassSchemaを作成"""
+        return cls(
+            id=str(class_obj.id),
+            name=class_obj.name,
+            grade_number=class_obj.grade_number,
+            class_number=class_obj.class_number,
+            school_id=str(class_obj.school.id) if class_obj.school else None,
+            school_name=class_obj.school.name if class_obj.school else None,
+        )
+
 class SchoolSchema(Schema):
     id: str
     name: str
@@ -64,14 +97,7 @@ class UserAffiliationSchema(Schema):
         # Classオブジェクトから ClassSchema への変換
         class_schemas = []
         for class_obj in classes:
-            class_schemas.append(ClassSchema(
-                id=str(class_obj.id),
-                name=class_obj.name,
-                grade_number=class_obj.grade_number,
-                class_number=class_obj.class_number,
-                school_id=str(class_obj.school.id) if class_obj.school else None,
-                school_name=class_obj.school.name if class_obj.school else None,
-            ))
+            class_schemas.append(ClassSchema.from_class(class_obj))
         
         # Schoolオブジェクトから SchoolSchema への変換
         school_schemas = []
