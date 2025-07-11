@@ -11,11 +11,12 @@
 	import { setUserFromServerData, logout as authLogout, isAuthenticated, currentUser } from '../lib/stores/auth.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api } from '../lib/services/django.js';
+	import { apiClient } from '../lib/services/django.js';
 	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
 	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
 	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
 	import ServicesGridMenu from '../lib/components/card/topbar/servicesGridMenu.svelte';
+	import UserIcon from '../lib/components/utils/userIcon.svelte';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
@@ -134,6 +135,17 @@
 		},*/
 	]
 
+	let your_classes = $state([]);
+
+	onMount(async () => {
+		const response = await apiClient.get("/enrollments/my_classes");
+		your_classes = response.map(class_obj => ({
+			icon: School,
+			href: `/class/${class_obj.id}`,
+			label: class_obj.name
+		}));
+	});
+
 	let bottom_services = [
 		{
 			icon: Settings,
@@ -158,10 +170,13 @@
 			<Dropdown simple>
 				<ServicesGridMenu />
 			</Dropdown>
-			<UserInfo />
+			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill>
+				<Bell class="w-6 h-6 text-gray-500" />
+			</Button>
+			<UserIcon />
 		</div>
 	</div>
-	<div class="flex justify-between flex-1">
+	<div class="flex justify-between flex-1 h-full">
 		<div class="flex items-start flex-col justify-between">
 			<button class="border border-gray-300 rounded-lg py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => showSidebar = !showSidebar}>
 				サイドバーを{showSidebar ? "閉じる" : "開く"}
@@ -172,10 +187,10 @@
 				{#each services as service}
 					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
 				{/each}
-				<!--<h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
-				{#each enrollment_services as service}
+				<h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
+				{#each your_classes as service}
 					<SidebarButton icon={service.icon} href={service.href} label={service.label} />
-				{/each>-->
+				{/each}
 			</div>
 			<div class="flex flex-col gap-1 p-2">
 				{#each bottom_services as service}
