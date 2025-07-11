@@ -7,13 +7,14 @@
         Bookmark,
         Plus,
         Bird,
-        TicketPlus ,
-        TicketCheck ,
+        TicketPlus,
+        TicketCheck,
     } from "lucide-svelte";
     import EventCard from "$lib/components/page-components/eventCard.svelte";
     import EventForm from "$lib/components/page-components/eventForm.svelte";
-    import Tab from "$lib/components/page-components/tab.svelte"
+    import Tab from "$lib/components/page-components/tab.svelte";
     import { apiClient } from "$lib/services/django";
+    import { fly } from 'svelte/transition';
 
     // サーバーから取得したデータを受け取る
     export let data;
@@ -23,17 +24,17 @@
     $: heldEvents = data.heldEvents || [];
 
     let tabdata = [
-                   {
-                        label:"現在・未来のイベント",
-                        href:"/test",
-                        icon:TicketPlus
-                   },
-                   {
-                        label:"過去のイベント",
-                        href:"/test2",
-                        icon:TicketCheck
-                   }
-                ]
+        {
+            label: "現在・未来のイベント",
+            href: "/test",
+            icon: TicketPlus,
+        },
+        {
+            label: "過去のイベント",
+            href: "/test2",
+            icon: TicketCheck,
+        },
+    ];
 
     // 日時をフォーマットする関数
     function formatDateTime(dateTimeString) {
@@ -84,7 +85,7 @@
     $: upcomingEvents = getUpcomingEvents();
 </script>
 
-<Tab tabsData={tabdata}/>
+<Tab tabsData={tabdata} />
 
 <div class="flex flex-col gap-2 h-full p-2">
     <!-- 現在進行中のイベント -->
@@ -113,8 +114,12 @@
 
     <!-- EventForm を最上位レイヤーに配置 -->
     {#if showForm}
-        <div class="fixed inset-0 bg-gray bg-opacity-80 flex items-center justify-center z-[100]">
-            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="fixed inset-0 flex items-end justify-center z-[100] p-4">
+            <div
+                class="bg-white rounded-lg w-full max-w-[68vw] max-h-[70vh] overflow-y-auto shadow-2xl"
+                in:fly={{ y: 200, duration: 400 }}
+                out:fly={{ y: 200, duration: 400 }}
+            >
                 <EventForm on:added={handleDataAdded} onClose={closeForm} />
             </div>
         </div>
