@@ -4,10 +4,10 @@
     let { tabsData } = $props();
 </script>
 
-<div class="flex justify-around flex-wrap">
+<div class="flex justify-around border-b border-gray-300">
     {#each tabsData as t}
-        <a href={t.href} class="flex items-center space-x-2">
-            <button class="flex gap-2 hover:bg-red-700 px-20 py-3">
+        <a href={t.href} class="flex items-center w-full">
+            <button class="flex gap-2 hover:bg-gray-200 w-full hover:cursor-pointer justify-center h-10 items-center transition-all duration-300">
                 <t.icon />
                 {t.label}
             </button>
