@@ -4,7 +4,7 @@ from django.db.models import Q, Max, Count
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
 import uuid
-from .models import Message
+from .models import Message, ClassMessage
 from .schemas import (
     MessageSchema, 
     MessageListInputSchema, 
@@ -15,6 +15,7 @@ from .schemas import (
     MessageReadOutputSchema,
     WhoSentMessage,
     UsersHaveHistoryWithUserOutputSchema,
+    ClassMessageListOutputSchema,
 )
 
 # viewsに直接ビジネスロジックを書いているので後々サービス層作ってそこに移行
@@ -218,3 +219,35 @@ def get_users_have_history_with_user(request):
     except Exception as e:
         from ninja.errors import HttpError
         raise HttpError(400, f"ユーザーのリストの取得に失敗しました: {str(e)}")
+    
+@router.get("/class-messages/{class_id}", response=ClassMessageListOutputSchema, auth=JWTAuth())
+def get_class_messages(request, class_id: uuid.UUID):
+    """クラスのメッセージを取得"""
+    try:
+        messages = ClassMessage.objects.get_messages_by_class_id(class_id).select_related('sender', 'sender__profile').order_by('created_at')
+        
+        # 手動でスキーマに変換
+        message_schemas = []
+        for message in messages:
+            # senderのUserProfileSchemaを作成
+            if message.sender:
+                from users.schemas import UserProfileSchema
+                sender_schema = UserProfileSchema.from_user(message.sender)
+            else:
+                # senderがNoneの場合のデフォルト値
+                sender_schema = None
+            
+            # ClassMessageSchemaを作成
+            message_schema = {
+                'id': message.id,
+                'sender': sender_schema,
+                'content': message.content,
+                'created_at': message.created_at,
+                'updated_at': message.updated_at
+            }
+            message_schemas.append(message_schema)
+        
+        return ClassMessageListOutputSchema(messages=message_schemas)
+    except Exception as e:
+        from ninja.errors import HttpError
+        raise HttpError(400, f"クラスのメッセージの取得に失敗しました: {str(e)}")

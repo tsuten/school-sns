@@ -4,6 +4,29 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
+from enrollments.models import Class
+
+class BaseMessage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sender')
+    content = models.TextField()
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def delete_message(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore_message(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+
+
+# 個人メッセージ
 class MessageManager(models.Manager):
     def get_from_sender(self, sender_id):
         return self.filter(sender_id=sender_id)
@@ -96,6 +119,18 @@ class Message(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super(Message, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.content
+    
+class ClassMessageManager(models.Manager):
+    def get_messages_by_class_id(self, class_id):
+        return self.filter(class_id=class_id)
+    
+class ClassMessage(BaseMessage):
+    class_id = models.ForeignKey(Class, on_delete=models.CASCADE)
+
+    objects = ClassMessageManager()
 
     def __str__(self):
         return self.content
