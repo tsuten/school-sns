@@ -1,24 +1,18 @@
 <script>
     /** @type {{ data: import('./$types').PageData }} */
     import NotificationCard from "$lib/components/card/notification/notificationCard.svelte";
-    import { onMount } from "svelte";
-    import { apiClient } from "$lib/services/django";
     import { MessageCircle, OctagonAlert } from "lucide-svelte";
     import Page from "$lib/components/utils/page.svelte";
-    import { connectTestWS, Notifications as wsNotifications } from "$lib/stores/notificationWSStore.js";
+    import { Notifications as wsNotifications } from "$lib/stores/notificationWSStore.js";
     let { data } = $props();
-
-    let wsNotificationsReversed = $state([]);
-
-    // subscribeの代わりに$effectを使用してリアクティブに監視
-    $effect(() => {
-        wsNotificationsReversed = $wsNotifications.reverse();
-    });
 
     let notifications = $state([]);
     let isFilter = $state(false);
     let filterTyped = $state();
     let filteredNotifications = $state([]);
+
+// 一度コピーを作成してからreverse
+    let reversedNotifications = $derived([...$wsNotifications].reverse());
 
     // 何をしているのかわからない関数
     function notificationsFilter(type){
@@ -41,14 +35,6 @@
         filterTyped = type
     }
 
-    onMount(async () => {
-        const response = await apiClient.get("/notifications/notifications");
-
-        notifications = response.reverse();
-        console.log(notifications)
-
-        connectTestWS();
-    });
 </script>
 
 <Page>
@@ -66,19 +52,19 @@
         </div>
                  
         {#if isFilter == false}
-            {#each wsNotificationsReversed as i}
-                <NotificationCard notification={i} />
+            {#each reversedNotifications as notification}
+                <NotificationCard notification={notification} />
             {/each}
-            {#each notifications as i}
+            <!-- {#each notifications as i}
                 <NotificationCard notification={i} />
-            {/each}
+            {/each} -->
         {:else}
-            {#each wsNotificationsReversed as i}
-                <NotificationCard notification={i} />
+            {#each reversedNotifications as notification}
+                <NotificationCard notification={notification} />
             {/each}
-            {#each filteredNotifications as i}
+            <!-- {#each filteredNotifications as i}
                 <NotificationCard notification={i} />
-            {/each}
+            {/each} -->
         {/if}
     </div>
 </Page>

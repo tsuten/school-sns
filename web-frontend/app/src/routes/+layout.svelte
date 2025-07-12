@@ -17,6 +17,7 @@
 	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
 	import ServicesGridMenu from '../lib/components/card/topbar/servicesGridMenu.svelte';
 	import UserIcon from '../lib/components/utils/userIcon.svelte';
+	import NotificationDropdown from '../lib/components/card/topbar/notificationDropdown.svelte';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
@@ -173,6 +174,9 @@
 			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill>
 				<Bell class="w-6 h-6 text-gray-500" />
 			</Button>
+			<Dropdown simple>
+				<NotificationDropdown />
+			</Dropdown>
 			<UserIcon />
 		</div>
 	</div>
