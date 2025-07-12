@@ -21,12 +21,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        await self.send(text_data=json.dumps({
-            'type': 'connection',
-            'message': 'connected',
-            'connected_to': self.user_group_name,
-            'user_id': self.user_id
-        }))
+        # await self.send(text_data=json.dumps({
+        #     'type': 'connection',
+        #     'message': 'connected',
+        #     'connected_to': self.user_group_name,
+        #     'user_id': self.user_id
+        # }))
 
     async def disconnect(self, close_code):
         # グループからの削除（認証されていない場合はuser_group_nameが設定されていない可能性があるため確認）
