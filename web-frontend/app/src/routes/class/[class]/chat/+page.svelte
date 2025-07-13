@@ -3,7 +3,8 @@
     import Page from "$lib/components/utils/page.svelte";
     import { page } from "$app/stores";
     import { browser } from '$app/environment';
-
+    import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
+    import Input from "$lib/components/utils/chat/input.svelte";
     let classId = $derived($page.params?.class);
 
     $inspect("messages", $messages);
@@ -19,13 +20,7 @@
     });
 </script>
 
-<Page>
-    <div class="flex flex-col gap-4">
-        <h1 class="text-2xl font-bold">チャット</h1>
-        {#each $messages as message}
-            <div class="flex flex-col gap-2">
-                <span class="text-sm text-gray-500">{message.content}</span>
-            </div>
-        {/each}
-    </div>
+<Page class="flex flex-col h-full">
+    <ChatCore messages={$messages} />
+    <Input />
 </Page>

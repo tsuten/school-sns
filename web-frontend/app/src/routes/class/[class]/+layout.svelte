@@ -34,7 +34,7 @@
     ]
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 h-full">
     <div class="">
         <Tab tabsData={tabs} />
     </div>
