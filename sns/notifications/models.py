@@ -12,9 +12,11 @@ class NotificationManager(models.Manager):
 
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)
+    issued_by = models.UUIDField(null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     type = models.CharField(max_length=255, choices=NotificationType.choices, null=True, blank=True)
     content = models.TextField(default="")
+    href_web = models.CharField(max_length=255, default="", null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
