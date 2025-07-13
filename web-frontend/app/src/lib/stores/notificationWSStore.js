@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 import djangoWsClient from '$lib/services/djangoWS.js';
 import { apiClient } from '$lib/services/django.js';
 import { authService } from '$lib/services/auth.js';
+import { addToast } from '$lib/stores/toast.js';
 
 // 通知がここに格納される
 export const Notifications = writable([]);
@@ -29,6 +30,8 @@ export const connectToNotificationWS = async () => {
                 created_at: data.created_at
             }
         ]);
+        
+        addToast(data.content, 'info', 4000);
     });
 }
 
