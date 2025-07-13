@@ -21,6 +21,10 @@ class EnrollmentManager(models.Manager):
         user = User.objects.get(id=user_id)
         classes = Class.objects.filter(students=user)
         return classes
+    
+    def get_class_info(self, class_id):
+        class_obj = Class.objects.get(id=class_id)
+        return class_obj
 
 class School(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

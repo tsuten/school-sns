@@ -2,6 +2,7 @@ from django.shortcuts import render
 from ninja import Router
 from .models import Class, School
 from users.schemas import UserProfileSchema, ClassSchema
+from .schemas import ClassInfoSchema
 from typing import List
 from ninja_jwt.authentication import JWTAuth    
 
@@ -16,3 +17,8 @@ def get_members(request, class_id: str):
 def get_my_classes(request):
     classes = Class.objects.get_user_classes(request.user.id)
     return [ClassSchema.from_class(class_obj) for class_obj in classes]
+
+@router.get("/class_info/{class_id}", response=ClassInfoSchema, auth=JWTAuth())
+def get_class_info(request, class_id: str):
+    class_obj = Class.objects.get_class_info(class_id)
+    return ClassInfoSchema.from_class(class_obj)
