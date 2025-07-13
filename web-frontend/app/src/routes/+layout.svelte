@@ -12,6 +12,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { apiClient } from '../lib/services/django.js';
+	import { page } from '$app/stores';
 	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
 	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
 	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
@@ -158,7 +159,7 @@
 </script>
 
 <div class="flex flex-col h-screen w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-4 border-b h-16">
+	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-4 border-b h-16 flex-shrink-0">
 		<div>
 		</div>
 		<div class="flex flex-row items-center gap-2">
@@ -180,7 +181,7 @@
 			<UserIcon />
 		</div>
 	</div>
-	<div class="flex justify-between flex-1 h-full">
+	<div class="flex justify-between flex-1 min-h-0 overflow-hidden">
 		<div class="flex items-start flex-col justify-between">
 			<button class="border border-gray-300 rounded-lg py-2 w-full text-center text-gray-500 text-sm font-bold hover:cursor-pointer hover:bg-gray-200" onclick={() => showSidebar = !showSidebar}>
 				サイドバーを{showSidebar ? "閉じる" : "開く"}
@@ -209,7 +210,11 @@
 		</div>
 
 		<div class="w-full border-x border-gray-300 h-full">
-			{@render children()}
+			{#key $page.url.pathname}
+				<div class="page-transition page-transition-in h-full">
+					{@render children()}
+				</div>
+			{/key}
 		</div>
 		<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
 			<div class="h-full">
