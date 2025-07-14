@@ -16,7 +16,6 @@
 </script>
 
 <Page>
-    <h1>お知らせ</h1>
     {#each announcements as announcement}
         <AnnouncementCard announcement={announcement} />
     {/each}
