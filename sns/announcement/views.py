@@ -29,3 +29,8 @@ def post_announcement(request, announcement: AnnouncementPostSchema):
 def get_announcements(request, posted_to: str, id: str):
     announcements = Announcement.objects.get_announcements(posted_to, id)
     return [AnnouncementResponseSchema.from_announcement(announcement) for announcement in announcements]
+
+@router.post('/announcement/{id}/read', auth=JWTAuth())
+def read_announcement(request, id: str):
+    response = Announcement.objects.read_announcement(request.user.id, id)
+    return response

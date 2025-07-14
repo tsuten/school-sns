@@ -22,6 +22,7 @@ class AnnouncementResponseSchema(Schema):
     posted_by: str  # ユーザー名
     posted_to_schools: List[str]  # 学校名のリスト
     posted_to_classes: List[str]  # クラス名のリスト
+    users_read: List[str]  # 既読したユーザー名のリスト
     
     @classmethod
     def from_announcement(cls, announcement):
@@ -37,4 +38,5 @@ class AnnouncementResponseSchema(Schema):
             posted_by=announcement.posted_by.username,
             posted_to_schools=[school.name for school in announcement.posted_to_school.all()],
             posted_to_classes=[f"{cls.school.name} - {cls.name}" for cls in announcement.posted_to_class.all()],
+            users_read=[user.username for user in announcement.read.all()],
         )

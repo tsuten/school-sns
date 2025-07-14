@@ -39,6 +39,25 @@ class AnnouncementManager(models.Manager):
         announcement.full_clean()
         
         return announcement
+    
+    def read_announcement(self, user_id, announcement_id):
+        try:
+            announcement = self.get_queryset().get(id=announcement_id)
+            user = User.objects.get(id=user_id)
+            
+            # 既読チェック
+            if announcement.read.filter(id=user_id).exists():
+                return {"message": "既に既読です"}
+            
+            # 既読に追加
+            announcement.read.add(user)
+            announcement.save()
+            return {"message": "既読にしました"}
+            
+        except Announcement.DoesNotExist:
+            raise ValueError("指定されたお知らせが見つかりません")
+        except User.DoesNotExist:
+            raise ValueError("指定されたユーザーが見つかりません")
 
 class Announcement(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -55,6 +74,11 @@ class Announcement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = AnnouncementManager()
+
+    def read_announcement(self, user_id):
+        user = User.objects.get(id=user_id)
+        self.read.add(user)
+        self.save()
 
     def __str__(self):
         return self.title
