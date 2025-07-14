@@ -23,7 +23,7 @@
         
         // filteredを初期化
         filteredNotifications = []
-        for (const notification of notifications) {
+        for (const notification of reversedNotifications) {
             // 気合でフィルタリング
             if (notification.type == type){
                 filteredNotifications.push(notification)
@@ -59,7 +59,7 @@
                 <NotificationCard notification={i} />
             {/each} -->
         {:else}
-            {#each reversedNotifications as notification}
+            {#each filteredNotifications as notification}
                 <NotificationCard notification={notification} />
             {/each}
             <!-- {#each filteredNotifications as i}
