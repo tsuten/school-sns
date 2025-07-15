@@ -22,3 +22,7 @@ def get_my_classes(request):
 def get_class_info(request, class_id: str):
     class_obj = Class.objects.get_class_info(class_id)
     return ClassInfoSchema.from_class(class_obj)
+
+@router.get("/is_manager/{class_id}", response=bool, auth=JWTAuth())
+def is_manager(request, class_id: str):
+    return Class.objects.is_manager(request.user.id, class_id)
