@@ -4,16 +4,17 @@
     import { Badge } from 'flowbite-svelte';
     import { Notifications } from '$lib/stores/notificationWSStore.js';
     import { timeNormalize } from '$lib/utils/datetimeNormalize';
+    let reversedNotifications = $derived([...$Notifications].reverse());
 </script>
 
 <WidgetBase title="通知" icon={Bell} href="/notifications">
     {#snippet snippet()}
         <ul class="flex flex-col gap-1 w-full">
-            {#each $Notifications.slice(0, 5) as notification}
+            {#each reversedNotifications.slice(0, 5) as notification}
             <li class="flex items-center justify-between gap-1">
                 <div class="flex items-center gap-1">
                     <MessageCircle class="w-4 h-4" />
-                    <p>{notification.content}</p>
+                    <p class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[19ch]">{notification.content}</p>
                 </div>
                 <Badge color="gray">{timeNormalize(notification.created_at)}</Badge>
             </li>

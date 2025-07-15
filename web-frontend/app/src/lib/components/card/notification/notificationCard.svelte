@@ -41,9 +41,9 @@
             <svelte:component this={getNotificationIcon(notification.type)} class="w-12 h-12" />
             <div class="flex flex-col gap-1">
                 <div class="text-sm text-gray-500">
-                    {getNotificationType(notification.type)}
+                    <p class="">{getNotificationType(notification.type)}</p>
                 </div>
-                {notification.content}
+                <p class="max-w-[70ch] break-words whitespace-normal leading-relaxed">{notification.content}</p>
             </div>
         </div>
         <div class="flex flex-col gap-1 justify-between">
