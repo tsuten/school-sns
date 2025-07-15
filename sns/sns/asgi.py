@@ -17,6 +17,7 @@ from circle.consumers import CircleChatConsumer, CircleNotificationConsumer
 from notifications.consumers import TestConsumer, NotificationConsumer
 from enrollments.consumers import ClassChatConsumer
 from sns.utils.websocket_auth import JWTAuthMiddlewareStack
+from websocket.unified_consumers import UnifiedConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sns.settings')
 
@@ -26,6 +27,7 @@ websocket_urlpatterns = [
     path('ws/class/<class_id>', ClassChatConsumer.as_asgi()),
     path('ws/test/', TestConsumer.as_asgi()),
     path('ws/notification', NotificationConsumer.as_asgi()),
+    path('ws/unified', UnifiedConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({
