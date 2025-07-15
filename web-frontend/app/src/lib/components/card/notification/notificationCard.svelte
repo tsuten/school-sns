@@ -43,7 +43,7 @@
                 <div class="text-sm text-gray-500">
                     <p class="">{getNotificationType(notification.type)}</p>
                 </div>
-                <p class="max-w-[70ch] break-words whitespace-normal leading-relaxed">{notification.content}</p>
+                <p class="max-w-[60ch] break-words whitespace-normal leading-relaxed">{notification.content}</p>
             </div>
         </div>
         <div class="flex flex-col gap-1 justify-between">

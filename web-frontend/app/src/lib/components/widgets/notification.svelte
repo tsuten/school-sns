@@ -1,9 +1,23 @@
 <script>
-    import WidgetBase from './widgetBase.svelte';
-    import { MessageCircle, Heart, Vote, Calendar, Key, Bell } from 'lucide-svelte';
-    import { Badge } from 'flowbite-svelte';
-    import { Notifications } from '$lib/stores/notificationWSStore.js';
-    import { timeNormalize } from '$lib/utils/datetimeNormalize';
+    import WidgetBase from "./widgetBase.svelte";
+    import {
+        MessageCircle,
+        Heart,
+        Vote,
+        Calendar,
+        Key,
+        Bell,
+    } from "lucide-svelte";
+    import { Badge } from "flowbite-svelte";
+    import { Notifications } from "$lib/stores/notificationWSStore.js";
+    import { datetimeNormalize } from "$lib/utils/datetimeNormalize";
+    import dayjs from "dayjs";
+    import relativeTime from "dayjs/plugin/relativeTime";
+    import "dayjs/locale/ja";
+
+    dayjs.extend(relativeTime);
+    dayjs.locale("ja");
+
     let reversedNotifications = $derived([...$Notifications].reverse());
 </script>
 
@@ -11,18 +25,35 @@
     {#snippet snippet()}
         <ul class="flex flex-col gap-1 w-full">
             {#each reversedNotifications.slice(0, 5) as notification}
-            <li class="flex items-center justify-between gap-1">
-                <div class="flex items-center gap-1">
-                    <MessageCircle class="w-4 h-4" />
-                    <p class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[19ch]">{notification.content}</p>
-                </div>
-                <Badge color="gray">{timeNormalize(notification.created_at)}</Badge>
-            </li>
+                <li class="flex items-center justify-between gap-1">
+                    <div class="flex items-center gap-1">
+                        <MessageCircle class="w-4 h-4" />
+                        <p class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[6ch]">
+                            {notification.content}
+                        </p>
+                    </div>
+                    <Badge color="gray"
+                        >{dayjs().to(
+                            dayjs(datetimeNormalize(notification.created_at)),
+                        )}
+                    </Badge>
+                </li>
             {/each}
-            <li class="flex items-center gap-1 whitespace-nowrap"><Heart class="w-4 h-4" /><p class="overflow-hidden text-ellipsis w-full">あなたの投稿がいいねされましたよん</p></li>
-            <li class="flex items-center gap-1"><Vote class="w-4 h-4" />投票が終了しました</li>
-            <li class="flex items-center gap-1"><Calendar class="w-4 h-4" />イベントが開催されます</li>
-            <li class="flex items-center gap-1"><Key class="w-4 h-4" />パスワードが変更されました</li>
+            <!-- <li class="flex items-center gap-1 whitespace-nowrap">
+                <Heart class="w-4 h-4" />
+                <p class="overflow-hidden text-ellipsis w-full">
+                    あなたの投稿がいいねされましたよん
+                </p>
+            </li>
+            <li class="flex items-center gap-1">
+                <Vote class="w-4 h-4" />投票が終了しました
+            </li>
+            <li class="flex items-center gap-1">
+                <Calendar class="w-4 h-4" />イベントが開催されます
+            </li>
+            <li class="flex items-center gap-1">
+                <Key class="w-4 h-4" />パスワードが変更されました
+            </li> -->
         </ul>
     {/snippet}
 </WidgetBase>
