@@ -1,56 +1,84 @@
 from django import forms
-from .models import Announcement, School, Class
+from .models import Announcement
+from enrollments.models import School, Class
+
+class PostToChoiceField(forms.ChoiceField):
+    """学校とクラスを統合したドロップダウンフィールド"""
+    
+    def __init__(self, *args, **kwargs):
+        choices = [('', '配信先を選択してください')]
+        
+        # 学校の選択肢を追加
+        for school in School.objects.all():
+            choices.append((f"school_{school.id}", f"学校: {school.name}"))
+        
+        # クラスの選択肢を追加
+        for class_obj in Class.objects.all():
+            choices.append((f"class_{class_obj.id}", f"クラス: {class_obj.name}"))
+        
+        kwargs['choices'] = choices
+        super().__init__(*args, **kwargs)
 
 class AnnouncementForm(forms.ModelForm):
-    # 配信先の種類を選択するラジオボタン
-    post_to_type = forms.ChoiceField(
-        choices=[('school', '学校全体'), ('class', 'クラス単位')],
-        widget=forms.RadioSelect,
-        label="配信先の種類",
-        required=True
-    )
-
-    # 配信先の学校を選択するドロップダウン
-    target_school = forms.ModelChoiceField(
-        queryset=School.objects.all(),
-        label="対象の学校",
-        required=False
-    )
-
-    # 配信先のクラスを選択するドロップダウン
-    target_class = forms.ModelChoiceField(
-        queryset=Class.objects.all(),
-        label="対象のクラス",
-        required=False
+    # 統合された配信先選択フィールド
+    post_to_selection = PostToChoiceField(
+        label="配信先",
+        required=True,
+        help_text="配信先の学校またはクラスを選択してください"
     )
 
     class Meta:
         model = Announcement
-        # posted_by を除外。これは管理画面側で自動設定します。
         fields = ['title', 'content', 'priority', 'is_pinned']
-    
-    class Media:
-        js = ('announcement/admin.js',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            if self.instance.posted_to_school.exists():
-                self.fields['post_to_type'].initial = 'school'
-                self.fields['target_school'].initial = self.instance.posted_to_school.first()
-            elif self.instance.posted_to_class.exists():
-                self.fields['post_to_type'].initial = 'class'
-                self.fields['target_class'].initial = self.instance.posted_to_class.first()
-
-    def clean(self):
-        cleaned_data = super().clean()
-        post_type = cleaned_data.get('post_to_type')
-        school = cleaned_data.get('target_school')
-        class_ = cleaned_data.get('target_class')
-
-        if post_type == 'school' and not school:
-            self.add_error('target_school', '学校を選択してください。')
-        elif post_type == 'class' and not class_:
-            self.add_error('target_class', 'クラスを選択してください。')
         
-        return cleaned_data 
+        # 編集時の初期値設定
+        if self.instance and self.instance.pk and self.instance.post_to:
+            try:
+                # 学校かクラスかを判定して初期値を設定
+                school = School.objects.filter(id=self.instance.post_to).first()
+                if school:
+                    self.fields['post_to_selection'].initial = f"school_{school.id}"
+                else:
+                    class_obj = Class.objects.filter(id=self.instance.post_to).first()
+                    if class_obj:
+                        self.fields['post_to_selection'].initial = f"class_{class_obj.id}"
+            except:
+                pass
+
+    def clean_post_to_selection(self):
+        """post_to_selectionの値を検証し、UUIDを抽出"""
+        selection = self.cleaned_data.get('post_to_selection')
+        if not selection:
+            raise forms.ValidationError('配信先を選択してください。')
+        
+        try:
+            target_type, target_id = selection.split('_', 1)
+            if target_type == 'school':
+                school = School.objects.get(id=target_id)
+                return school.id
+            elif target_type == 'class':
+                class_obj = Class.objects.get(id=target_id)
+                return class_obj.id
+            else:
+                raise forms.ValidationError('無効な配信先です。')
+        except (ValueError, School.DoesNotExist, Class.DoesNotExist):
+            raise forms.ValidationError('無効な配信先です。')
+
+    def _post_clean(self):
+        """モデルのバリデーションを実行する前にpost_toを設定"""
+        # post_to_selectionが正常に処理されている場合は、post_toを事前に設定
+        if 'post_to_selection' in self.cleaned_data and not self.errors:
+            self.instance.post_to = self.cleaned_data['post_to_selection']
+        
+        # 通常のフィールドバリデーションを実行（post_toは既に設定済み）
+        super()._post_clean()
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.post_to = self.cleaned_data['post_to_selection']
+        if commit:
+            instance.save()
+        return instance 

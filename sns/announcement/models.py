@@ -6,13 +6,8 @@ from enrollments.models import School, Class
 
 class AnnouncementManager(models.Manager):
 
-    def get_announcements(self, posted_to, id):
-        if posted_to == 'school':
-            return self.get_queryset().filter(is_deleted=False, posted_to_school=id).order_by('-created_at')
-        elif posted_to == 'class':
-            return self.get_queryset().filter(is_deleted=False, posted_to_class=id).order_by('-created_at')
-        else:
-            raise ValueError("posted_toが無効です")
+    def get_announcements(self, id):
+        return self.get_queryset().filter(is_deleted=False, post_to=id).order_by('-created_at')
     
     def post_announcement(self, title, content, posted_by, post_to, target, priority):
         # ManyToManyフィールドの関連付け前にバリデーションを回避するため、
@@ -30,10 +25,10 @@ class AnnouncementManager(models.Manager):
         # ManyToManyフィールドに関連付けを追加
         if post_to == 'school':
             school = School.objects.get(id=target)
-            announcement.posted_to_school.add(school)
+            announcement.posted_to = school.id
         elif post_to == 'class':
             class_obj = Class.objects.get(id=target)
-            announcement.posted_to_class.add(class_obj)
+            announcement.posted_to = class_obj.id
         
         # 関連付け後にバリデーションを実行
         announcement.full_clean()
@@ -65,8 +60,7 @@ class Announcement(models.Model):
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_announcements')
     content = models.TextField()
     priority = models.CharField(max_length=10, choices=[('high', '高'), ('medium', '中'), ('low', '低')], default='low')
-    posted_to_school = models.ManyToManyField(School, related_name='posted_announcements', blank=True)
-    posted_to_class = models.ManyToManyField(Class, related_name='posted_announcements', blank=True)
+    post_to = models.UUIDField(blank=True, null=True)
     is_pinned = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     read = models.ManyToManyField(User, related_name='read_announcements', blank=True)
@@ -84,10 +78,9 @@ class Announcement(models.Model):
         return self.title
 
     def clean(self):
-        if not self.posted_to_school and not self.posted_to_class:
+        if not self.post_to:
             raise ValidationError({
-                'posted_to_school': '学校かクラスのどちらかを選択してください。',
-                'posted_to_class': '学校かクラスのどちらかを選択してください。'
+                'post_to': '配信先を選択してください。'
             })
 
     def save(self, *args, **kwargs):

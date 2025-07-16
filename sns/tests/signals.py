@@ -15,7 +15,8 @@ def send_to_user(sender, user, **kwargs):
     
     # 非同期関数を同期的に呼び出し
     asyncio.run(send_to_user(
-        user.id, 
-        "test_signal_2", 
-        {"message": "test_signal_2"}
+        user_id = user.id,
+        message_type = "test", 
+        data = {"message": "test_signal_2",
+                "tinpo": "うんかすがすぎる"}
     ))

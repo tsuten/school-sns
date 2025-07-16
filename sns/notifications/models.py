@@ -9,6 +9,17 @@ class NotificationType(models.TextChoices):
 class NotificationManager(models.Manager):
     def get_notifications(self, user):
         return self.filter(user=user)
+    
+    def issue_notification(self, user, type, content, href_web=None, issued_by=None):
+        notification = self.create(
+            user=user,
+            type=type,
+            content=content,
+            href_web=href_web,
+            issued_by=issued_by
+        )
+        notification.save()
+        return notification
 
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)

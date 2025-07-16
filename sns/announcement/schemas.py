@@ -20,8 +20,7 @@ class AnnouncementResponseSchema(Schema):
     created_at: datetime
     updated_at: datetime
     posted_by: str  # ユーザー名
-    posted_to_schools: List[str]  # 学校名のリスト
-    posted_to_classes: List[str]  # クラス名のリスト
+    post_to: uuid.UUID  # 配信先のID
     users_read: List[str]  # 既読したユーザー名のリスト
     
     @classmethod
@@ -36,7 +35,6 @@ class AnnouncementResponseSchema(Schema):
             created_at=announcement.created_at,
             updated_at=announcement.updated_at,
             posted_by=announcement.posted_by.username,
-            posted_to_schools=[school.name for school in announcement.posted_to_school.all()],
-            posted_to_classes=[f"{cls.school.name} - {cls.name}" for cls in announcement.posted_to_class.all()],
+            post_to=announcement.post_to,
             users_read=[user.username for user in announcement.read.all()],
         )

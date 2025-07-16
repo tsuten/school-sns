@@ -28,3 +28,21 @@ def send_notification(sender, instance, created, **kwargs):
                 'created_at': instance.created_at.isoformat()
             }
         )
+
+@receiver(post_save, sender=Notification)
+def send_to_user(sender, instance, created, **kwargs):
+    from websocket.unified_consumers import send_to_user
+    import asyncio
+    
+    # 非同期関数を同期的に呼び出し
+    asyncio.run(send_to_user(
+        instance.user.id, 
+        "notification", 
+        {
+            "notification_type": instance.type,
+            "notification_id": str(instance.id),
+            "message": instance.content,
+            "is_read": instance.is_read,
+            "created_at": instance.created_at.isoformat()
+        }
+    ))

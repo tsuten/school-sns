@@ -1,17 +1,18 @@
 from django.contrib import admin
 from .models import Announcement
 from .forms import AnnouncementForm
+from enrollments.models import School, Class
 
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
     """
     AnnouncementモデルのDjango管理画面設定
     """
-    # カスタムフォームを使用して、配信先の選択ロジックを実装します
+    # カスタムフォームを使用
     form = AnnouncementForm
 
     # 一覧ページの表示設定
-    list_display = ('title', 'posted_by', 'priority', 'is_pinned', 'created_at', 'get_schools_display', 'get_classes_display')
+    list_display = ('title', 'posted_by', 'priority', 'is_pinned', 'created_at', 'get_post_to_display')
     list_filter = ('priority', 'is_pinned', 'is_deleted', 'created_at')
     search_fields = ('title', 'content', 'posted_by__username')
     ordering = ('-created_at',)
@@ -19,11 +20,11 @@ class AnnouncementAdmin(admin.ModelAdmin):
     # 編集ページのレイアウト設定
     fieldsets = (
         (None, {
-            'fields': ('title', 'content') # posted_by を削除
+            'fields': ('title', 'content')
         }),
         ('配信先設定', {
-            'description': "配信先の種類を選択し、対応する学校またはクラスを指定してください。",
-            'fields': ('post_to_type', 'target_school', 'target_class'),
+            'description': "配信先の学校またはクラスを選択してください。",
+            'fields': ('post_to_selection',),
         }),
         ('オプション', {
             'fields': ('priority', 'is_pinned', 'is_deleted'),
@@ -47,41 +48,35 @@ class AnnouncementAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         """
         カスタム保存ロジック:
-        1. フォームからインスタンスを作成するが、DBにはまだ保存しない。
-        2. posted_by に現在ログイン中のユーザーを設定する。
-        3. モデルのバリデーションをバイパスして、まずインスタンスをDBに保存する。
-        4. フォームで選択された配信先(M2M)を設定する。
+        posted_byに現在のユーザーを設定してから保存
         """
-        # 1. フォームのデータでインスタンスを作成
-        instance = form.save(commit=False)
+        # posted_byを現在のユーザーに設定
+        obj.posted_by = request.user
         
-        # 2. 投稿者を現在のユーザーに設定
-        instance.posted_by = request.user
+        # フォームで処理済みのpost_toを使用して保存
+        obj.save()
+
+    @admin.display(description='配信先')
+    def get_post_to_display(self, obj):
+        """配信先を表示（学校またはクラス）"""
+        if not obj.post_to:
+            return "未設定"
         
-        # 3. モデルのsave()をバイパスして保存（NOT NULL制約とM2M検証を回避）
-        super(Announcement, instance).save()
-
-        # 4. 配信先(M2M)を設定
-        post_type = form.cleaned_data.get('post_to_type')
-        school = form.cleaned_data.get('target_school')
-        class_ = form.cleaned_data.get('target_class')
-
-        instance.posted_to_school.clear()
-        instance.posted_to_class.clear()
-
-        if post_type == 'school':
-            instance.posted_to_school.add(school)
-        elif post_type == 'class':
-            instance.posted_to_class.add(class_)
-
-    @admin.display(description='配信先学校')
-    def get_schools_display(self, obj):
-        return ", ".join([school.name for school in obj.posted_to_school.all()]) or "ー"
-
-    @admin.display(description='配信先クラス')
-    def get_classes_display(self, obj):
-        return ", ".join([cls.name for cls in obj.posted_to_class.all()]) or "ー"
+        try:
+            # まず学校として検索
+            school = School.objects.filter(id=obj.post_to).first()
+            if school:
+                return f"学校: {school.name}"
+            
+            # 次にクラスとして検索
+            class_obj = Class.objects.filter(id=obj.post_to).first()
+            if class_obj:
+                return f"クラス: {class_obj.name}"
+            
+            return "不明な配信先"
+        except:
+            return "エラー"
     
     def get_queryset(self, request):
-        # パフォーマンス向上のために関連オブジェクトをプリフェッチ
-        return super().get_queryset(request).prefetch_related('posted_to_school', 'posted_to_class').select_related('posted_by')
+        # パフォーマンス向上のために関連オブジェクトを取得
+        return super().get_queryset(request).select_related('posted_by')

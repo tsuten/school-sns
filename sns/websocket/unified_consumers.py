@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
+from datetime import datetime
 
 async def send_to_user(user_id, message_type, data):
     """特定のユーザーIDに対してメッセージを送信"""
@@ -56,6 +57,46 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+    async def receive(self, text_data):
+        """WebSocketからのメッセージを受信して処理"""
+        try:
+            text_data_json = json.loads(text_data)
+            action = text_data_json.get('action')
+            
+            if action == 'join_group':
+                group_name = text_data_json.get('group_name')
+                if group_name:
+                    await self.join_group(group_name)
+                    await self.send(text_data=json.dumps({
+                        'type': 'group_joined',
+                        'data': {'group_name': group_name},
+                        'timestamp': datetime.now().isoformat()
+                    }))
+            
+            elif action == 'leave_group':
+                group_name = text_data_json.get('group_name')
+                if group_name:
+                    await self.leave_group(group_name)
+                    await self.send(text_data=json.dumps({
+                        'type': 'group_left',
+                        'data': {'group_name': group_name},
+                        'timestamp': datetime.now().isoformat()
+                    }))
+            
+            else:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'data': {'message': 'Unknown action'},
+                    'timestamp': datetime.now().isoformat()
+                }))
+                
+        except json.JSONDecodeError:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'data': {'message': 'Invalid JSON'},
+                'timestamp': datetime.now().isoformat()
+            }))
+
     async def send_message(self, event):
         """チャンネルレイヤーからのメッセージを処理"""
         message_type = event['message_type']
@@ -63,7 +104,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         
         await self.send(text_data=json.dumps({
             'type': message_type,
-            'data': data
+            'data': data,
+            'timestamp': datetime.now().isoformat()
         }))
     
     async def join_group(self, group_name):
