@@ -13,11 +13,13 @@ export const connectToWS = async () => {
     
     djangoWsClient.connectApp("/unified?token=" + token);    
     djangoWsClient.onApp("/unified?token=" + token, 'message', (data) => {
+        console.log("Received WebSocket message:", data);
         messages.update(state => [
             ...state,
             {
-                data: data.data.message,
-                timestamp: datetimeNormalize(new Date())
+                type: data.type,
+                data: data.data,
+                timestamp: data.timestamp || datetimeNormalize(new Date())
             }
         ]);
     });
@@ -27,7 +29,7 @@ export const disconnectFromWS = async () => {
     if (!browser) return;
 
     try {
-        djangoWsClient.disconnectApp("/unified?token=" + token);
+        djangoWsClient.disconnect("/unified?token=" + token);
     } catch (error) {
         console.error('WebSocket切断エラー:', error);
     }
@@ -35,6 +37,20 @@ export const disconnectFromWS = async () => {
 
 const InitializeMessages = async () => {
     await connectToWS();
+}
+
+export const JoinGroup = async (group_name) => {
+    djangoWsClient.send("/unified?token=" + token, {
+        action: 'join_group',
+        group_name: group_name
+    });
+}
+
+export const LeaveGroup = async (group_name) => {
+    djangoWsClient.send("/unified?token=" + token, {
+        action: 'leave_group',
+        group_name: group_name
+    });
 }
 
 InitializeMessages();
