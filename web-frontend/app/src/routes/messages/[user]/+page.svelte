@@ -1,6 +1,6 @@
 <script>
     import { Button, Avatar, Input, Textarea } from 'flowbite-svelte';
-    import { Send, ArrowLeft, User } from 'lucide-svelte';
+    import { Send, ArrowLeft, User, LogOut, Siren, DoorOpen, Ellipsis, Ban, BellOff } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { authService } from '$lib/services/auth.js';
@@ -11,7 +11,7 @@
     import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
     import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
     import { initialize } from "$lib/stores/messageStore.js";
-    
+    import ChatHeader from "$lib/components/shared/chat/chatHeader.svelte";
     let targetUser = $state(null);
     let userId = $state('');
     let users = $state([]);
@@ -42,6 +42,25 @@
             isLoading = false;
         }
     }
+    let showMenu = $state(false);
+
+    // 対象ユーザー情報を取得する関数
+    async function loadTargetUser(targetUserId) {
+        try {
+            // ユーザーリストから対象ユーザーを探す
+            const userEntry = users.find(u => u.user_id === targetUserId);
+            if (userEntry) {
+                targetUser = userEntry.user;
+            } else {
+                // ユーザーリストにない場合は直接APIで取得
+                // 今回はユーザーリストから取得するのみとする
+                targetUser = null;
+            }
+        } catch (err) {
+            console.error('対象ユーザー情報の取得に失敗しました:', err);
+            targetUser = null;
+        }
+    }
 
     // URLパラメータの変更を監視
     $effect(() => {
@@ -49,12 +68,20 @@
         if (targetUserId && targetUserId !== userId) {
             userId = targetUserId;
             initialize(targetUserId);
+            loadTargetUser(targetUserId);
         }
     });
 
     // コンポーネントマウント時にユーザーリストを読み込み
     onMount(() => {
         loadUsers();
+    });
+
+    // ユーザーリストが更新されたときに対象ユーザーを設定
+    $effect(() => {
+        if (users.length > 0 && userId && !targetUser) {
+            loadTargetUser(userId);
+        }
     });
 
 </script>
@@ -77,25 +104,30 @@
                      onclick={() => goto(`/messages/${user.user_id}`)}
                      onkeydown={(e) => e.key === 'Enter' && goto(`/messages/${user.user_id}`)}>
                     <div class="flex items-start gap-3">
-                        <!-- アイコンプレースホルダー -->
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 {userId === user.user_id ? 'bg-blue-200' : ''}">
-                            <User class="w-4 h-4 text-blue-600" />
+                        <!-- ユーザーアイコン -->
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden {userId === user.user_id ? 'ring-2 ring-blue-300' : ''}">
+                            {#if getProfileImage(user.user)}
+                                <img 
+                                    src={getProfileImage(user.user)} 
+                                    alt={getDisplayName(user.user)}
+                                    class="w-full h-full object-cover"
+                                />
+                            {:else}
+                                <div class="w-full h-full bg-blue-100 flex items-center justify-center">
+                                    <User class="w-4 h-4 text-blue-600" />
+                                </div>
+                            {/if}
                         </div>
                         
                         <!-- 詳細情報 -->
                         <div class="flex-1 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
                             <div class="flex items-center gap-2">
                                 <h3 class="font-medium text-gray-800 truncate whitespace-nowrap">{getDisplayName(user.user)}</h3>
-                                {#if user.latest_message && !user.latest_message.is_read && !user.latest_message.is_sent_by_me}
-                                    <div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                {/if}
+                                <p class="text-xs text-gray-500 truncate whitespace-nowrap">@{user.user.user_username}</p>
                             </div>
                             {#if user.latest_message}
                                 <p class="text-xs text-gray-500 truncate">
                                     {user.latest_message.content}
-                                </p>
-                                <p class="text-xs text-gray-400">
-                                    {new Date(user.latest_message.created_at).toLocaleDateString()}
                                 </p>
                             {/if}
                         </div>
@@ -106,21 +138,28 @@
     </div>
 </InPageSideBar>
 <div class="flex flex-col h-full w-full relative">
-    <!-- ヘッダー -->
-    <div class="flex items-center gap-3 p-4 border-b border-gray-200 bg-white">
-        {#if targetUser}
-            <Avatar src={getProfileImage(targetUser)} size="sm" />
-            <div class="flex flex-col">
-                <h2 class="text-lg font-semibold">{getDisplayName(targetUser)}</h2>
-                <p class="text-sm text-gray-500">@{targetUser.user_username}</p>
-            </div>
-        {:else}
-            <div class="flex flex-col">
-                <h2 class="text-lg font-semibold">ユーザー</h2>
-                <p class="text-sm text-gray-500">読み込み中...</p>
-            </div>
-        {/if}
-    </div>
+    <ChatHeader 
+        logo={targetUser ? getProfileImage(targetUser) : null} 
+        title={targetUser ? getDisplayName(targetUser) : 'ユーザー'} 
+        subtitle={targetUser ? `@${targetUser.user_username}` : '読み込み中...'} 
+    >
+        <div class="flex flex-row items-center gap-2">
+            {#if showMenu}
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
+                <Siren class="h-5 w-5 text-gray-500" />
+            </Button>
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
+                <Ban class="h-5 w-5 text-gray-500" />
+            </Button>
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button">
+                <BellOff class="h-5 w-5 text-gray-500" />
+            </Button>
+            {/if}
+            <Button pill={true} color="light" class="p-2! hover:cursor-pointer" id="chat-menu-button" onclick={() => showMenu = !showMenu}>
+                <Ellipsis class="h-5 w-5 text-gray-500" />
+            </Button>
+        </div>
+    </ChatHeader>
     <ChatCore messages={$chatMessages} />
     <ChatInput apiPath="/chat/messages/" />
 </div>

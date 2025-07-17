@@ -68,5 +68,6 @@ function fetchInitialMessages(user_id) {
 }
 
 export function initialize(user_id) {
+    console.log("messageStoreを初期化します");
     fetchInitialMessages(user_id);
 }
