@@ -2,6 +2,18 @@ import { browser } from '$app/environment';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+// cookieユーティリティ関数
+function getCookie(name) {
+    if (!browser) return null;
+    
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    return null;
+}
+
 class AuthService {
     constructor() {
         this.tokenKey = 'access_token';
@@ -33,6 +45,11 @@ class AuthService {
         if (!browser) return;
         localStorage.removeItem(this.tokenKey);
         localStorage.removeItem(this.refreshTokenKey);
+    }
+
+    // cookieからトークンを取得
+    getAccessTokenFromCookie() {
+        return getCookie('access_token');
     }
 
     // ログイン

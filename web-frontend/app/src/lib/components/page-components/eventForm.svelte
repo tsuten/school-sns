@@ -2,10 +2,10 @@
     // svelte系の定義
     import { onMount } from "svelte";
     import { apiClient } from "$lib/services/django";
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
     import PostalSearch from "$lib/components/page-components/postalSearch.svelte";
 
-   // 使う変数
+    // 使う変数
     let eventName = $state();
     let content = $state();
     let selectedDate = $state();
@@ -17,22 +17,22 @@
     let building = $state();
 
     let startDate = $state();
-    let endDate = $state();  
+    let endDate = $state();
 
     let startDateTime = new Date();
-    let endDateTime = new Date(); 
-    
+    let endDateTime = new Date();
+
     let selectedDateTime = new Date();
-    
+
     // カレンダーの表示状態を個別に管理
     let isStartCalendarOpen = $state(false);
     let isEndCalendarOpen = $state(false);
-    
+
     let currentCalendarDate = $state();
     let minute = $state();
 
     minute = Math.floor(selectedDateTime.getMinutes() / 5) * 5;
-    let hour = $state()
+    let hour = $state();
     hour = selectedDateTime.getHours();
 
     let calendarMode = "start";
@@ -143,7 +143,8 @@
 
     //updateする関数
     function updateSelectedDisplay() {
-        const targetDateTime = calendarMode === "start" ? startDateTime : endDateTime;
+        const targetDateTime =
+            calendarMode === "start" ? startDateTime : endDateTime;
         const y = targetDateTime.getFullYear();
         const m = targetDateTime.getMonth() + 1;
         const d = targetDateTime.getDate();
@@ -151,7 +152,7 @@
         const h = hour.toString().padStart(2, "0");
         const min = minute.toString().padStart(2, "0");
         const dateStr = `${y}年${m}月${d}日(${w}) ${h}:${min}`;
-        
+
         if (calendarMode === "start") {
             startDate = dateStr;
         } else {
@@ -202,7 +203,7 @@
         const firstDay = getFirstDayOfMonth();
         const daysInMonth = getDaysInMonth();
         const daysInPrevMonth = getDaysInPrevMonth();
-        
+
         if (index < firstDay) {
             // 前月の日付
             const day = daysInPrevMonth - (firstDay - index - 1);
@@ -224,9 +225,9 @@
         // 他のカレンダーを閉じる
         isStartCalendarOpen = false;
         isEndCalendarOpen = false;
-        
+
         calendarMode = mode;
-        
+
         if (mode === "start") {
             isStartCalendarOpen = true;
             currentCalendarDate = new Date(startDateTime);
@@ -245,8 +246,18 @@
     // すべてのフィールドが入力されているか確認し、APIにPOSTリクエストを送信
     // 成功したらonCloseを呼び出す
     async function HandleEvent() {
-        if (!eventName || !content || !startDateTime || !endDateTime || !postalCode || !prefecture || !city || !street || !banti) {
-            valuesError_1 = true;   
+        if (
+            !eventName ||
+            !content ||
+            !startDateTime ||
+            !endDateTime ||
+            !postalCode ||
+            !prefecture ||
+            !city ||
+            !street ||
+            !banti
+        ) {
+            valuesError_1 = true;
             return;
         }
         if (building == undefined) {
@@ -258,292 +269,415 @@
                 description: content,
                 start_datetime: startDateTime.toISOString(),
                 end_datetime: endDateTime.toISOString(),
-                location: postalCode + prefecture + city + street + banti + (building || ""),
-                published: true
+                location:
+                    postalCode +
+                    prefecture +
+                    city +
+                    street +
+                    banti +
+                    (building || ""),
+                published: true,
             });
-            
-            dispatch('added');
+
+            dispatch("added");
             onClose?.();
         } catch (e) {
             alert("登録に失敗しました: " + (e?.message || ""));
             console.log("APIエラー詳細", e);
         }
     }
+
+    let moveTarget = $state();
+    let moveTarget2 = $state();
+
+    function handlePointerMove(event) {
+        if (event.buttons) {
+            moveTarget.style.left =
+                moveTarget.offsetLeft + event.movementX + "px";
+            moveTarget.style.top =
+                moveTarget.offsetTop + event.movementY + "px";
+            moveTarget.style.position = "absolute";
+            moveTarget.draggable = false;
+            moveTarget.setPointerCapture(event.pointerId);
+        }
+    }
 </script>
 
 {#if valuesError_1 === true}
-    <p>建物名・部屋番号以外の項目は全て入力してください</p>
+    <p class="text-red-500 text-sm mb-3">
+        建物名・部屋番号以外の項目は全て入力してください
+    </p>
 {/if}
 
-<div class="w-full max-w-md mx-auto bg-white rounded shadow p-4 mt-4">
+<div class="w-full w-[68vw] mx-auto rounded-lg shadow-lg p-6 relative">
+    <!-- 閉じるボタン -->
+    <button
+        type="button"
+        class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+        onclick={() => onClose?.()}
+        aria-label="フォームを閉じる"
+    >
+        <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+            />
+        </svg>
+    </button>
+
+    <!-- フォームタイトル -->
+    <h2 class="text-xl font-bold text-gray-800 mb-6 pr-8">
+        新しいイベントを作成
+    </h2>
+
     <form onsubmit={(e) => e.preventDefault()}>
-        <!-- フォーム本体ここから -->
-        <div class="flex items-center gap-2 mb-3 mt-2">
-            <label class="block text-sm font-semibold min-w-[5.5rem]">イベント名</label>
+        <!-- イベント名 -->
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2"
+                >イベント名</label
+            >
             <input
-                class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-left text-sm w-[calc(92%-2.5rem)] min-w-0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 bind:value={eventName}
                 placeholder="例: ドキドキマヤ文明鎮魂祭"
             />
         </div>
-        <div class="flex items-center gap-2 mb-3">
-            <label class="block text-sm font-semibold min-w-[5.5rem]">概要</label>
-            <input
-                class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-left text-sm w-[calc(92%-2.5rem)] min-w-0"
+
+        <!-- 概要 -->
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2"
+                >概要</label
+            >
+            <textarea
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                rows="3"
                 bind:value={content}
                 placeholder="例: マヤ文明の魂を鎮魂します"
-            />
+            ></textarea>
         </div>
-        <div class="flex gap-2 mb-2 ml-[5.5rem] w-[calc(100%-5.5rem-1.5rem)] min-w-0 pr-6">
-            <div class="flex-1">
-                <label class="block text-sm font-semibold">日時</label>
+
+        <!-- 日時選択 -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 will-change-transform"
+                    >開始日時</label
+                >
                 <input
-                    class="px-3 py-0.5 border border-gray-300 rounded bg-gray-50 text-left text-sm w-full min-w-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                     readonly
                     value={startDate}
                     onclick={() => openCalendar("start")}
-                    placeholder="日時を選択してください"
+                    placeholder="日時を選択"
                 />
-                <input type="hidden" name="start_datetime" value={startDate} required />
                 {#if isStartCalendarOpen}
-                    <div class="fixed bottom-0 right-2 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-64">
-                        <div class="flex justify-between items-center mb-3">
-                            <button
-                                type="button"
-                                class="bg-transparent border-none cursor-pointer p-1 rounded-full w-6 h-6 flex items-center justify-center text-base hover:bg-gray-100"
-                                onclick={() => changeMonth(-1)}>‹</button
-                            >
-                            <div class="text-sm font-bold">
-                                {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() + 1}月
+                    <div
+                        class="fixed inset-0 flex items-center justify-center z-[1001]"
+                        bind:this={moveTarget}
+                        onpointermove={handlePointerMove}
+                        style="position:relative;"
+                    >
+                        <div
+                            class="bg-white border border-gray-300 rounded-lg shadow-xl p-4 w-80 max-w-[90vw]"
+                        >
+                            <div class="flex justify-between items-center mb-3">
+                                <button
+                                    type="button"
+                                    class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    onclick={() => changeMonth(-1)}>‹</button
+                                >
+                                <div class="text-sm font-bold">
+                                    {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() +
+                                        1}月
+                                </div>
+                                <button
+                                    type="button"
+                                    class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    onclick={() => changeMonth(1)}>›</button
+                                >
                             </div>
-                            <button
-                                type="button"
-                                class="bg-transparent border-none cursor-pointer p-1 rounded-full w-6 h-6 flex items-center justify-center text-base hover:bg-gray-100"
-                                onclick={() => changeMonth(1)}>›</button
-                            >
-                        </div>
 
-                        <div class="grid grid-cols-7 gap-0.5 mb-2">
-                            {#each weekdays as day}
-                                <div class="text-center text-xs font-bold text-gray-600 py-1 px-0.5">{day}</div>
-                            {/each}
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-0.5 mb-3">
-                            {#each Array(getCalendarCells()) as _, index}
-                                {#key index}
-                                    {@const cellData = getCalendarCellData(index)}
-                                    <button
-                                        class="w-6 h-6 border-none bg-transparent cursor-pointer rounded text-xs flex items-center justify-center transition-all hover:bg-blue-50 {cellData.isPrevMonth || cellData.isNextMonth ? 'text-gray-400' : 'text-black'}"
-                                        onclick={() => selectDay(cellData.day, cellData.isPrevMonth || cellData.isNextMonth)}
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                {#each weekdays as day}
+                                    <div
+                                        class="text-center text-xs font-bold text-gray-600 py-1"
                                     >
-                                        {cellData.day}
-                                    </button>
-                                {/key}
-                            {/each}
-                        </div>
+                                        {day}
+                                    </div>
+                                {/each}
+                            </div>
 
-                        <div class="flex gap-2 mb-3">
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                            <div class="flex-1">
-                                <label class="block mb-1 text-xs font-bold">時</label>
-                                <select
-                                    class="w-full p-1 border border-gray-300 rounded text-xs"
-                                    bind:value={hour}
-                                    onchange={updateSelectedDisplay}
-                                >
-                                    {#each Array(24) as _, h}
-                                        <option value={h}>{String(h).padStart(2, "0")}時</option>
-                                    {/each}
-                                </select>
+                            <div class="grid grid-cols-7 gap-1 mb-4">
+                                {#each Array(getCalendarCells()) as _, index}
+                                    {#key index}
+                                        {@const cellData =
+                                            getCalendarCellData(index)}
+                                        <button
+                                            class="w-8 h-8 rounded text-xs flex items-center justify-center hover:bg-blue-50 transition-colors {cellData.isPrevMonth ||
+                                            cellData.isNextMonth
+                                                ? 'text-gray-400'
+                                                : 'text-black'}"
+                                            onclick={() =>
+                                                selectDay(
+                                                    cellData.day,
+                                                    cellData.isPrevMonth ||
+                                                        cellData.isNextMonth,
+                                                )}
+                                        >
+                                            {cellData.day}
+                                        </button>
+                                    {/key}
+                                {/each}
                             </div>
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                            <div class="flex-1">
-                                <label class="block mb-1 text-xs font-bold">分</label>
-                                <select
-                                    class="w-full p-1 border border-gray-300 rounded text-xs"
-                                    bind:value={minute}
-                                    onchange={updateSelectedDisplay}
-                                >
-                                    {#each Array(12) as _, i}
-                                        <option value={i * 5}>{String(i * 5).padStart(2, "0")}分</option>
-                                    {/each}
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="mt-2 border-t border-gray-300 pt-2">
-                            <div class="bg-gray-100 p-2 rounded mb-3 text-xs">
-                                選択中: {startDate}
+                            <div class="flex gap-2 mb-4">
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs font-bold"
+                                        >時</label
+                                    >
+                                    <select
+                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        bind:value={hour}
+                                        onchange={updateSelectedDisplay}
+                                    >
+                                        {#each Array(24) as _, h}
+                                            <option value={h}
+                                                >{String(h).padStart(
+                                                    2,
+                                                    "0",
+                                                )}時</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs font-bold"
+                                        >分</label
+                                    >
+                                    <select
+                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        bind:value={minute}
+                                        onchange={updateSelectedDisplay}
+                                    >
+                                        {#each Array(12) as _, i}
+                                            <option value={i * 5}
+                                                >{String(i * 5).padStart(
+                                                    2,
+                                                    "0",
+                                                )}分</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
                             </div>
-                            <div class="flex gap-2 justify-end">
-                                <button
-                                    type="button"
-                                    class="py-1 px-2 border border-gray-300 rounded cursor-pointer text-xs bg-gray-500 text-white hover:bg-gray-600"
-                                    onclick={() => isStartCalendarOpen = false}>キャンセル</button
+
+                            <div class="border-t pt-3">
+                                <div
+                                    class="bg-gray-100 p-2 rounded mb-3 text-sm"
                                 >
-                                <button
-                                    type="button"
-                                    class="py-1 px-2 border border-gray-300 rounded cursor-pointer text-xs bg-blue-500 text-white hover:bg-blue-700"
-                                    onclick={confirmDate}>決定</button
-                                >
+                                    選択中: {startDate}
+                                </div>
+                                <div class="flex gap-2 justify-end">
+                                    <button
+                                        type="button"
+                                        class="px-3 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+                                        onclick={() =>
+                                            (isStartCalendarOpen = false)}
+                                        >キャンセル</button
+                                    >
+                                    <button
+                                        type="button"
+                                        class="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+                                        onclick={confirmDate}>決定</button
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
                 {/if}
             </div>
-            <div class="flex-1">
-                <label class="block text-sm font-semibold">終了日時</label>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 will-change-transform"
+                    >終了日時</label
+                >
                 <input
-                    class="px-3 py-0.5 border border-gray-300 rounded bg-gray-50 text-left text-sm w-full min-w-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                     readonly
                     value={endDate}
                     onclick={() => openCalendar("end")}
-                    placeholder="日時を選択してください"
+                    placeholder="日時を選択"
                 />
-                <input type="hidden" name="end_datetime" value={endDate} required />
                 {#if isEndCalendarOpen}
-                    <div class="fixed top-0 right-2 z-[1000] bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-64">
-                        <div class="flex justify-between items-center mb-3">
-                            <button
-                                type="button"
-                                class="bg-transparent border-none cursor-pointer p-1 rounded-full w-6 h-6 flex items-center justify-center text-base hover:bg-gray-100"
-                                onclick={() => changeMonth(-1)}>‹</button
-                            >
-                            <div class="text-sm font-bold">
-                                {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() + 1}月
+                    <div
+                        class="fixed inset-0 flex items-center justify-center z-[1001]"
+                        bind:this={moveTarget}
+                        onpointermove={handlePointerMove}
+                        style="position:relative;"
+                    >
+                        <div
+                            class="bg-white border border-gray-300 rounded-lg shadow-xl p-4 w-80 max-w-[90vw]"
+                        >
+                            <div class="flex justify-between items-center mb-3">
+                                <button
+                                    type="button"
+                                    class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    onclick={() => changeMonth(-1)}>‹</button
+                                >
+                                <div class="text-sm font-bold">
+                                    {currentCalendarDate.getFullYear()}年 {currentCalendarDate.getMonth() +
+                                        1}月
+                                </div>
+                                <button
+                                    type="button"
+                                    class="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    onclick={() => changeMonth(1)}>›</button
+                                >
                             </div>
-                            <button
-                                type="button"
-                                class="bg-transparent border-none cursor-pointer p-1 rounded-full w-6 h-6 flex items-center justify-center text-base hover:bg-gray-100"
-                                onclick={() => changeMonth(1)}>›</button
-                            >
-                        </div>
 
-                        <div class="grid grid-cols-7 gap-0.5 mb-2">
-                            {#each weekdays as day}
-                                <div class="text-center text-xs font-bold text-gray-600 py-1 px-0.5">{day}</div>
-                            {/each}
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-0.5 mb-3">
-                            {#each Array(getCalendarCells()) as _, index}
-                                {#key index}
-                                    {@const cellData = getCalendarCellData(index)}
-                                    <button
-                                        class="w-6 h-6 border-none bg-transparent cursor-pointer rounded text-xs flex items-center justify-center transition-all hover:bg-blue-50 {cellData.isPrevMonth || cellData.isNextMonth ? 'text-gray-400' : 'text-black'}"
-                                        onclick={() => selectDay(cellData.day, cellData.isPrevMonth || cellData.isNextMonth)}
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                {#each weekdays as day}
+                                    <div
+                                        class="text-center text-xs font-bold text-gray-600 py-1"
                                     >
-                                        {cellData.day}
-                                    </button>
-                                {/key}
-                            {/each}
-                        </div>
+                                        {day}
+                                    </div>
+                                {/each}
+                            </div>
 
-                        <div class="flex gap-2 mb-3">
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                            <div class="flex-1">
-                                <label class="block mb-1 text-xs font-bold">時</label>
-                                <select
-                                    class="w-full p-1 border border-gray-300 rounded text-xs"
-                                    bind:value={hour}
-                                    onchange={updateSelectedDisplay}
-                                >
-                                    {#each Array(24) as _, h}
-                                        <option value={h}>{String(h).padStart(2, "0")}時</option>
-                                    {/each}
-                                </select>
+                            <div class="grid grid-cols-7 gap-1 mb-4">
+                                {#each Array(getCalendarCells()) as _, index}
+                                    {#key index}
+                                        {@const cellData =
+                                            getCalendarCellData(index)}
+                                        <button
+                                            class="w-8 h-8 rounded text-xs flex items-center justify-center hover:bg-blue-50 transition-colors {cellData.isPrevMonth ||
+                                            cellData.isNextMonth
+                                                ? 'text-gray-400'
+                                                : 'text-black'}"
+                                            onclick={() =>
+                                                selectDay(
+                                                    cellData.day,
+                                                    cellData.isPrevMonth ||
+                                                        cellData.isNextMonth,
+                                                )}
+                                        >
+                                            {cellData.day}
+                                        </button>
+                                    {/key}
+                                {/each}
                             </div>
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                                <!-- svelte-ignore a11y_label_has_associated_control -->
-                            <div class="flex-1">
-                                <label class="block mb-1 text-xs font-bold">分</label>
-                                <select
-                                    class="w-full p-1 border border-gray-300 rounded text-xs"
-                                    bind:value={minute}
-                                    onchange={updateSelectedDisplay}
-                                >
-                                    {#each Array(12) as _, i}
-                                        <option value={i * 5}>{String(i * 5).padStart(2, "0")}分</option>
-                                    {/each}
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="mt-2 border-t border-gray-300 pt-2">
-                            <div class="bg-gray-100 p-2 rounded mb-3 text-xs">
-                                選択中: {endDate}
+                            <div class="flex gap-2 mb-4">
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs font-bold"
+                                        >時</label
+                                    >
+                                    <select
+                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        bind:value={hour}
+                                        onchange={updateSelectedDisplay}
+                                    >
+                                        {#each Array(24) as _, h}
+                                            <option value={h}
+                                                >{String(h).padStart(
+                                                    2,
+                                                    "0",
+                                                )}時</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block mb-1 text-xs font-bold"
+                                        >分</label
+                                    >
+                                    <select
+                                        class="w-full p-2 border border-gray-300 rounded text-sm"
+                                        bind:value={minute}
+                                        onchange={updateSelectedDisplay}
+                                    >
+                                        {#each Array(12) as _, i}
+                                            <option value={i * 5}
+                                                >{String(i * 5).padStart(
+                                                    2,
+                                                    "0",
+                                                )}分</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
                             </div>
-                            <div class="flex gap-2 justify-end">
-                                <button
-                                    type="button"
-                                    class="py-1 px-2 border border-gray-300 rounded cursor-pointer text-xs bg-gray-500 text-white hover:bg-gray-600"
-                                    onclick={() => isEndCalendarOpen = false}>キャンセル</button
+
+                            <div class="border-t pt-3">
+                                <div
+                                    class="bg-gray-100 p-2 rounded mb-3 text-sm"
                                 >
-                                <button
-                                    type="button"
-                                    class="py-1 px-2 border border-gray-300 rounded cursor-pointer text-xs bg-blue-500 text-white hover:bg-blue-700"
-                                    onclick={confirmDate}>決定</button
-                                >
+                                    選択中: {endDate}
+                                </div>
+                                <div class="flex gap-2 justify-end">
+                                    <button
+                                        type="button"
+                                        class="px-3 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+                                        onclick={() =>
+                                            (isEndCalendarOpen = false)}
+                                        >キャンセル</button
+                                    >
+                                    <button
+                                        type="button"
+                                        class="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+                                        onclick={confirmDate}>決定</button
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
                 {/if}
             </div>
         </div>
+
+        <!-- 住所情報 -->
         <PostalSearch bind:postalCode bind:prefecture bind:city bind:street />
-        <div class="flex items-center gap-2 mb-3">
-            <label class="block text-sm font-semibold min-w-[5.5rem]">番地</label>
-            <input 
-                class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-left text-sm w-[calc(92%-2.5rem)] min-w-0"
-                bind:value={banti} 
-                placeholder="例: 1-19-11" 
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2"
+                >番地</label
+            >
+            <input
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                bind:value={banti}
+                placeholder="例: 1-19-11"
             />
         </div>
-        <div class="flex items-center gap-2 mb-3">
-            <label class="block text-sm font-semibold min-w-[5.5rem]">建物名/<br>部屋番号</label>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2"
+                >建物名・部屋番号</label
+            >
             <input
-                class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-left text-sm w-[calc(92%-2.5rem)] min-w-0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 bind:value={building}
                 placeholder="例: パークウェルビル5F（任意）"
             />
+            <p class="text-xs text-gray-500 mt-1">
+                マンション名や部屋番号がある場合は入力してください
+            </p>
         </div>
-        <div class="flex items-center mb-1 -mt-2">
-            <div class="min-w-[5.5rem]"></div>
-            <small class="block text-xs text-gray-500 mt-1">マンション名や部屋番号がある場合は入力してください</small>
-        </div>
+
+        <!-- 送信ボタン -->
         <div class="flex justify-end mb-2 pr-6">
-            <button type="button" id="submitBtn" class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition" onclick={() => HandleEvent?.()}>送信</button>
+            <button
+                type="button"
+                id="submitBtn"
+                class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                onclick={() => HandleEvent?.()}>送信</button
+            >
         </div>
     </form>
 </div>
-
-<style>
-    /* フォーム用スタイル(あとで消す) */
-    .bottom-sheet {
-        position: fixed;
-        bottom: -100%;
-        left: 0;
-        width: 100%;
-        height: 76vh;
-        margin: 0 auto;
-        background: white;
-        transition: bottom 0.3s ease;
-        z-index: 800;
-    }
-    .bottom-sheet.open {
-        bottom: 0;
-    }
-    .close-button {
-        position: absolute;
-        top: 10px;
-        right: 16px;
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        z-index: 1000;
-    }
-</style>

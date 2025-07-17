@@ -114,7 +114,7 @@
 </script>
 
 <div class="flex flex-col gap-2 w-full max-w-md mx-auto">
-  <div class="flex items-center gap-2 mb-2">
+  <div class="flex items-center gap-2 mb-2 relative">
     <label class="block text-sm font-semibold min-w-[5.5rem]">郵便番号</label>
     <input
       class="px-3 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 placeholder-gray-400 text-sm w-[8.5rem] min-w-0"
@@ -124,7 +124,7 @@
       maxlength="8"
     />
     {#if suggestions.length > 0}
-      <div class="absolute mt-10 left-0 w-[18rem] bg-white border border-gray-300 rounded shadow z-50">
+      <div class="absolute left-0 top-full mt-1 w-[18rem] bg-white border border-gray-300 rounded shadow z-50">
         {#each suggestions as s}
           <div
             class="px-3 py-1 hover:bg-blue-50 cursor-pointer text-sm"

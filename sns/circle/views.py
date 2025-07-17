@@ -206,3 +206,8 @@ def get_circle_activity(request, circle_id: str, limit: int = 50, until: str = N
     except ValidationError:
         from ninja.errors import HttpError
         raise HttpError(400, "サークルIDの形式が正しくありません")
+    
+@router.get("/user/{user_id}", auth=JWTAuth(), response=list[CircleSchema])
+def get_circle_user(request, user_id: str):
+    circles = Circle.objects.get_circles_by_user(user_id)
+    return circles

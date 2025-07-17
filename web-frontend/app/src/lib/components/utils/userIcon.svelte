@@ -1,0 +1,76 @@
+<script>
+    import { User } from "lucide-svelte";
+    import { isAuthenticated, currentUser } from "$lib/stores/auth.js";
+
+    // サイズクラスのマッピング
+    const sizeClasses = {
+        sm: {
+            avatar: "w-8 h-8",
+            icon: "w-4 h-4",
+            username: "text-xs",
+            displayName: "text-sm font-medium"
+        },
+        md: {
+            avatar: "w-10 h-10",
+            icon: "w-5 h-5",
+            username: "text-sm",
+            displayName: "text-base font-medium"
+        },
+        lg: {
+            avatar: "w-12 h-12",
+            icon: "w-6 h-6",
+            username: "text-base",
+            displayName: "text-lg font-medium"
+        }
+    };
+
+    const currentSize = sizeClasses["md"];  
+
+    // ユーザーデータの取得（レスポンス形式に応じて調整）
+    const userData = $derived($currentUser?.user || $currentUser);
+    const userPfp = $derived(userData?.pfp);
+    const userDisplayName = $derived(userData?.display_name);
+    const userUsername = $derived(userData?.user_username || userData?.username);
+
+    // プロフィール画像のURL処理
+    const profileImageUrl = $derived(userPfp ? 
+        (userPfp.startsWith('http') ? userPfp : `http://127.0.0.1:8000${userPfp}`) : 
+        null);
+</script>
+
+{#if $isAuthenticated && userData}
+        <!-- アバター/アイコン -->
+        <div class="flex-shrink-0">
+            {#if profileImageUrl}
+                <img 
+                    src={profileImageUrl} 
+                    alt="{userDisplayName || userUsername}のアバター"
+                    class="{currentSize.avatar} rounded-full object-cover border border-gray-200"
+                    onerror={() => {
+                        console.error('Failed to load profile image:', profileImageUrl);
+                    }}
+                >
+            {:else}
+                <div class="{currentSize.avatar} rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                    <User class="{currentSize.icon} text-gray-500" />
+                </div>
+            {/if}
+        </div>
+{:else}
+    <!-- 未認証時の表示 -->
+    <div class="flex gap-2 opacity-50">
+        <div class="flex-shrink-0">
+            <div class="{currentSize.avatar} rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                <User class="{currentSize.icon} text-gray-500" />
+            </div>
+        </div>
+        <div class="flex flex-col min-w-0">
+            <p class="{currentSize.displayName} text-gray-400 truncate">
+                ゲストユーザー
+            </p>
+            <p class="{currentSize.username} text-gray-400 truncate">
+                未ログイン
+            </p>
+        </div>
+    </div>
+{/if}

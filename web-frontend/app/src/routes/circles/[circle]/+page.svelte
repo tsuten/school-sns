@@ -107,7 +107,7 @@
                 <ArrowLeft class="h-5 w-5 text-gray-500" />
             </Button>
         </a>
-        <div class="bg-white rounded-sm border border-gray-300 p-6 mb-6">
+        <div class="bg-white rounded-sm border border-gray-300 p-4 mb-4">
             <div class="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-3">
@@ -146,21 +146,6 @@
 
                 <!-- アクションボタン -->
                 <div class="flex flex-col gap-2">
-                    {#if circle.tags && circle.tags.length > 0}
-                        <div class="p-4">
-                            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                <Tag class="w-5 h-5" />
-                                タグ
-                            </h3>
-                            <div class="flex flex-wrap gap-2">
-                                {#each circle.tags as tag}
-                                    <Badge color="gray" class="text-sm">
-                                        {tag.name}
-                                    </Badge>
-                                {/each}
-                            </div>
-                        </div>
-                    {/if}
                     {#if !isMember}
                         <Button color="blue" size="sm" class="flex items-center gap-2 rounded-sm hover:cursor-pointer" onclick={() => JoinCircle(circle.id)}>
                             <UserPlus class="w-4 h-4" />
@@ -178,24 +163,23 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <!-- 最近の活動 -->
-                <Card class="rounded-sm shadow-none border-gray-300">
-                    <div class="p-4">
-                        <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <MessageCircle class="w-5 h-5" />
-                            最近の活動
-                        </h3>
-                        <div class="text-center py-8 text-gray-500">
-                            <MessageCircle class="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                            <p>まだ活動がありません</p>
-                        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <!-- 最近の活動 -->
+            <Card class="rounded-sm shadow-none border-gray-300 lg:col-span-2">
+                <div class="p-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <MessageCircle class="w-5 h-5" />
+                        最近の活動
+                    </h3>
+                    <div class="text-center py-8 text-gray-500">
+                        <MessageCircle class="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                        <p>まだ活動がありません</p>
                     </div>
-                </Card>
+                </div>
+            </Card>
 
             <!-- サイドバー -->
-            <div class="space-y-6">
+            <div class="space-y-4 lg:col-span-1">
                 <!-- メンバーリスト -->
                 <Card class="rounded-sm shadow-none border-gray-300">
                     <div class="p-4">
@@ -220,31 +204,6 @@
                                     </div>
                                 </div>
                             {/each}
-                        </div>
-                    </div>
-                </Card>
-
-                <!-- サークル情報 -->
-                <Card class="rounded-sm shadow-none border-gray-300">
-                    <div class="p-4">
-                        <h3 class="text-lg font-bold text-gray-800 mb-3">サークル情報</h3>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">公開設定:</span>
-                                <span class="text-gray-800">{circle.is_public ? '公開' : '非公開'}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">カテゴリー:</span>
-                                <span class="text-gray-800">{categoryLabels[circle.category] || circle.category}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">作成日:</span>
-                                <span class="text-gray-800">{formatDate(circle.created_at)}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">更新日:</span>
-                                <span class="text-gray-800">{formatDate(circle.updated_at)}</span>
-                            </div>
                         </div>
                     </div>
                 </Card>

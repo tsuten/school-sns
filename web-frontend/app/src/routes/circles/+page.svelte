@@ -20,7 +20,7 @@
 </script>
 
 <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold">サークル一覧</h1>
+    <h1 class="text-2xl font-bold">あなたが所属しているサークル</h1>
 
     {#each joinedCircles as circle}
         <div class="bg-white rounded-sm border border-gray-300 p-4 mb-4">

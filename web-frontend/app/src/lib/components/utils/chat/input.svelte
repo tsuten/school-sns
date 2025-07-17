@@ -10,6 +10,8 @@
         onFileSelect,
         disabled = false, 
         placeholder = 'メッセージを入力...',
+        isEmojiInput = false,
+        isFileInput = false,
         ...restProps 
     } = $props();
 
@@ -86,8 +88,9 @@
     }
 </script>
 
-<div class="bg-white border-t border-gray-300 p-4">
+<div class="bg-white border-gray-300 absolute bottom-4 left-4 right-4">
     <div class="flex items-center gap-2">
+        {#if isFileInput}
         <!-- ファイル添付ボタン -->
         <Button 
             pill={true} 
@@ -111,6 +114,7 @@
                 </DropdownItem>
             {/each}
         </Dropdown>
+        {/if}
 
         <!-- 隠しファイル入力 -->
         <input 
@@ -131,6 +135,7 @@
         />
         
         <!-- 絵文字ボタン -->
+        {#if isEmojiInput}
         <Button 
             pill={true} 
             color="light" 
@@ -139,7 +144,7 @@
         >
             <Smile class="h-5 w-5 text-gray-500" />
         </Button>
-        
+        {/if}
         <!-- 送信ボタン -->
         <Button 
             pill={true}

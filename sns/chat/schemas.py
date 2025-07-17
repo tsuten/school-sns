@@ -3,6 +3,8 @@ from datetime import datetime
 import uuid
 from enum import Enum
 from typing import Optional
+from users.schemas import UserProfileSchema
+from typing import Any
 
 class WhoSentMessage(Enum):
     REQUEST_USER = "request_user"
@@ -43,5 +45,27 @@ class MessageReadOutputSchema(Schema):
     success: bool
     read_at: datetime
 
+class LatestMessageSchema(Schema):
+    content: str
+    created_at: datetime
+    sender_id: uuid.UUID
+    is_sent_by_me: bool
+    is_read: bool
+
+class UserWithLatestMessageSchema(Schema):
+    user_id: uuid.UUID
+    user: Any  # UserProfileSchema - 循環インポートを避けるためAnyを使用
+    latest_message: LatestMessageSchema
+
 class UsersHaveHistoryWithUserOutputSchema(Schema):
-    users: list[uuid.UUID]
+    users: list[UserWithLatestMessageSchema]
+
+class ClassMessageSchema(Schema):
+    id: uuid.UUID
+    sender: Optional[UserProfileSchema] = None
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+class ClassMessageListOutputSchema(Schema):
+    messages: list[ClassMessageSchema]

@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'chat',
     'circle',
     'emojis',
+    'enrollments',
+    'announcement',
+    'notifications',
 ]
 
 MIDDLEWARE = [

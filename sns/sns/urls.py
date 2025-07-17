@@ -29,6 +29,10 @@ from calendar_module.views import router as calendar_router
 from chat.views import router as chat_router
 from circle.views import router as circle_router
 from emojis.views import router as emojis_router
+from announcement.views import router as announcement_router
+from notifications.views import router as notifications_router
+from enrollments.views import router as enrollments_router
+from tests.views import router as tests_router
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
 api.add_router('posts', posts_router)
 api.add_router('users', users_router)
@@ -38,6 +42,10 @@ api.add_router('calendar', calendar_router)
 api.add_router('chat', chat_router)
 api.add_router('circle', circle_router)
 api.add_router('emojis', emojis_router)
+api.add_router('announcement', announcement_router)
+api.add_router('notifications', notifications_router)
+api.add_router('enrollments', enrollments_router)
+api.add_router('tests', tests_router)
 api.register_controllers(NinjaJWTDefaultController)
 
 urlpatterns = [

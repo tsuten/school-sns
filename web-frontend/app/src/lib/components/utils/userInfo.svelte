@@ -1,6 +1,6 @@
 <script>
     import { User } from "lucide-svelte";
-    import { userInfo } from "../../stores/userInfo.js";
+    import { isAuthenticated, currentUser } from "../../stores/auth.js";
 
     let { 
         size = "md", // sm, md, lg
@@ -33,17 +33,31 @@
 
     const currentSize = sizeClasses[size];
     const layoutClass = layout === "vertical" ? "flex-col items-center text-center" : "flex-row items-center";
+
+    // ユーザーデータの取得（レスポンス形式に応じて調整）
+    const userData = $derived($currentUser?.user || $currentUser);
+    const userPfp = $derived(userData?.pfp);
+    const userDisplayName = $derived(userData?.display_name);
+    const userUsername = $derived(userData?.user_username || userData?.username);
+
+    // プロフィール画像のURL処理
+    const profileImageUrl = $derived(userPfp ? 
+        (userPfp.startsWith('http') ? userPfp : `http://127.0.0.1:8000${userPfp}`) : 
+        null);
 </script>
 
-{#if $userInfo.authenticated}
+{#if $isAuthenticated && userData}
     <div class="flex {layoutClass} gap-2 border border-gray-200 rounded-lg p-2">
         <!-- アバター/アイコン -->
         <div class="flex-shrink-0">
-            {#if $userInfo.pfp}
+            {#if profileImageUrl}
                 <img 
-                    src={$userInfo.pfp} 
-                    alt="{$userInfo.display_name || $userInfo.username}のアバター"
+                    src={profileImageUrl} 
+                    alt="{userDisplayName || userUsername}のアバター"
                     class="{currentSize.avatar} rounded-full object-cover border border-gray-200"
+                    onerror={() => {
+                        console.error('Failed to load profile image:', profileImageUrl);
+                    }}
                 >
             {:else}
                 <div class="{currentSize.avatar} rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
@@ -53,16 +67,16 @@
         </div>
 
         <!-- ユーザー情報 -->
-        {#if (showDisplayName && $userInfo.display_name) || (showUsername && $userInfo.username)}
+        {#if (showDisplayName && userDisplayName) || (showUsername && userUsername)}
             <div class="flex flex-col {layout === 'vertical' ? 'items-center' : 'items-start'} min-w-0">
-                {#if showDisplayName && $userInfo.display_name}
+                {#if showDisplayName && userDisplayName}
                     <p class="{currentSize.displayName} text-gray-900 truncate">
-                        {$userInfo.display_name}
+                        {userDisplayName}
                     </p>
                 {/if}
-                {#if showUsername && $userInfo.username}
+                {#if showUsername && userUsername}
                     <p class="{currentSize.username} text-gray-500 truncate">
-                        @{$userInfo.username}
+                        @{userUsername}
                     </p>
                 {/if}
             </div>

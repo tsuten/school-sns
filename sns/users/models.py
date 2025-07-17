@@ -97,9 +97,48 @@ class UserActivityManager(models.Manager):
         user = User.objects.get(id=user_id)
         activity = UserActivity.objects.get(user=user)
         return activity
+
+    def get_user_affiliation(self, user_id):
+        # 遅延インポートで循環インポートを回避
+        from enrollments.models import Class
+        
+        user = User.objects.get(id=user_id)
+        classes = Class.objects.filter(students=user)
+        schools = [class_obj.school for class_obj in classes if class_obj.school]
+        return classes, schools
     
 class UserActivity(models.Model):
     objects = UserActivityManager()
+
+class UserSettingsManager(models.Manager):
+    def get_user_settings(self, user_id):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        return settings
+    
+    def set_theme_settings(self, user_id, darkmode: bool):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings.is_dark_mode_enabled = darkmode
+        settings.save()
+        return settings
+    
+    def set_notification_settings(self, user_id, notification: bool):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings.is_notification_enabled = notification
+        settings.save()
+        return settings
+    
+    def set_privacy_settings(self, user_id, profile: bool, birthday: bool, location: bool, activity: bool):
+        user = User.objects.get(id=user_id)
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings.is_profile_public = profile
+        settings.is_birthday_public = birthday
+        settings.is_location_public = location
+        settings.is_activity_public = activity
+        settings.save()
+        return settings
 
 class UserSettings(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
@@ -118,6 +157,8 @@ class UserSettings(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserSettingsManager()
 
     def __str__(self):
         return self.user.username

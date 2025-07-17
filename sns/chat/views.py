@@ -4,7 +4,7 @@ from django.db.models import Q, Max, Count
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
 import uuid
-from .models import Message
+from .models import Message, ClassMessage
 from .schemas import (
     MessageSchema, 
     MessageListInputSchema, 
@@ -15,6 +15,7 @@ from .schemas import (
     MessageReadOutputSchema,
     WhoSentMessage,
     UsersHaveHistoryWithUserOutputSchema,
+    ClassMessageListOutputSchema,
 )
 
 # viewsに直接ビジネスロジックを書いているので後々サービス層作ってそこに移行
@@ -210,11 +211,71 @@ def send_message(request, payload: MessageCreateInputSchema):
     
 @router.get("/users-have-history-with-user", auth=JWTAuth(), response=UsersHaveHistoryWithUserOutputSchema)
 def get_users_have_history_with_user(request):
-    """指定ユーザーとメッセージを交信したユーザーのリストを取得"""
+    """指定ユーザーとメッセージを交信したユーザーのリストを最新メッセージ情報と共に取得"""
     try:
         current_user = request.user
-        users = Message.objects.get_list_of_users_have_history_with_user(current_user)
-        return UsersHaveHistoryWithUserOutputSchema(users=users)
+        users_data = Message.objects.get_list_of_users_have_history_with_user(current_user)
+        
+        # スキーマに変換
+        users_with_messages = []
+        
+        for entry in users_data:
+            user = entry['user']
+            
+            # ユーザー情報を手動で構築（必要最小限の情報のみ）
+            user_profile_data = {
+                'user_id': user.id,
+                'user_username': user.username,
+                'display_name': getattr(user, 'display_name', user.username),
+                'pfp': getattr(user, 'pfp', None),
+            }
+            
+            user_with_message = {
+                'user_id': entry['user_id'],
+                'user': user_profile_data,
+                'latest_message': {
+                    'content': entry['latest_message']['content'],
+                    'created_at': entry['latest_message']['created_at'],
+                    'sender_id': entry['latest_message']['sender_id'],
+                    'is_sent_by_me': entry['latest_message']['is_sent_by_me'],
+                    'is_read': entry['latest_message']['is_read']
+                }
+            }
+            users_with_messages.append(user_with_message)
+        
+        return UsersHaveHistoryWithUserOutputSchema(users=users_with_messages)
     except Exception as e:
         from ninja.errors import HttpError
         raise HttpError(400, f"ユーザーのリストの取得に失敗しました: {str(e)}")
+    
+@router.get("/class-messages/{class_id}", response=ClassMessageListOutputSchema, auth=JWTAuth())
+def get_class_messages(request, class_id: uuid.UUID):
+    """クラスのメッセージを取得"""
+    try:
+        messages = ClassMessage.objects.get_messages_by_class_id(class_id).select_related('sender', 'sender__profile').order_by('created_at')
+        
+        # 手動でスキーマに変換
+        message_schemas = []
+        for message in messages:
+            # senderのUserProfileSchemaを作成
+            if message.sender:
+                from users.schemas import UserProfileSchema
+                sender_schema = UserProfileSchema.from_user(message.sender)
+            else:
+                # senderがNoneの場合のデフォルト値
+                sender_schema = None
+            
+            # ClassMessageSchemaを作成
+            message_schema = {
+                'id': message.id,
+                'sender': sender_schema,
+                'content': message.content,
+                'created_at': message.created_at,
+                'updated_at': message.updated_at
+            }
+            message_schemas.append(message_schema)
+        
+        return ClassMessageListOutputSchema(messages=message_schemas)
+    except Exception as e:
+        from ninja.errors import HttpError
+        raise HttpError(400, f"クラスのメッセージの取得に失敗しました: {str(e)}")
