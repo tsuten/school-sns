@@ -1,38 +1,12 @@
 import { writable } from 'svelte/store';
 
-import { messages } from '$lib/compornents/stores/unifiedBaseWSStore.js';
-// const messageList = {
-//   type: $state(),
-//   content: $state(),
-//   sender: {
-//     id: $state(),
-//     username: $state(),
-//     displayName: $state(),
-//     icon: $state()
-//   },
-//   created_at: $state(),
-//   timestamp: $state()
-// };
-const messageList = writable([]);
+import { messages } from '$lib/stores/unifiedBaseWSStore.js';
+import { apiClient } from '$lib/services/django.js';
 
-// 初期化関数
-function initialize(messageList) {
-    return {
-        type: '',
-        content: '',
-        sender: {
-            id: '',
-            username: '',
-            displayName: '',
-            icon: ''
-        },
-        created_at: null,
-        timestamp: null
-    };
-}
+export const chatMessages = writable([]);
 
 // データを取得する関数
-function get() {
+function fetchMessages() {
     messages.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
@@ -75,6 +49,7 @@ const JoinAnnouncementsGroup = async (announcements_id) => {
 const LeaveAnnouncementsGroup = async (announcements_id) => {
     await LeaveGroup("announcements_" + announcements_id);
 }
+
 // 追加データ読み込み関数(カーソルページネーション)
 function fetchMoreMessage() {
     // メッセージを時系列順（古い順）にソート
@@ -84,4 +59,14 @@ function fetchMoreMessage() {
         return timeA - timeB;
     });
 
+}
+
+function fetchInitialMessages(user_id) {
+    apiClient.get(`/chat/messages/${user_id}`).then(response => {
+        chatMessages.set(response.messages);
+    });
+}
+
+export function initialize(user_id) {
+    fetchInitialMessages(user_id);
 }

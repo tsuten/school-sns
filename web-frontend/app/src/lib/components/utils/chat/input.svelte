@@ -88,7 +88,7 @@
     }
 </script>
 
-<div class="bg-white border-t border-gray-300 p-4">
+<div class="bg-white border-gray-300 absolute bottom-4 left-4 right-4">
     <div class="flex items-center gap-2">
         {#if isFileInput}
         <!-- ファイル添付ボタン -->

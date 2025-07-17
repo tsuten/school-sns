@@ -4,7 +4,8 @@
     import { page } from "$app/stores";
     import { browser } from '$app/environment';
     import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
-    import Input from "$lib/components/utils/chat/input.svelte";
+    import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
+    import InPageSideBar from "$lib/components/page-components/inPageSideBar.svelte";
     let classId = $derived($page.params?.class);
 
     $inspect("messages", $messages);
@@ -20,7 +21,10 @@
     });
 </script>
 
-<Page class="flex flex-col h-full">
-    <ChatCore messages={$messages} />
-    <Input />
-</Page>
+<div class="flex flex-row w-full h-full">
+    <InPageSideBar data={$messages} currentCircleId={classId} />
+    <div class="flex-1 flex flex-col relative h-full w-full">
+        <ChatCore messages={$messages} />
+        <ChatInput apiPath="/chat/class-messages/" />
+    </div>
+</div>
