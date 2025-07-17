@@ -49,6 +49,15 @@
     }
 
     let showForm = false;
+    let showEventForm = false;
+
+    function openEventForm() {
+        showEventForm = true;
+    }
+
+    function closeEventForm() {
+        showEventForm = false;
+    }
 
     function openForm() {
         showForm = true;
