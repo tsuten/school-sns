@@ -108,7 +108,7 @@
 </script>
 
 <div class="flex flex-row h-full w-full">
-<InPageSideBar hoverWidth=80>
+<InPageSideBar>
     <div class="flex flex-col">
         {#if isLoading}
             <div class="p-4 text-gray-500">読み込み中...</div>
