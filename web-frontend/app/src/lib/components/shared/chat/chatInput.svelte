@@ -6,7 +6,7 @@
 
     let { 
         value = $bindable(''), 
-        apiPath,
+        onSend = () => {},
         disabled = false, 
         placeholder = 'メッセージを入力...',
         isEmojiInput = false,
@@ -52,17 +52,9 @@
             console.log('Empty message, not sending');
             return;
         }
-        
-        if (!apiPath) {
-            console.log('apiPath not provided');
-            return;
-        }
 
         try {
-            const response = await apiClient.post(apiPath, {
-                content: value.trim()
-            });
-            console.log('Message sent successfully:', response);
+            await onSend(value.trim());
             value = ''; // 送信後に入力値をクリア
         } catch (error) {
             console.error('Failed to send message:', error);

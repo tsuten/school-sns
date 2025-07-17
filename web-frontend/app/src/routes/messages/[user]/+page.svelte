@@ -84,10 +84,31 @@
         }
     });
 
+    // メッセージ送信処理
+    async function handleMessageSend(content) {
+        if (!userId) {
+            console.error('送信先ユーザーが指定されていません');
+            return;
+        }
+
+        console.log("メッセージを送信します", content, userId);
+
+        try {
+            const response = await apiClient.post('/chat/messages', {
+                content: content,
+                receiver_id: userId
+            });
+            console.log('メッセージが送信されました:', response);
+        } catch (error) {
+            console.error('メッセージの送信に失敗しました:', error);
+            throw error; // エラーを再スローして chatInput でハンドリング
+        }
+    }
+
 </script>
 
 <div class="flex flex-row h-full w-full">
-<InPageSideBar>
+<InPageSideBar hoverWidth=80>
     <div class="flex flex-col">
         {#if isLoading}
             <div class="p-4 text-gray-500">読み込み中...</div>
@@ -161,6 +182,6 @@
         </div>
     </ChatHeader>
     <ChatCore messages={$chatMessages} />
-    <ChatInput apiPath="/chat/messages/" />
+    <ChatInput onSend={handleMessageSend} />
 </div>
 </div>

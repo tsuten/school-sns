@@ -1,6 +1,6 @@
 <script>
     import { Crown, Hash, Users } from 'lucide-svelte';
-    let { children, hoverWidth = 80 } = $props();
+    let { children, hoverWidth } = $props();
 </script>
 
 <div class="w-16 hover:w-{hoverWidth} border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out group">
