@@ -56,7 +56,10 @@ class MessageManager(models.Manager):
         ).order_by('-created_at').first()
     
     def get_list_of_users_have_history_with_user(self, user):
-        """指定ユーザーとメッセージを交信したユーザーのリストを取得"""
+        """指定ユーザーとメッセージを交信したユーザーのリストを最新メッセージ情報と共に取得"""
+        from django.db.models import Q, Max, Case, When, Value, CharField
+        from users.models import User
+        
         # 送信したメッセージの受信者を取得
         sent_to_users = self.filter(
             sender=user, is_deleted=False
@@ -72,7 +75,42 @@ class MessageManager(models.Manager):
         user_ids.discard(None)  # null値を除外
         user_ids.discard(user.id)  # 現在のユーザーを除外
         
-        return list(user_ids)
+        if not user_ids:
+            return []
+        
+        # 各ユーザーとの最新メッセージを取得
+        result = []
+        for other_user_id in user_ids:
+            # 該当ユーザーとの最新メッセージを取得
+            latest_message = self.filter(
+                Q(sender=user, receiver_id=other_user_id) | 
+                Q(sender_id=other_user_id, receiver=user),
+                is_deleted=False
+            ).order_by('-created_at').first()
+            
+            if latest_message:
+                # ユーザー情報を取得
+                try:
+                    other_user = User.objects.get(id=other_user_id)
+                except User.DoesNotExist:
+                    continue
+                
+                result.append({
+                    'user_id': other_user_id,
+                    'user': other_user,
+                    'latest_message': {
+                        'content': latest_message.content,
+                        'created_at': latest_message.created_at,
+                        'sender_id': latest_message.sender.id,
+                        'is_sent_by_me': latest_message.sender.id == user.id,
+                        'is_read': latest_message.is_read
+                    }
+                })
+        
+        # 最新メッセージの日時で降順ソート
+        result.sort(key=lambda x: x['latest_message']['created_at'], reverse=True)
+        
+        return result
 
 
 # Create your models here.

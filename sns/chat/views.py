@@ -211,11 +211,39 @@ def send_message(request, payload: MessageCreateInputSchema):
     
 @router.get("/users-have-history-with-user", auth=JWTAuth(), response=UsersHaveHistoryWithUserOutputSchema)
 def get_users_have_history_with_user(request):
-    """指定ユーザーとメッセージを交信したユーザーのリストを取得"""
+    """指定ユーザーとメッセージを交信したユーザーのリストを最新メッセージ情報と共に取得"""
     try:
         current_user = request.user
-        users = Message.objects.get_list_of_users_have_history_with_user(current_user)
-        return UsersHaveHistoryWithUserOutputSchema(users=users)
+        users_data = Message.objects.get_list_of_users_have_history_with_user(current_user)
+        
+        # スキーマに変換
+        users_with_messages = []
+        
+        for entry in users_data:
+            user = entry['user']
+            
+            # ユーザー情報を手動で構築（必要最小限の情報のみ）
+            user_profile_data = {
+                'user_id': user.id,
+                'user_username': user.username,
+                'display_name': getattr(user, 'display_name', user.username),
+                'pfp': getattr(user, 'pfp', None),
+            }
+            
+            user_with_message = {
+                'user_id': entry['user_id'],
+                'user': user_profile_data,
+                'latest_message': {
+                    'content': entry['latest_message']['content'],
+                    'created_at': entry['latest_message']['created_at'],
+                    'sender_id': entry['latest_message']['sender_id'],
+                    'is_sent_by_me': entry['latest_message']['is_sent_by_me'],
+                    'is_read': entry['latest_message']['is_read']
+                }
+            }
+            users_with_messages.append(user_with_message)
+        
+        return UsersHaveHistoryWithUserOutputSchema(users=users_with_messages)
     except Exception as e:
         from ninja.errors import HttpError
         raise HttpError(400, f"ユーザーのリストの取得に失敗しました: {str(e)}")
