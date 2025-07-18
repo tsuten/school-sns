@@ -8,12 +8,15 @@ const token = await authService.getAccessTokenFromCookie();
 
 export const messages = writable([]);
 
+export const latestMessage = writable({});
+
 export const connectToWS = async () => {
     if (!browser) return;
     
     djangoWsClient.connectApp("/unified?token=" + token);    
     djangoWsClient.onApp("/unified?token=" + token, 'message', (data) => {
         console.log("Received WebSocket message:", data);
+        latestMessage.set(data);
         messages.update(state => [
             ...state,
             {
