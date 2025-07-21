@@ -1,18 +1,75 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 
 import { messages, latestMessage } from '$lib/stores/unifiedBaseWSStore.js';
 import { apiClient } from '$lib/services/django.js';
 
+export const chatConfig = writable({
+    type: null,
+    room_id: null,
+});
+
 export const chatMessages = writable([]);
+
+// メッセージ削除処理
+const deleteMessage = (messageId) => {
+    chatMessages.update((messages) => messages.filter(message => message.id !== messageId));
+};
+
+// メッセージ復元処理
+const restoreMessage = (data) => {
+    const config = get(chatConfig);
+    console.log("Restore data:", data);
+    console.log("Config:", config);
+    
+    if (config.type === 'private' && config.room_id == data.sender.id) {
+        const message = {
+            id: data.id || crypto.randomUUID(),
+            content: data.content,
+            created_at: data.created_at,
+            sender: data.sender,
+            type: 'message'
+        };
+        chatMessages.update((messages) => [...messages, message]);
+        console.log("Message restored:", message);
+    }
+};
+
+// メッセージ追加処理
+const addMessage = (data) => {
+    const config = get(chatConfig);
+    console.log("chatConfig", config.type);
+    console.log("data.data.sender.id", data.data.sender.id);
+    console.log("chatConfig.room_id", config.room_id);
+    
+    if (config.type === 'private' && config.room_id == data.data.sender.id) {
+        const message = {
+            id: data.data.id || crypto.randomUUID(), // IDを追加
+            content: data.data.content,
+            created_at: data.data.created_at,
+            sender: data.data.sender,
+            type: 'message'
+        };
+        chatMessages.update((messages) => [...messages, message]);
+    }
+};
 
 latestMessage.subscribe((data) => {
     try {
         if (data.type === 'message') {
-            const message = {
-                content: data.data.content,
-                created_at: data.data.created_at,
-            };
-            chatMessages.update((messages) => [...messages, message]);
+            // operationがdeleteの場合、メッセージを削除
+            if (data.operation === 'delete' && data.data && data.data.id) {
+                deleteMessage(data.data.id);
+                return;
+            }
+            
+            // operationがrestoreの場合、メッセージを復元
+            if (data.operation === 'restore' && data.data) {
+                restoreMessage(data.data);
+                return;
+            }
+            
+            // メッセージを追加
+            addMessage(data);
         }
     } catch (error) {
         console.error('WebSocketデータの解析に失敗しました:', error);
@@ -45,11 +102,12 @@ function fetchMoreMessage() {
 }
 
 function fetchInitialMessages(user_id) {
-    apiClient.get(`/chat/messages/${user_id}`).then(response => {
-        chatMessages.set(response.messages)
+    apiClient.get(`/pm/messages/${user_id}`).then(response => {
+        chatMessages.set(response.data.messages)
     });
 }
 
 export function initialize(user_id) {
     fetchInitialMessages(user_id);
 }
+

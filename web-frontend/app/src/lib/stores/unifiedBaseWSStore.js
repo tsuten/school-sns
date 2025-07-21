@@ -21,6 +21,7 @@ export const connectToWS = async () => {
             ...state,
             {
                 type: data.type,
+                operation: data.operation,
                 data: data.data,
                 timestamp: data.timestamp || datetimeNormalize(new Date())
             }
