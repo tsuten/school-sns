@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-$rhggovbf*bm_q9qrl+4uvz1@+2cq70f*(_n10@7$0ky3$gf*q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -63,7 +63,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -210,3 +209,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+
+# Custom error handlers
+HANDLER404 = 'shared.handlers.custom_404_handler'
+HANDLER500 = 'shared.handlers.custom_500_handler'
+HANDLER403 = 'shared.handlers.custom_403_handler'

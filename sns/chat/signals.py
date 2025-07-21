@@ -1,58 +1,249 @@
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from .models import ClassMessage, Message
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver, Signal
+from .models import PrivateMessage
 from users.models import UserProfile
 
-@receiver(post_save, sender=ClassMessage)
-def send_class_message(sender, instance, created, **kwargs):
-    if created:
-        channel_layer = get_channel_layer()
-        
-        # グループ名を作成（コンシューマーと同じ形式）
-        group_name = f"class_{instance.class_id.id}"
-        
-        # WebSocketグループにメッセージを送信
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                'type': 'class_message',
-                'data': {
-                    'id': str(instance.id),
-                    'sender': {
-                        'id': str(instance.sender.id) if instance.sender else None,
-                        'username': instance.sender.username if instance.sender else 'Unknown'
-                    },
-                    'content': instance.content,
-                    'class_id': str(instance.class_id.id),
-                    'created_at': instance.created_at.isoformat(),
-                    'is_deleted': instance.is_deleted
-                }
-            }
-        )
+# カスタムシグナルを定義
+message_post_signal = Signal()
+message_update_signal = Signal()
+message_delete_signal = Signal()
+message_restore_signal = Signal()
 
-@receiver(post_save, sender=Message)
-def send_to_user(sender, instance, created, **kwargs):
+# シグナル送信のラッパー関数
+def send_message_post_signal(message):
+    """メッセージ作成シグナルを送信"""
+    message_post_signal.send(
+        sender=PrivateMessage,
+        message=message,
+        action='post',
+        user_id=message.sender.id if message.sender else None,
+        receiver_id=message.receiver.id if message.receiver else None
+    )
+
+def send_message_update_signal(message):
+    """メッセージ更新シグナルを送信"""
+    message_update_signal.send(
+        sender=PrivateMessage,
+        message=message,
+        action='update',
+        user_id=message.sender.id if message.sender else None,
+        receiver_id=message.receiver.id if message.receiver else None
+    )
+
+def send_message_delete_signal(message):
+    """メッセージ削除シグナルを送信"""
+    message_delete_signal.send(
+        sender=PrivateMessage,
+        message=message,
+        action='delete',
+        user_id=message.sender.id if message.sender else None,
+        receiver_id=message.receiver.id if message.receiver else None
+    )
+
+def send_message_restore_signal(message):
+    """メッセージ復元シグナルを送信"""
+    message_restore_signal.send(
+        sender=PrivateMessage,
+        message=message,
+        action='restore',
+        user_id=message.sender.id if message.sender else None,
+        receiver_id=message.receiver.id if message.receiver else None
+    )
+
+# カスタムシグナルを受信するハンドラー
+@receiver(message_post_signal, sender=PrivateMessage)
+def handle_message_post_signal(sender, message, action, user_id, receiver_id, **kwargs):
+    """メッセージ作成シグナルを受信してWebSocket通知を送信"""
     from websocket.unified_consumers import send_to_user
     import asyncio
-
-    sender_profile = UserProfile.objects.get_userdata_and_profile(instance.sender.id)
+    
+    try:
+        sender_profile = UserProfile.objects.get_userdata_and_profile(message.sender.id)
         
-    # 非同期関数を同期的に呼び出し
-    asyncio.run(send_to_user(
-        instance.receiver.id, 
-        "message", 
-        {
-            "id": str(instance.id),
+        message_data = {
+            "id": str(message.id),
             "sender": {
-                "id": str(instance.sender.id),
-                "pfp": str(sender_profile[1].pfp),
+                "id": str(message.sender.id),
+                "pfp": str(sender_profile[1].pfp) if sender_profile[1].pfp else None,
                 "display_name": sender_profile[1].display_name,
-                "username": instance.sender.username
+                "username": message.sender.username
             },
-            "content": instance.content,
-            "created_at": instance.created_at.isoformat(),
-            "is_deleted": instance.is_deleted,
+            "content": message.content,
+            "created_at": message.created_at.isoformat(),
+            "is_deleted": message.is_deleted,
         }
-    ))
+        
+        # 送信者と受信者の両方に新規メッセージ通知を送信
+        # if message.sender:
+        #     asyncio.run(send_to_user(message.sender.id, "message", message_data, "create"))
+            
+        if message.receiver:
+            asyncio.run(send_to_user(message.receiver.id, "message", message_data, "create"))
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"新規メッセージ通知の送信に失敗しました: {e}")
+
+@receiver(message_update_signal, sender=PrivateMessage)
+def handle_message_update_signal(sender, message, action, user_id, receiver_id, **kwargs):
+    """メッセージ更新シグナルを受信してWebSocket通知を送信"""
+    from websocket.unified_consumers import send_to_user
+    import asyncio
+    
+    try:
+        # is_deletedの変更を検出
+        if hasattr(message, 'is_deleted'):
+            if message.is_deleted:
+                # 削除された場合
+                if message.sender:
+                    asyncio.run(send_to_user(
+                        message.sender.id,
+                        "message",
+                        {
+                            "id": str(message.id),
+                            "sender_id": str(message.sender.id),
+                            "receiver_id": str(message.receiver.id) if message.receiver else None,
+                            "deleted_at": message.deleted_at.isoformat() if hasattr(message, 'deleted_at') and message.deleted_at else message.updated_at.isoformat(),
+                            "room_type": "private"
+                        },
+                        "delete"
+                    ))
+                
+                if message.receiver:
+                    asyncio.run(send_to_user(
+                        message.receiver.id,
+                        "message", 
+                        {
+                            "id": str(message.id),
+                            "sender_id": str(message.sender.id) if message.sender else None,
+                            "receiver_id": str(message.receiver.id),
+                            "deleted_at": message.deleted_at.isoformat() if hasattr(message, 'deleted_at') and message.deleted_at else message.updated_at.isoformat(),
+                            "room_type": "private"
+                        },
+                        "delete"
+                    ))
+            else:
+                # 通常の更新（content等の変更）
+                sender_profile = UserProfile.objects.get_userdata_and_profile(message.sender.id)
+                
+                message_data = {
+                    "id": str(message.id),
+                    "sender": {
+                        "id": str(message.sender.id),
+                        "pfp": str(sender_profile[1].pfp) if sender_profile[1].pfp else None,
+                        "display_name": sender_profile[1].display_name,
+                        "username": message.sender.username
+                    },
+                    "content": message.content,
+                    "created_at": message.created_at.isoformat(),
+                    "is_deleted": message.is_deleted,
+                    "updated_at": message.updated_at.isoformat()
+                }
+                
+                if message.sender:
+                    asyncio.run(send_to_user(message.sender.id, "message", message_data, "update"))
+                
+                if message.receiver:
+                    asyncio.run(send_to_user(message.receiver.id, "message", message_data, "update"))
+                    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"メッセージ更新通知の送信に失敗しました: {e}")
+
+@receiver(message_delete_signal, sender=PrivateMessage)
+def handle_message_delete_signal(sender, message, action, user_id, receiver_id, **kwargs):
+    """メッセージ削除シグナルを受信してWebSocket通知を送信"""
+    from websocket.unified_consumers import send_to_user
+    import asyncio
+    
+    try:
+        # 論理削除されたメッセージの通知を両方のユーザーに送信
+        if message.sender:
+            asyncio.run(send_to_user(
+                message.sender.id,
+                "message",
+                {
+                    "id": str(message.id),
+                    "sender_id": str(message.sender.id),
+                    "receiver_id": str(message.receiver.id) if message.receiver else None,
+                    "deleted_at": message.deleted_at.isoformat() if hasattr(message, 'deleted_at') and message.deleted_at else message.updated_at.isoformat(),
+                    "room_type": "private"
+                },
+                "delete"
+            ))
+        
+        if message.receiver:
+            asyncio.run(send_to_user(
+                message.receiver.id,
+                "message", 
+                {
+                    "id": str(message.id),
+                    "sender_id": str(message.sender.id) if message.sender else None,
+                    "receiver_id": str(message.receiver.id),
+                    "deleted_at": message.deleted_at.isoformat() if hasattr(message, 'deleted_at') and message.deleted_at else message.updated_at.isoformat(),
+                    "room_type": "private"
+                },
+                "delete"
+            ))
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"メッセージ削除通知の送信に失敗しました: {e}")
+
+@receiver(message_restore_signal, sender=PrivateMessage)
+def handle_message_restore_signal(sender, message, action, user_id, receiver_id, **kwargs):
+    """メッセージ復元シグナルを受信してWebSocket通知を送信"""
+    from websocket.unified_consumers import send_to_user
+    import asyncio
+    
+    try:
+        sender_profile = UserProfile.objects.get_userdata_and_profile(message.sender.id)
+        
+        message_data = {
+            "id": str(message.id),
+            "sender": {
+                "id": str(message.sender.id),
+                "pfp": str(sender_profile[1].pfp) if sender_profile[1].pfp else None,
+                "display_name": sender_profile[1].display_name,
+                "username": message.sender.username
+            },
+            "content": message.content,
+            "created_at": message.created_at.isoformat(),
+            "is_deleted": message.is_deleted,
+            "restored_at": message.updated_at.isoformat()
+        }
+        
+        if message.sender:
+            asyncio.run(send_to_user(message.sender.id, "message", message_data, "restore"))
+        
+        if message.receiver:
+            asyncio.run(send_to_user(message.receiver.id, "message", message_data, "restore"))
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"メッセージ復元通知の送信に失敗しました: {e}")
+
+# Django標準シグナルのハンドラーは無効化（カスタムシグナルを使用するため）
+# @receiver(post_save, sender=PrivateMessage)
+# def send_new_message_notification(sender, instance, created, **kwargs):
+#     """新規メッセージが作成された際にWebSocket通知を送信"""
+#     # カスタムシグナルハンドラーで処理するため無効化
+#     pass
+
+# Django標準シグナルのハンドラーは無効化（カスタムシグナルを使用するため）
+# @receiver(post_save, sender=PrivateMessage)
+# def send_message_deleted_notification(sender, instance, created, update_fields, **kwargs):
+#     """メッセージが論理削除された際にWebSocket通知を送信"""
+#     # カスタムシグナルハンドラーで処理するため無効化
+#     pass
+
+# Django標準シグナルのハンドラーは無効化（カスタムシグナルを使用するため）
+# @receiver(post_save, sender=PrivateMessage)  
+# def send_message_restore_notification(sender, instance, created, update_fields, **kwargs):
+#     """メッセージが復元された際にWebSocket通知を送信"""
+#     # カスタムシグナルハンドラーで処理するため無効化
+#     pass

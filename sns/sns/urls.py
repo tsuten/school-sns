@@ -1,19 +1,3 @@
-"""
-URL configuration for sns project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from django.conf import settings
@@ -26,14 +10,26 @@ from ninja_extra import NinjaExtraAPI
 from polls.views import router as polls_router
 from events.views import router as events_router
 from calendar_module.views import router as calendar_router
-from chat.views import router as chat_router
+from chat.views import router as chat_router, private_message_router
 from circle.views import router as circle_router
 from emojis.views import router as emojis_router
 from announcement.views import router as announcement_router
 from notifications.views import router as notifications_router
 from enrollments.views import router as enrollments_router
 from tests.views import router as tests_router
+from shared.handlers import custom_404_handler, custom_500_handler, custom_403_handler, api_exception_handler, api_404_handler
+from ninja.errors import ValidationError
+from pydantic import ValidationError as PydanticValidationError
+from ninja.errors import HttpError
+
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
+
+# 例外ハンドラーを設定
+api.add_exception_handler(ValidationError, api_exception_handler)
+api.add_exception_handler(PydanticValidationError, api_exception_handler)
+api.add_exception_handler(HttpError, api_exception_handler)
+api.add_exception_handler(Exception, api_exception_handler)
+
 api.add_router('posts', posts_router)
 api.add_router('users', users_router)
 api.add_router('polls', polls_router)
@@ -46,7 +42,11 @@ api.add_router('announcement', announcement_router)
 api.add_router('notifications', notifications_router)
 api.add_router('enrollments', enrollments_router)
 api.add_router('tests', tests_router)
+api.add_router('pm', private_message_router)
 api.register_controllers(NinjaJWTDefaultController)
+
+# カスタム404ハンドラーを追加
+from django.urls import re_path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -57,3 +57,11 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# カスタム404ハンドラーを最後に追加
+urlpatterns.append(re_path(r'^.*$', api_404_handler, name='api_404'))
+
+# カスタム404ハンドラー
+handler404 = 'shared.handlers.custom_404_handler'
+handler500 = 'shared.handlers.custom_500_handler'
+handler403 = 'shared.handlers.custom_403_handler'

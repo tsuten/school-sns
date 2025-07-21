@@ -3,7 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from datetime import datetime
 
-async def send_to_user(user_id, message_type, data):
+async def send_to_user(user_id, message_type, data, operation=None):
     """特定のユーザーIDに対してメッセージを送信"""
     channel_layer = get_channel_layer()
     group_name = f"user_{user_id}"
@@ -13,11 +13,12 @@ async def send_to_user(user_id, message_type, data):
         {
             'type': 'send_message',
             'message_type': message_type,
-            'data': data
+            'data': data,
+            'operation': operation
         }
     )
 
-async def send_to_group(group_name, message_type, data):
+async def send_to_group(group_name, message_type, data, operation=None):
     """グループに対してメッセージを送信"""
     channel_layer = get_channel_layer()
     
@@ -26,7 +27,8 @@ async def send_to_group(group_name, message_type, data):
         {
             'type': 'send_message',
             'message_type': message_type,
-            'data': data
+            'data': data,
+            'operation': operation
         }
     )
 
@@ -101,9 +103,11 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """チャンネルレイヤーからのメッセージを処理"""
         message_type = event['message_type']
         data = event['data']
-        
+        operation = event.get('operation', 'other')
+
         await self.send(text_data=json.dumps({
             'type': message_type,
+            'operation': operation,
             'data': data,
             'timestamp': datetime.now().isoformat()
         }))
@@ -120,5 +124,5 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-    async def send_to_group(self, group_name, message_type, data):
-        await send_to_group(group_name, message_type, data)
+    async def send_to_group(self, group_name, message_type, data, operation=None):
+        await send_to_group(group_name, message_type, data, operation)

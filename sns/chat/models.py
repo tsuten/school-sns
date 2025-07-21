@@ -1,33 +1,23 @@
 from django.db import models
-import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
-from enrollments.models import Class
+from shared.abstract_models import AbstractBaseModel
+from .decorators import send_message_signal
 
-class BaseMessage(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class AbstractBaseMessage(AbstractBaseModel):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sender')
     content = models.TextField()
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    def delete_message(self):
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.save()
+    class Meta:
+        abstract = True
 
-    def restore_message(self):
-        self.is_deleted = False
-        self.deleted_at = None
-        self.save()
 
 
 # 個人メッセージ
-class MessageManager(models.Manager):
+class PrivateMessageManager(models.Manager):
+
     def get_from_sender(self, sender_id):
         return self.filter(sender_id=sender_id)
     
@@ -57,7 +47,7 @@ class MessageManager(models.Manager):
     
     def get_list_of_users_have_history_with_user(self, user):
         """指定ユーザーとメッセージを交信したユーザーのリストを最新メッセージ情報と共に取得"""
-        from django.db.models import Q, Max, Case, When, Value, CharField
+        from django.db.models import Q
         from users.models import User
         
         # 送信したメッセージの受信者を取得
@@ -95,9 +85,22 @@ class MessageManager(models.Manager):
                 except User.DoesNotExist:
                     continue
                 
+                # UserProfileを通してpfpを取得
+                try:
+                    pfp_url = other_user.profile.pfp.url if other_user.profile.pfp else None
+                    display_name = other_user.profile.display_name
+                except:
+                    pfp_url = None
+                    display_name = other_user.username
+                
                 result.append({
                     'user_id': other_user_id,
-                    'user': other_user,
+                    'user': {
+                        'id': other_user.id,
+                        'user_username': other_user.username,
+                        'display_name': display_name,
+                        'pfp': pfp_url,
+                    },
                     'latest_message': {
                         'content': latest_message.content,
                         'created_at': latest_message.created_at,
@@ -112,20 +115,92 @@ class MessageManager(models.Manager):
         
         return result
 
+    @send_message_signal('post')
+    def send_message(self, sender, receiver, content):
+        """メッセージを送信するメソッド"""
+        message = self.create(
+            sender=sender,
+            receiver=receiver,
+            content=content
+        )
+        return message
+
+    @send_message_signal('update')
+    def update_message(self, message_id, **kwargs):
+        """メッセージを更新するメソッド"""
+        message = self.get(id=message_id)
+        for key, value in kwargs.items():
+            setattr(message, key, value)
+        message.save()
+        return message
+
+    @send_message_signal('update')
+    def update_message_content(self, message_id, content):
+        """メッセージの内容を更新するメソッド"""
+        message = self.get(id=message_id)
+        message.content = content
+        message.save()
+        return message
+
+    @send_message_signal('update')
+    def update_message_read_status(self, message_id, is_read=True):
+        """メッセージの既読状態を更新するメソッド"""
+        message = self.get(id=message_id)
+        message.is_read = is_read
+        if is_read:
+            message.read_at = timezone.now()
+        else:
+            message.read_at = None
+        message.save()
+        return message
+
+    @send_message_signal('update')
+    def update_message_deleted_status(self, message_id, is_deleted=True):
+        """メッセージの削除状態を更新するメソッド"""
+        message = self.get(id=message_id)
+        message.is_deleted = is_deleted
+        if is_deleted:
+            message.deleted_at = timezone.now()
+        message.save()
+        return message
+
+    @send_message_signal('restore')
+    def restore_message(self, message_id):
+        """削除されたメッセージを復元するメソッド"""
+        message = self.get(id=message_id)
+        message.is_deleted = False
+        message.deleted_at = None
+        message.save()
+        return message
+
+    @send_message_signal('delete')
+    def delete_message(self, message_id):
+        """メッセージを論理削除するメソッド"""
+        message = self.get(id=message_id)
+        message.is_deleted = True
+        message.save()
+        return message
+
+    @send_message_signal('update')
+    def mark_message_as_read(self, message_id):
+        """メッセージを既読にするメソッド"""
+        message = self.get(id=message_id)
+        if message.is_read:
+            raise ValidationError("Message is already read")
+        
+        message.is_read = True
+        message.read_at = timezone.now()
+        message.save()
+        return message
+
 
 # Create your models here.
-class Message(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sent_messages')
-    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='received_messages')
-    content = models.TextField()
+class PrivateMessage(AbstractBaseMessage):
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='receiver')
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
-    is_deleted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = MessageManager()
+    objects = PrivateMessageManager()
     
     class Meta:
         ordering = ['-created_at']
@@ -135,20 +210,13 @@ class Message(models.Model):
             models.Index(fields=['is_read']),
         ]
 
-    def delete_message(self):
-        self.is_deleted = True
-        self.save()
-
-    def restore_message(self):
-        self.is_deleted = False
-        self.save()
-    
     def mark_as_read(self):
-        """メッセージを既読にする"""
-        if not self.is_read:
-            self.is_read = True
-            self.read_at = timezone.now()
-            self.save()
+        if self.is_read:
+            raise ValidationError("Message is already read")
+        
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save()
 
     def clean(self):
         if self.sender == self.receiver:
@@ -156,19 +224,8 @@ class Message(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
-        super(Message, self).save(*args, **kwargs)
+        super(PrivateMessage, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.content
     
-class ClassMessageManager(models.Manager):
-    def get_messages_by_class_id(self, class_id):
-        return self.filter(class_id=class_id)
-    
-class ClassMessage(BaseMessage):
-    class_id = models.ForeignKey(Class, on_delete=models.CASCADE)
-
-    objects = ClassMessageManager()
-
-    def __str__(self):
-        return self.content
