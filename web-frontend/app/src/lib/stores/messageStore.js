@@ -53,6 +53,7 @@ const addMessage = (data) => {
     }
 };
 
+// 変数更新用購読ハンドラ
 latestMessage.subscribe((data) => {
     try {
         if (data.type === 'message') {

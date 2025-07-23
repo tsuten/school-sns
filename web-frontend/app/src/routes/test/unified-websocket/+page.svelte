@@ -1,12 +1,12 @@
 <script>
-    import { messages } from "$lib/stores/unifiedBaseWSStore.js";
+    import { announcements } from "$lib/stores/announcementStore.js";
 
-    $inspect($messages);
+    $inspect($announcements);
 </script>
 
 <div>
-    {#each $messages as message}
-        <p>{message.data}</p>
-        <p>{message.timestamp}</p>
+    {#each $announcements as announcement}
+        <p>{announcement.message}</p>
+        <p>{announcement.timestamp}</p>
     {/each}
 </div>

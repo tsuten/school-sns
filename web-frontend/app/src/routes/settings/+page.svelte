@@ -7,6 +7,7 @@
         Shield,
     } from "lucide-svelte";
     import { Toggle, Button } from "flowbite-svelte";
+    import InPageSideBar from "$lib/components/page-components/inPageSideBar.svelte";
 
     // 設定項目の定義
     let settingsItems = [
@@ -77,24 +78,20 @@
     }
 </script>
 
-<div class="flex h-full">
+<div class="flex flex-row h-full">
     <!-- 左側メニュー -->
-    <div class="w-50 bg-white border-r border-gray-200 shadow-sm">
-        <div class="p-6 border-b border-gray-100">
+    <InPageSideBar is_fixed={true}>
+        <div class="p-4 border-b border-gray-300">
             <h1 class="text-2xl font-bold text-gray-800">設定</h1>
-            <p class="text-gray-600 text-sm mt-1">アカウント設定を管理</p>
         </div>
 
-        <nav class="p-4">
-            <ul class="space-y-2">
+        <nav class="">
+            <ul class="">
                 {#each settingsItems as item}
                     <li>
                         <button
                             onclick={() => showSetting(item.id)}
-                            class="setting-item w-full text-left px-4 py-3 rounded-lg hover:bg-mint-50 hover:text-mint-700 transition-colors duration-200 flex items-center space-x-3"
-                            class:bg-mint-100={currentSetting === item.id}
-                            class:text-mint-700={currentSetting === item.id}
-                            class:active-menu={currentSetting === item.id}
+                            class="flex items-center w-full p-4 hover:bg-gray-100 hover:cursor-pointer gap-2"
                         >
                             <svelte:component
                                 this={item.icon}
@@ -106,7 +103,7 @@
                 {/each}
             </ul>
         </nav>
-    </div>
+    </InPageSideBar>
 
     <!-- 右側コンテンツ -->
     <div class="flex-1 bg-white overflow-y-auto">
@@ -360,25 +357,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .setting-item {
-        transition: all 0.2s ease;
-    }
-    .setting-item:hover {
-        transform: translateX(4px);
-    }
-    .fade-in {
-        animation: fadeIn 0.3s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>

@@ -21,7 +21,6 @@ export const connectToNotificationWS = async () => {
     console.log("接続しましたぞ")
      // イベントを監視
     djangoWsClient.onApp('/notification?token=' + token, 'message', (data) => {
-        console.log("通知通ってますぞ")
         Notifications.update(state => [
             ...state,
             {
