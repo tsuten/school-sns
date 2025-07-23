@@ -85,12 +85,10 @@
 	<div class="flex justify-between flex-1 min-h-0 overflow-hidden">
 		<Sidebar />
 
-		<div class="w-full border-x border-gray-300 h-full">
-			{#key $page.url.pathname}
-				<div class="page-transition page-transition-in h-full">
-					{@render children()}
-				</div>
-			{/key}
+		<div class="w-full border-x border-gray-300 h-full">	
+			<div class="page-transition page-transition-in h-full">
+				{@render children()}
+			</div>
 		</div>
 		<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
 			<div class="h-full">
