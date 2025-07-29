@@ -12,7 +12,7 @@
         {#each $wsNotifications as notification}
             <div class="flex items-center gap-2">
                 <Bell class="w-4 h-4" />
-                <span class="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{notification.content}</span>
+                <span class="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[25ch]">{notification.content}</span>
             </div>
         {/each}
     </div>
