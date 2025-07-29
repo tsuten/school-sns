@@ -3,8 +3,10 @@
     import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip} from 'lucide-svelte';
     import { apiClient } from "$lib/services/django";
     import { onMount } from "svelte";
-
-    let showSidebar = $state(false);
+    import { fade } from 'svelte/transition';
+	import { page } from "$app/stores";
+	import { goto } from "$app/navigation";
+    let { showSidebar } = $props();
     let show_logout_modal = $state(false);
 
     let your_classes = $state([]);
@@ -102,6 +104,14 @@
 			label: class_obj.name
 		}));
 	});
+
+	function navigateToSettings(href) {
+		// 現在のパスに「settings」が含まれている場合は遷移しない
+		if ($page.url.pathname.includes('settings')) {
+			return;
+		}
+		goto(href);
+	}
 </script>
 
 <!-- <div class="flex items-start flex-col justify-between">
@@ -109,11 +119,7 @@
         サイドバーを{showSidebar ? "閉じる" : "開く"}
     </button>
 </div> -->
-<div class="hover:cursor-pointer" onclick={(event) => {
-    if (event.target === event.currentTarget) {
-        showSidebar = !showSidebar;
-    }
-}}>
+<div>
 {#if showSidebar}
 <div class="flex items-start flex-col justify-between">
     <div class="flex flex-col gap-1 p-2">
@@ -137,7 +143,7 @@
     </div>
 </div>
 {:else}
-<div class="flex items-start flex-col justify-between">
+<div class="flex items-center flex-col justify-between h-full">
     <div class="flex flex-col gap-1 p-2">
         {#each services as service}
             <a href={service.href} class="flex flex-row gap-2 items-center">
@@ -157,11 +163,11 @@
     </div>
     <div class="flex flex-col gap-1 p-2">
         {#each bottom_services as service}
-            <a href={service.href} class="flex flex-row gap-2 items-center">
+            <button onclick={() => navigateToSettings(service.href)} class="flex flex-row gap-2 items-center">
                 <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
                     <service.icon size="20" />
                 </div>
-            </a>
+            </button>
         {/each}
         <button class="flex flex-row items-center justify-center gap-2 group" onclick={() => show_logout_modal = true}>
             <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">

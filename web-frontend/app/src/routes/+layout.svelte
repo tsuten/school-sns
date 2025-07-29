@@ -1,6 +1,6 @@
 <script>
 	import '../app.css';
-	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip} from 'lucide-svelte';
+	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip, PanelLeftOpen, PanelLeftClose } from 'lucide-svelte';
 	import State from './state.svelte';
 	import Modal from '../lib/components/utils/modal.svelte';
 	import UserInfo from '../lib/components/utils/userInfo.svelte';
@@ -9,9 +9,7 @@
 	import ToastContainer from '../lib/components/utils/ToastContainer.svelte';
 	import { setUserFromServerData, logout as authLogout, isAuthenticated, currentUser } from '../lib/stores/auth.js';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { apiClient } from '../lib/services/django.js';
-	import { page } from '$app/stores';
 	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
 	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
 	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
@@ -19,6 +17,7 @@
 	import UserIcon from '../lib/components/utils/userIcon.svelte';
 	import NotificationDropdown from '../lib/components/card/topbar/notificationDropdown.svelte';
 	import Sidebar from '../lib/components/layout/sidebar/sidebar.svelte';
+	import { settingsStore } from '../lib/stores/serverSettingsStore.js';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
@@ -57,11 +56,19 @@
 
 	let editing_widget = $state(false);
 	let show_logout_modal = $state(false);
+	let showSidebar = $state(true);
 </script>
 
 <div class="flex flex-col h-screen w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-4 border-b h-16 flex-shrink-0">
+	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-2 border-b flex-shrink-0">
 		<div>
+			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill onclick={() => showSidebar = !showSidebar}>
+				{#if showSidebar}
+					<PanelLeftClose class="w-6 h-6 text-gray-500" />
+				{:else}
+					<PanelLeftOpen class="w-6 h-6 text-gray-500" />
+				{/if}
+			</Button>
 		</div>
 		<div class="flex flex-row items-center gap-2">
 			<Input type="text" placeholder="検索" class="w-full h-8 rounded-sm"/>
@@ -83,7 +90,7 @@
 		</div>
 	</div>
 	<div class="flex justify-between flex-1 min-h-0 overflow-hidden">
-		<Sidebar />
+		<Sidebar bind:showSidebar={showSidebar} />
 
 		<div class="w-full border-x border-gray-300 h-full">	
 			<div class="page-transition page-transition-in h-full">
