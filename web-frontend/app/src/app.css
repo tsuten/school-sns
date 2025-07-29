@@ -39,8 +39,6 @@
 body {
 	max-width: 1300px;
     margin: 0 auto;
-    scrollbar-width: none;
-    scrollbar-color: transparent transparent;
 }
 
 ::-webkit-scrollbar {
