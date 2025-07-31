@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'watson',
+    'django_cleanup.apps.CleanupConfig',
     'posts',
     'channels',
     'rest_framework',
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     'announcement',
     'notifications',
     'search',
+    'storage',
 ]
 
 MIDDLEWARE = [
@@ -109,7 +111,7 @@ SIMPLE_JWT = {
 from ninja_jwt.settings import api_settings as ninja_jwt_api_settings
 
 NINJA_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # SIMPLE_JWTと統一
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

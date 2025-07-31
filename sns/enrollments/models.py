@@ -68,3 +68,8 @@ class Class(models.Model):
 
     def __str__(self):
         return self.name
+    
+class OrganizationType(models.TextChoices):
+    CLASS = "class"
+    SCHOOL = "school"
+    CIRCLE = "circle"

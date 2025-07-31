@@ -18,6 +18,7 @@ from notifications.views import router as notifications_router
 from enrollments.views import router as enrollments_router
 from tests.views import router as tests_router
 from search.views import router as search_router
+from storage.views import router as storage_router
 from shared.handlers import custom_404_handler, custom_500_handler, custom_403_handler, api_exception_handler, api_404_handler
 from ninja.errors import ValidationError
 from pydantic import ValidationError as PydanticValidationError
@@ -45,6 +46,7 @@ api.add_router('enrollments', enrollments_router)
 api.add_router('tests', tests_router)
 api.add_router('pm', private_message_router)
 api.add_router('search', search_router)
+api.add_router('storage', storage_router)
 api.register_controllers(NinjaJWTDefaultController)
 
 # カスタム404ハンドラーを追加
