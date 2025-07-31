@@ -4,6 +4,7 @@ from shared.base_schemas import Status
 from ninja.errors import HttpError
 from ninja.errors import ValidationError
 from ninja_jwt.exceptions import InvalidToken, TokenError
+from ninja_jwt.authentication import JWTAuth
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from pydantic import ValidationError as PydanticValidationError
@@ -155,4 +156,38 @@ def send_signal(signal_type, signal_module_path, model_class=None, signal_mappin
             
             return result
         return wrapper
-    return decorator 
+    return decorator
+
+
+def unified_auth(response_schema=None):
+    """
+    統一認証デコレータ
+    JWTAuth認証とBaseSchemaレスポンス形式を自動適用
+    
+    使用例:
+    @router.get("/example", **unified_auth())
+    def example_view(request):
+        return {"message": "success"}
+    """
+    return {
+        "auth": JWTAuth(),
+        "response": {
+            200: response_schema if response_schema else dict,
+            401: dict,  # 認証エラー
+            403: dict,  # 権限エラー
+            500: dict   # サーバーエラー
+        }
+    }
+
+
+def unified_auth_decorator(func):
+    """
+    統一認証＋レスポンス形式のデコレータ（関数用）
+    JWTAuth + BaseSchema形式の統一を自動適用
+    
+    使用例:
+    @unified_auth_decorator
+    def my_view(request):
+        return {"data": "success"}
+    """
+    return with_base_schema(func) 
