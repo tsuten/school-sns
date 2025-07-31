@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 import uuid
 from .utils import Prefectures
+from watson import search as watson
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -162,3 +163,7 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+# django-watson 検索対象モデルの登録
+watson.register(User, fields=('username',))

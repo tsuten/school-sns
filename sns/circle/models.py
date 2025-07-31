@@ -5,6 +5,7 @@ import uuid
 from .schemas import ResponseSchema
 import mimetypes
 from django.utils import timezone
+from watson import search as watson
 
 class CircleCategory(models.TextChoices):
     STUDY = 'study', '学習'
@@ -388,3 +389,7 @@ class CircleNotification(models.Model):
 
     def __str__(self):
         return f"{self.circle.name} - {self.message}"
+
+
+# django-watson 検索対象モデルの登録
+watson.register(Circle, fields=('name', 'description'))

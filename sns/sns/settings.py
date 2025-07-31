@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'watson',
     'posts',
     'channels',
     'rest_framework',
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
     'enrollments',
     'announcement',
     'notifications',
+    'search',
 ]
 
 MIDDLEWARE = [

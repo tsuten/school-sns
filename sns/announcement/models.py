@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from users.models import User
 from enrollments.models import School, Class
+from watson import search as watson
 
 class AnnouncementManager(models.Manager):
 
@@ -86,3 +87,7 @@ class Announcement(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+# django-watson 検索対象モデルの登録
+watson.register(Announcement, fields=('title', 'content'))
