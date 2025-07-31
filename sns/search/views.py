@@ -4,7 +4,7 @@ from ninja.errors import HttpError
 from typing import Dict, Any, List
 from django.apps import apps
 
-router = Router()
+router = Router(tags=["search"])
 
 # 検索結果のモデル設定
 SEARCH_MODEL_CONFIG = {
