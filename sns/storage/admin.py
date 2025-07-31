@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SharedFile, FileCategory
+from .models import SharedFile, FileCategory, StorageRoom, StorageItem, StorageItemTag
 # from .models import FileAccess  # ログ履歴機能を一時的に無効化
 
 # Register your models here.
@@ -9,6 +9,19 @@ class FileCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'icon', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name', 'description']
+
+@admin.register(StorageRoom)
+class StorageRoomAdmin(admin.ModelAdmin):
+    list_display = ['name', 'organization_type', 'organization_id', 'created_at']
+    list_filter = ['organization_type', 'created_at']
+    search_fields = ['name', 'organization_type', 'organization_id']
+
+@admin.register(StorageItem)
+class StorageItemAdmin(admin.ModelAdmin):
+    list_display = ['name', 'storage_room', 'created_by', 'created_at']
+    list_filter = ['storage_room', 'created_by', 'created_at']
+    search_fields = ['name', 'storage_room__name', 'created_by__username']
+
 
 
 @admin.register(SharedFile)

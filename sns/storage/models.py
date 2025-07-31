@@ -7,6 +7,9 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.validators import FileExtensionValidator
 from shared.abstract_models import AbstractBaseModel
 import uuid
+from users.models import User
+from enrollments.models import OrganizationType
+
 
 try:
     import magic
@@ -62,7 +65,23 @@ class FileCategory(AbstractBaseModel):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
+    
+    
+class StorageItemTag(AbstractBaseModel):
+    name = models.CharField(max_length=100, verbose_name="タグ名")
 
+class StorageRoom(AbstractBaseModel):
+    name = models.CharField(max_length=100, verbose_name="ルーム名") 
+    organization_type = models.CharField(max_length=255, choices=OrganizationType.choices, null=True, blank=True)
+    organization_id = models.UUIDField(null=True, blank=True)
+    managers = models.ManyToManyField(User, blank=True)
+
+class StorageItem(AbstractBaseModel):
+    name = models.CharField(max_length=100, verbose_name="アイテム名")
+    file = models.FileField(upload_to='storage/', null=True, blank=True)
+    storage_room = models.ForeignKey(StorageRoom, on_delete=models.CASCADE, null=True, blank=True)
+    tags = models.ManyToManyField(StorageItemTag, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
 class SharedFileManager(models.Manager):
     def get_queryset(self):

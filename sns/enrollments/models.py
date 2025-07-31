@@ -73,3 +73,4 @@ class OrganizationType(models.TextChoices):
     CLASS = "class"
     SCHOOL = "school"
     CIRCLE = "circle"
+    PERSONAL = "personal"
