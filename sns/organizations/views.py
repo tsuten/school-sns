@@ -6,7 +6,7 @@ from .schemas import ClassInfoSchema
 from typing import List
 from ninja_jwt.authentication import JWTAuth    
 
-router = Router(tags=["enrollments"])
+router = Router(tags=["organizations"])
 
 @router.get("/members/{class_id}", response=List[UserProfileSchema])
 def get_members(request, class_id: str):

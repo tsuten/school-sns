@@ -7,7 +7,7 @@
     let classInfo = $state({});
 
     onMount(async () => {
-        const response = await apiClient.get(`/enrollments/class_info/${$page.params.class}`);
+        const response = await apiClient.get(`/organizations/class_info/${$page.params.class}`);
         classInfo = response
     });
 </script>

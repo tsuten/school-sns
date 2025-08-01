@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Announcement
 from .forms import AnnouncementForm
-from enrollments.models import School, Class
+from organizations.models import School, Class
 
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):

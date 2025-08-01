@@ -8,7 +8,7 @@ from django.core.validators import FileExtensionValidator
 from shared.abstract_models import AbstractBaseModel
 import uuid
 from users.models import User
-from enrollments.models import OrganizationType
+from organizations.models import OrganizationType
 
 
 try:

@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import uuid
-from enrollments.models import OrganizationType
+from organizations.models import OrganizationType
 from shared.abstract_models import AbstractBaseModel
 from users.models import User
 from .utils import check_organization_exists

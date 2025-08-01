@@ -36,7 +36,7 @@
     ]);
 
     async function fetchIsManager() {
-        const response = await apiClient.get("/enrollments/is_manager/" + $page.params.class);
+        const response = await apiClient.get("/organizations/is_manager/" + $page.params.class);
         console.log(response);
         return response;
     }

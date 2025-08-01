@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'chat',
     'circle',
     'emojis',
-    'enrollments',
+    'organizations',
     'announcement',
     'notifications',
     'search',

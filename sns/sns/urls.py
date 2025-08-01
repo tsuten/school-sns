@@ -15,7 +15,7 @@ from circle.views import router as circle_router
 from emojis.views import router as emojis_router
 from announcement.views import router as announcement_router
 from notifications.views import router as notifications_router
-from enrollments.views import router as enrollments_router
+from organizations.views import router as organizations_router
 from tests.views import router as tests_router
 from search.views import router as search_router
 from storage.views import router as storage_router
@@ -42,7 +42,7 @@ api.add_router('circle', circle_router)
 api.add_router('emojis', emojis_router)
 api.add_router('announcement', announcement_router)
 api.add_router('notifications', notifications_router)
-api.add_router('enrollments', enrollments_router)
+api.add_router('organizations', organizations_router)
 api.add_router('tests', tests_router)
 api.add_router('pm', private_message_router)
 api.add_router('search', search_router)

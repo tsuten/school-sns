@@ -2,7 +2,7 @@ import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
 from users.models import User
-from enrollments.models import School, Class
+from organizations.models import School, Class
 from watson import search as watson
 
 class AnnouncementManager(models.Manager):

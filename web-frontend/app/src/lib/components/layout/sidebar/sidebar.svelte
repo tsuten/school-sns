@@ -97,7 +97,7 @@
 	]
 
     onMount(async () => {
-		const response = await apiClient.get("/enrollments/my_classes");
+		const response = await apiClient.get("/organizations/my_classes");
 		your_classes = response.map(class_obj => ({
 			icon: School,
 			href: `/class/${class_obj.id}`,

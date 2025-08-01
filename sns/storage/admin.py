@@ -43,3 +43,5 @@ class SharedFileAdmin(admin.ModelAdmin):
 #     list_filter = ['action', 'created_at']
 #     search_fields = ['file__original_name', 'user__username']
 #     readonly_fields = ['created_at']
+
+admin.site.register(StorageItemTag)

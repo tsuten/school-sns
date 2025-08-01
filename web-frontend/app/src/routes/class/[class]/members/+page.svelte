@@ -10,7 +10,7 @@
     let members = $state([]);
 
     onMount(async () => {
-        const response = await apiClient.get(`/enrollments/members/${$page.params.class}`);
+        const response = await apiClient.get(`/organizations/members/${$page.params.class}`);
         members = response;
     });
 </script>
