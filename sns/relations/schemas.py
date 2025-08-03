@@ -9,8 +9,17 @@ class SendFriendRequestSchema(Schema):
 class AcceptFriendRequestSchema(Schema):
     friend_request_id: uuid.UUID
 
+class RejectFriendRequestSchema(Schema):
+    friend_request_id: uuid.UUID
+
+class CancelFriendRequestSchema(Schema):
+    friend_request_id: uuid.UUID
+
 class RelationManagementSchema(Schema):
     target_user_id: uuid.UUID
+
+class RemoveFriendSchema(Schema):
+    friend_user_id: uuid.UUID
 
 class UserBasicSchema(Schema):
     id: uuid.UUID

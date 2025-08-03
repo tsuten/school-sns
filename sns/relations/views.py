@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from ninja_jwt.authentication import JWTAuth
 from shared.decorators import with_base_schema
 from .models import Friend
-from .schemas import SendFriendRequestSchema, AcceptFriendRequestSchema, RelationManagementSchema, UserBasicSchema, RelationManagementEntrySchema # スキーマをインポート
+from .schemas import SendFriendRequestSchema, AcceptFriendRequestSchema, RelationManagementSchema, UserBasicSchema, RelationManagementEntrySchema, RejectFriendRequestSchema, RemoveFriendSchema, CancelFriendRequestSchema # スキーマをインポート
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from .models import RelationManagement, RelationManagementType # RelationManagementTypeもインポート
@@ -44,6 +44,36 @@ def accept_friend_request(request, data: AcceptFriendRequestSchema):
     
     friend_request.accept()
     return {"status": "success", "message": "Friend request accepted successfully"}
+
+@router.post('/request/reject', auth=JWTAuth())
+@with_base_schema
+def reject_friend_request(request, data: RejectFriendRequestSchema):
+    try:
+        friend_request = FriendRequest.objects.get(id=data.friend_request_id)
+        if friend_request.to_user != request.user:
+            return {'status': 'error', 'error': 'You are not the recipient of this friend request'}
+        
+        friend_request.reject()
+        return {"status": "success", "message": "Friend request rejected successfully"}
+    except FriendRequest.DoesNotExist:
+        return {'status': 'error', 'error': 'Friend request not found'}
+    except Exception as e:
+        return {'status': 'error', 'error': f'フレンドリクエストの拒否中にエラーが発生しました: {e}'}
+
+@router.post('/request/cancel', auth=JWTAuth())
+@with_base_schema
+def cancel_friend_request(request, data: CancelFriendRequestSchema):
+    try:
+        friend_request = FriendRequest.objects.get(id=data.friend_request_id)
+        if friend_request.from_user != request.user:
+            return {'status': 'error', 'error': 'You can only cancel your own friend requests'}
+        
+        friend_request.cancel()
+        return {"status": "success", "message": "Friend request cancelled successfully"}
+    except FriendRequest.DoesNotExist:
+        return {'status': 'error', 'error': 'Friend request not found'}
+    except Exception as e:
+        return {'status': 'error', 'error': f'フレンドリクエストの取り消し中にエラーが発生しました: {e}'}
 
 @router.post('/management/block', auth=JWTAuth())
 @with_base_schema
@@ -175,6 +205,33 @@ def list_friends(request):
         return {"status": "success", "data": result}
     except Exception as e:
         return {'status': 'error', 'error': f'フレンドの取得中にエラーが発生しました: {e}'}
+
+@router.post('/friends/remove', auth=JWTAuth())
+@with_base_schema
+def remove_friend(request, data: RemoveFriendSchema):
+    try:
+        # 削除対象のユーザーを取得
+        friend_user = User.objects.get(id=data.friend_user_id)
+        
+        # 自分自身を削除しようとしていないかチェック
+        if request.user.id == friend_user.id:
+            return {'status': 'error', 'error': 'You cannot remove yourself from friends'}
+        
+        # フレンドかどうかチェック
+        if not Friend.objects.check_friend(request.user, friend_user):
+            return {'status': 'error', 'error': 'You are not friends with this user'}
+        
+        # フレンド削除
+        success = Friend.objects.remove_friend(request.user, friend_user)
+        if success:
+            return {"status": "success", "message": "Friend removed successfully"}
+        else:
+            return {'status': 'error', 'error': 'Failed to remove friend'}
+            
+    except User.DoesNotExist:
+        return {'status': 'error', 'error': 'User not found'}
+    except Exception as e:
+        return {'status': 'error', 'error': f'フレンドの削除中にエラーが発生しました: {e}'}
     
 @router.get('/requests', auth=JWTAuth(), response=BaseSchema)
 @with_base_schema
@@ -185,3 +242,13 @@ def list_friend_requests(request):
         return {"status": "success", "data": result}
     except Exception as e:
         return {'status': 'error', 'error': f'フレンドリクエストの取得中にエラーが発生しました: {e}'}
+
+@router.get('/requests/sent', auth=JWTAuth(), response=BaseSchema)
+@with_base_schema
+def list_sent_friend_requests(request):
+    try:
+        sent_friend_requests = FriendRequest.objects.get_sent_friend_requests(request.user)
+        result = [UserBasicSchema(id=friend_request.to_user.id, username=friend_request.to_user.username).dict() for friend_request in sent_friend_requests]
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {'status': 'error', 'error': f'送信済みフレンドリクエストの取得中にエラーが発生しました: {e}'}

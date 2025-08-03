@@ -15,6 +15,17 @@ class FriendManager(models.Manager):
         friends_as_user1 = self.filter(user2=user).values_list('user1__id', flat=True)
         # 両方のリストを結合し、重複を排除して返す
         return friends_as_user1.union(friends_as_user2)
+    
+    def remove_friend(self, user1, user2):
+        # user1とuser2のどちらの順序でも削除できるように両方をチェック
+        friendship = self.filter(user1=user1, user2=user2).first()
+        if not friendship:
+            friendship = self.filter(user1=user2, user2=user1).first()
+        
+        if friendship:
+            friendship.delete()
+            return True
+        return False
 
 class FriendRequestStatus(models.TextChoices):
     PENDING = 'pending'
@@ -50,6 +61,10 @@ class FriendRequestManager(models.Manager):
         return self.filter(to_user=user, status=FriendRequestStatus.PENDING).exclude(
             from_user__id__in=list(blocked_users_ids) + list(ignored_users_ids)
         )
+    
+    def get_sent_friend_requests(self, user):
+        # ユーザーが送信したペンディング中のフレンドリクエストを取得
+        return self.filter(from_user=user, status=FriendRequestStatus.PENDING)
 
 class FriendRequest(AbstractBaseModel):
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_requests_from')
@@ -92,6 +107,13 @@ class FriendRequest(AbstractBaseModel):
 
     def reject(self):
         self.status = FriendRequestStatus.REJECTED
+        self.status_updated_at = timezone.now()
+        self.save()
+        self.delete()
+    
+    def cancel(self):
+        """送信者がフレンドリクエストを取り消します"""
+        self.status = FriendRequestStatus.REJECTED  # 取り消しも拒否として扱う
         self.status_updated_at = timezone.now()
         self.save()
         self.delete()

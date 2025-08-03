@@ -11,6 +11,7 @@ from polls.views import router as polls_router
 from events.views import router as events_router
 from calendar_module.views import router as calendar_router
 from chat.views import router as chat_router, private_message_router
+from chat.room_messages_views import router as room_messages_router
 from circle.views import router as circle_router
 from emojis.views import router as emojis_router
 from announcement.views import router as announcement_router
@@ -23,6 +24,7 @@ from shared.handlers import custom_404_handler, custom_500_handler, custom_403_h
 from ninja.errors import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from ninja.errors import HttpError
+from relations.views import router as relations_router
 
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
 
@@ -47,6 +49,8 @@ api.add_router('tests', tests_router)
 api.add_router('pm', private_message_router)
 api.add_router('search', search_router)
 api.add_router('storage', storage_router)
+api.add_router('room_messages', room_messages_router)
+api.add_router('relations', relations_router)
 api.register_controllers(NinjaJWTDefaultController)
 
 # カスタム404ハンドラーを追加
