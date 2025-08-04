@@ -5,9 +5,15 @@ from django.db.models import Q
 from django.utils import timezone
 from shared.abstract_models import AbstractBaseModel
 from .decorators import send_message_signal
+from organizations.models import OrganizationType
 
 class AbstractBaseMessage(AbstractBaseModel):
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sender')
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='%(class)s_sent'  # 動的related_name（private_message_sent, room_message_sent）
+    )
     content = models.TextField()
 
     class Meta:
@@ -229,3 +235,108 @@ class PrivateMessage(AbstractBaseMessage):
     def __str__(self):
         return self.content
     
+class RoomType(models.TextChoices):
+    CLASS = OrganizationType.CLASS
+    SCHOOL = OrganizationType.SCHOOL  
+    CIRCLE = OrganizationType.CIRCLE
+    GROUP = "group", "グループ"
+
+class RoomMessageManager(models.Manager):
+    def get_messages_from_room(self, user, room_type, room_id, before_date=None, limit=50):
+        if not self.validate_room_exists(room_type, room_id):
+            raise ValidationError(f"Room {room_type}:{room_id} does not exist")
+        
+        try:
+            messages = self.filter(room_type=room_type, room_id=room_id, is_deleted=False)
+            if before_date:
+                messages = messages.filter(created_at__lte=before_date)
+            messages = messages.order_by('-created_at')[:limit]
+            print(f"messages: {messages}")
+            return messages
+        except Exception as e:
+            raise ValidationError(f"メッセージの取得に失敗しました: {str(e)}")
+    
+    def validate_room_exists(self, room_type, room_id):
+        """部屋の存在確認（統一API使用）"""
+        if room_type == RoomType.GROUP:
+            return True  # グループは常にOK
+            
+        try:
+            if room_type == RoomType.CLASS:
+                from organizations.models import Class
+                return Class.objects.filter(id=room_id).exists()
+            elif room_type == RoomType.SCHOOL:
+                from organizations.models import School
+                return School.objects.filter(id=room_id).exists()
+            elif room_type == RoomType.CIRCLE:
+                from circle.models import Circle
+                return Circle.objects.filter(id=room_id).exists()
+            else:
+                return False
+        except Exception:
+            return False  # エラー時は存在しないとみなす
+    
+    def can_user_access_room(self, user, room_type, room_id):
+        """ユーザーがルームにアクセス可能かチェック（統一API使用）"""
+        if room_type == RoomType.GROUP:
+            return True  # グループは誰でもアクセス可能
+            
+        try:
+            if room_type == RoomType.CLASS:
+                from organizations.models import Class
+                org = Class.objects.get(id=room_id)
+                return org.can_send_message(user)
+            elif room_type == RoomType.SCHOOL:
+                from organizations.models import School
+                org = School.objects.get(id=room_id)
+                return org.can_send_message(user)
+            elif room_type == RoomType.CIRCLE:
+                from circle.models import Circle
+                # Circleモデルが統一APIを持っていない場合の暫定処理
+                circle = Circle.objects.get(id=room_id)
+                # TODO: CircleもAbstractOrganizationを継承して統一APIを実装
+                return circle.members.filter(id=user.id).exists()
+            else:
+                return False
+        except Exception:
+            return False
+    
+    def send_message(self, sender, room_type, room_id, content):
+        """メッセージ送信（統一権限チェック・シグナル送信）"""
+        # 存在確認
+        if not self.validate_room_exists(room_type, room_id):
+            raise ValidationError(f"Room {room_type}:{room_id} does not exist")
+        
+        # 権限確認（統一API使用）
+        if not self.can_user_access_room(sender, room_type, room_id):
+            raise ValidationError(f"User {sender.username} does not have permission to send messages to {room_type}:{room_id}")
+        
+        message = self.create(sender=sender, room_type=room_type, 
+                             room_id=room_id, content=content)
+        
+        # リアルタイム通知シグナルを送信
+        from .signals import send_room_message_post_signal
+        send_room_message_post_signal(message)
+        
+        return message
+    
+class RoomMessage(AbstractBaseMessage):
+    room_type = models.CharField(max_length=255, choices=RoomType.choices, null=True, blank=True)
+    room_id = models.UUIDField(null=True, blank=True)
+    users_read = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+
+    objects = RoomMessageManager()
+
+    def send_message(self, sender, room_type, room_id, content):
+        """メッセージ送信（Managerメソッドを使用）"""
+        return RoomMessage.objects.send_message(sender, room_type, room_id, content)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['room_type', 'room_id']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return self.content

@@ -70,3 +70,16 @@ class UserWithLatestMessageSchema(Schema):
 class UsersHaveHistoryWithUserOutputSchema(Schema):
     users: list[UserWithLatestMessageSchema]
 
+class RoomMessageSchema(Schema):
+    id: uuid.UUID
+    sender_id: uuid.UUID
+    room_type: str
+    room_id: uuid.UUID
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+class RoomMessageCreateSchema(Schema):
+    room_type: str
+    room_id: uuid.UUID
+    content: str
