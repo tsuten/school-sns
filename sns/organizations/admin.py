@@ -5,7 +5,7 @@ from .models import Class, School
 class ClassAdmin(admin.ModelAdmin):
     list_display = ('name', 'school', 'grade_number', 'class_number', 'has_logo', 'get_managers_count', 'get_students_count', 'created_at')
     list_filter = ('school', 'grade_number', 'class_number', 'created_at')
-    search_fields = ('name', 'school__name', 'grade_number', 'class_number', 'managers__username', 'students__username')
+    search_fields = ('name', 'school__name', 'grade_number', 'class_number', 'managers__username', 'members__username')
     
     fieldsets = (
         ('基本情報', {
@@ -17,8 +17,8 @@ class ClassAdmin(admin.ModelAdmin):
             'description': 'クラスのロゴ画像'
         }),
         ('管理者・学生', {
-            'fields': ('managers', 'students'),
-            'description': 'クラスの管理者と学生'
+            'fields': ('managers', 'members'),
+            'description': 'クラスの管理者と学生（メンバー）'
         }),
         ('システム情報', {
             'fields': ('id', 'created_at', 'updated_at'),
@@ -28,7 +28,7 @@ class ClassAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('id', 'created_at', 'updated_at', 'logo_preview')
-    filter_horizontal = ('managers', 'students')
+    filter_horizontal = ('managers', 'members')
     
     def has_logo(self, obj):
         return bool(obj.logo)
@@ -46,7 +46,7 @@ class ClassAdmin(admin.ModelAdmin):
     get_managers_count.short_description = '管理者数'
     
     def get_students_count(self, obj):
-        return obj.students.count()
+        return obj.members.count()
     get_students_count.short_description = '学生数'
 
 class SchoolAdmin(admin.ModelAdmin):
