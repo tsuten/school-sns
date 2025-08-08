@@ -55,12 +55,13 @@ INSTALLED_APPS = [
     'chat',
     'circle',
     'emojis',
-    'organizations',
+    'apps.core.organizations',
     'announcement',
     'notifications',
     'search',
     'storage',
     'relations',
+    'setup',
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 from django import forms
 from .models import Announcement
-from organizations.models import School, Class
+from apps.core.organizations.organizations.models import School, Class
 
 class PostToChoiceField(forms.ChoiceField):
     """学校とクラスを統合したドロップダウンフィールド"""

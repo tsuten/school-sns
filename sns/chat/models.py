@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 from shared.abstract_models import AbstractBaseModel
 from .decorators import send_message_signal
-from organizations.models import OrganizationType
+from apps.core.organizations.organizations.models import OrganizationType
 
 class AbstractBaseMessage(AbstractBaseModel):
     sender = models.ForeignKey(
@@ -263,10 +263,10 @@ class RoomMessageManager(models.Manager):
             
         try:
             if room_type == RoomType.CLASS:
-                from organizations.models import Class
+                from apps.core.organizations.organizations.models import Class
                 return Class.objects.filter(id=room_id).exists()
             elif room_type == RoomType.SCHOOL:
-                from organizations.models import School
+                from apps.core.organizations.organizations.models import School
                 return School.objects.filter(id=room_id).exists()
             elif room_type == RoomType.CIRCLE:
                 from circle.models import Circle
@@ -283,11 +283,11 @@ class RoomMessageManager(models.Manager):
             
         try:
             if room_type == RoomType.CLASS:
-                from organizations.models import Class
+                from apps.core.organizations.organizations.models import Class
                 org = Class.objects.get(id=room_id)
                 return org.can_send_message(user)
             elif room_type == RoomType.SCHOOL:
-                from organizations.models import School
+                from apps.core.organizations.organizations.models import School
                 org = School.objects.get(id=room_id)
                 return org.can_send_message(user)
             elif room_type == RoomType.CIRCLE:

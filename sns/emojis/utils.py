@@ -1,4 +1,4 @@
-from organizations.models import Class, School, OrganizationType
+from apps.core.organizations.organizations.models import Class, School, OrganizationType
 
 def check_organization_exists(organization_type, organization_id):
     if organization_type == OrganizationType.CLASS:

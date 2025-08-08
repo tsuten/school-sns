@@ -303,7 +303,7 @@ class RoomMessageManagerTest(TestCase):
         exists = RoomMessage.objects.validate_room_exists(RoomType.GROUP, self.room_id)
         self.assertTrue(exists)
         
-    @patch('chat.models.Class.objects.filter')
+    @patch('apps.core.organizations.organizations.models.Class.objects.filter')
     def test_validate_room_exists_class(self, mock_filter):
         """クラスルームの存在確認テスト"""
         mock_filter.return_value.exists.return_value = True

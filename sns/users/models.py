@@ -101,7 +101,7 @@ class UserActivityManager(models.Manager):
 
     def get_user_affiliation(self, user_id):
         # 遅延インポートで循環インポートを回避
-        from organizations.models import Class
+        from apps.core.organizations.organizations.models import Class
         
         user = User.objects.get(id=user_id)
         classes = Class.objects.filter(students=user)
