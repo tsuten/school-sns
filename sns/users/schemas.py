@@ -123,3 +123,45 @@ class UserPrivacySettingsSchema(Schema):
     birthday: Optional[bool] = None
     location: Optional[bool] = None
     activity: Optional[bool] = None
+
+class UserUnifiedSettingsSchema(Schema):
+    """統合ユーザー設定スキーマ - {type}.{label}: boolean 形式"""
+    settings: dict
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "settings": {
+                    "theme.darkmode": True,
+                    "notification.notification": False,
+                    "privacy.profile": True,
+                    "privacy.birthday": False,
+                    "privacy.location": True,
+                    "privacy.activity": True
+                }
+            }
+        }
+
+class UserSettingsResponseSchema(Schema):
+    """設定取得用レスポンススキーマ"""
+    theme: dict
+    notification: dict
+    privacy: dict
+    
+    @classmethod
+    def from_settings(cls, settings):
+        """UserSettingsインスタンスからスキーマを作成"""
+        return cls(
+            theme={
+                "darkmode": settings.is_dark_mode_enabled
+            },
+            notification={
+                "notification": settings.is_notification_enabled
+            },
+            privacy={
+                "profile": settings.is_profile_public,
+                "birthday": settings.is_birthday_public,
+                "location": settings.is_location_public,
+                "activity": settings.is_activity_public
+            }
+        )
