@@ -1,8 +1,8 @@
 from django.db import models
 import uuid
 from django.conf import settings
-from .notification_types import NotificationType
 from shared.abstract_models import AbstractBaseModel
+from .notification_types import NotificationType
 
 class NotificationManager(models.Manager):
     def get_notifications(self, user, include_deleted=False):
@@ -135,5 +135,6 @@ class Notification(AbstractBaseModel):
     content = models.TextField(default="")
     href_web = models.CharField(max_length=255, default="", null=True, blank=True)
     is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
 
     objects = NotificationManager()
