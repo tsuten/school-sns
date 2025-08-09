@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'emojis',
     'apps.core.organizations',
     'announcement',
-    'notifications',
+    'apps.core.notifications',
     'search',
     'storage',
     'relations',

@@ -14,7 +14,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
 from circle.consumers import CircleChatConsumer, CircleNotificationConsumer
-from notifications.consumers import TestConsumer, NotificationConsumer
+from apps.core.notifications.consumers import TestConsumer, NotificationConsumer
 from apps.core.organizations.organizations.consumers import ClassChatConsumer
 from sns.utils.websocket_auth import JWTAuthMiddlewareStack
 from websocket.unified_consumers import UnifiedConsumer
