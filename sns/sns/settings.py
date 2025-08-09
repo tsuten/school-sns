@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.core.organizations',
     'announcement',
     'apps.core.notifications',
+    'apps.core.bookmark',
     'search',
     'storage',
     'relations',
