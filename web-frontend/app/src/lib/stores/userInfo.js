@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { apiClient } from '../services/django.js';
+import { apiClient } from '$lib/services/django.js';
 
 // 初期値
 const initialUserInfo = {
