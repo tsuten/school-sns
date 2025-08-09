@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.test import Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from users.models import User
+from apps.core.users.models import User
 from .models import Friend, FriendRequest, FriendRequestStatus, RelationManagement, RelationManagementType
 from django.core.exceptions import ValidationError
 import json

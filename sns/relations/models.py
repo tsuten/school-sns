@@ -1,6 +1,6 @@
 from django.db import models
+from apps.core.users.models import User
 from shared.abstract_models import AbstractBaseModel
-from users.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 

@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver, Signal
 from .models import PrivateMessage, RoomMessage
-from users.models import UserProfile
+from apps.core.users.models import UserProfile
 
 # プライベートメッセージ用カスタムシグナル
 message_post_signal = Signal()

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from ninja import NinjaAPI, Redoc
 from posts.views import router as posts_router
-from users.views import router as users_router
+from apps.core.users.views import router as users_router
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_extra import NinjaExtraAPI
 from polls.views import router as polls_router

@@ -1,6 +1,6 @@
 from ninja import Schema
 import uuid
-from users.schemas import UserProfileSchema
+from apps.core.users.schemas import UserProfileSchema
 
 class ClassInfoSchema(Schema):
     id: uuid.UUID

@@ -54,7 +54,7 @@ class PrivateMessageManager(models.Manager):
     def get_list_of_users_have_history_with_user(self, user):
         """指定ユーザーとメッセージを交信したユーザーのリストを最新メッセージ情報と共に取得"""
         from django.db.models import Q
-        from users.models import User
+        from apps.core.users.models import User
         
         # 送信したメッセージの受信者を取得
         sent_to_users = self.filter(
@@ -87,6 +87,7 @@ class PrivateMessageManager(models.Manager):
             if latest_message:
                 # ユーザー情報を取得
                 try:
+                    from apps.core.users.models import User
                     other_user = User.objects.get(id=other_user_id)
                 except User.DoesNotExist:
                     continue

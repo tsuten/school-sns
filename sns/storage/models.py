@@ -1,13 +1,15 @@
 import os
 import hashlib
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.validators import FileExtensionValidator
 from shared.abstract_models import AbstractBaseModel
 import uuid
-from users.models import User
+from apps.core.users.models import User
 from apps.core.organizations.organizations.models import OrganizationType
 
 

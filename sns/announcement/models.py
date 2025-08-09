@@ -1,7 +1,9 @@
 import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
-from users.models import User
+from django.utils import timezone
+from apps.core.users.models import User
+from shared.abstract_models import AbstractBaseModel
 from apps.core.organizations.organizations.models import School, Class
 from watson import search as watson
 

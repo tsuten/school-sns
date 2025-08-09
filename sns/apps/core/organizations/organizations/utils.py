@@ -182,7 +182,7 @@ class OrganizationManagerService:
                              role: Optional[str] = None, org_type: Optional[str] = None) -> bool:
         """スマートなメンバー操作（動的メソッド選択）"""
         try:
-            from users.models import User
+            from apps.core.users.models import User
             user = User.objects.get(id=user_id)
             
             # 操作に応じて動的にメソッドを選択
@@ -212,7 +212,7 @@ class OrganizationManagerService:
     def cross_organization_analysis(cls, user_id: str) -> Dict[str, Any]:
         """複数組織をまたいだユーザー分析"""
         try:
-            from users.models import User
+            from apps.core.users.models import User
             user = User.objects.get(id=user_id)
             
             models_registry = cls.get_registered_models()
@@ -286,28 +286,27 @@ class OrganizationManagerService:
     
     @staticmethod
     def get_members_with_role_info(organization_id: str, org_type: Optional[str] = None) -> dict:
-        """
-        メンバー情報を役割付きで取得（動的処理でAbstractOrganizationメソッド使用）
+        """組織のメンバーと役割情報を取得"""
+        from apps.core.users.models import User
         
-        Args:
-            organization_id: 組織ID
-            org_type: 組織タイプ
-            
-        Returns:
-            dict: メンバー情報（managers, members, counts含む）
-        """
-        org = OrganizationManagerService.get_organization_by_id_explicit(organization_id, org_type)
-        detected_org_type = org_type or OrganizationManagerService.auto_detect_organization_type(organization_id)
+        organization = OrganizationManagerService.get_organization_by_id(organization_id, org_type)
+        
+        members = organization.members.all()
+        managers = organization.managers.all()
+        
+        members_info = []
+        for member in members:
+            role = 'manager' if member in managers else 'member'
+            members_info.append({
+                'user_id': str(member.id),
+                'username': member.username,
+                'role': role
+            })
         
         return {
-            'managers': org.get_managers_list(),
-            'members': org.get_members_list(),
-            'managers_count': org.get_managers_count(),
-            'members_count': org.get_members_count(),
-            'total_count': org.get_managers_count() + org.get_members_count(),
-            'all_users': org.get_all_users(),
-            'organization_type': detected_org_type,
-            'organization_name': org.name
+            'organization_id': organization_id,
+            'members': members_info,
+            'total_members': len(members_info)
         }
     
     @staticmethod
@@ -321,7 +320,7 @@ class OrganizationManagerService:
         Returns:
             dict: 組織情報（クラス、学校、役割含む）
         """
-        from users.models import User
+        from apps.core.users.models import User
         
         try:
             user = User.objects.get(id=user_id)
@@ -390,7 +389,7 @@ class OrganizationManagerService:
         Returns:
             bool: 追加の成功/失敗
         """
-        from users.models import User
+        from apps.core.users.models import User
         
         try:
             org = OrganizationManagerService.get_organization_by_id_explicit(organization_id, org_type)
@@ -423,7 +422,7 @@ class OrganizationManagerService:
         Returns:
             bool: 削除の成功/失敗
         """
-        from users.models import User
+        from apps.core.users.models import User
         
         try:
             org = OrganizationManagerService.get_organization_by_id_explicit(organization_id, org_type)
@@ -457,7 +456,7 @@ class OrganizationManagerService:
         Returns:
             bool: 変更の成功/失敗
         """
-        from users.models import User
+        from apps.core.users.models import User
         
         try:
             org = OrganizationManagerService.get_organization_by_id_explicit(organization_id, org_type)
@@ -532,7 +531,7 @@ class OrganizationManagerService:
         Returns:
             List[AbstractOrganization]: 組織リスト
         """
-        from users.models import User
+        from apps.core.users.models import User
         
         try:
             user = User.objects.get(id=user_id)

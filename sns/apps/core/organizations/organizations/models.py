@@ -12,7 +12,7 @@ class OrganizationType(models.TextChoices):
 class EnrollmentManager(models.Manager):
     def get_user_enrollment(self, user_id):
         # 遅延インポートで循環インポートを回避
-        from users.models import User
+        from apps.core.users.models import User
         
         user = User.objects.get(id=user_id)
         classes = Class.objects.filter(students=user)
@@ -24,7 +24,7 @@ class EnrollmentManager(models.Manager):
         return class_obj.students.all()
     
     def get_user_classes(self, user_id):
-        from users.models import User
+        from apps.core.users.models import User
         
         user = User.objects.get(id=user_id)
         classes = Class.objects.filter(students=user)
@@ -79,7 +79,7 @@ class OrganizationManager(models.Manager):
     
     def get_user_role(self, user_id, organization_id, organization_type=None):
         """ユーザー役割取得（動的処理でAbstractOrganizationメソッド使用）"""
-        from users.models import User
+        from apps.core.users.models import User
         
         org = self.get_organization_by_id(organization_id, organization_type)
         user = User.objects.get(id=user_id)
@@ -101,7 +101,7 @@ class OrganizationManager(models.Manager):
     
     def add_user_to_organization(self, user_id, organization_id, role='member', organization_type=None):
         """ユーザー追加（動的処理でAbstractOrganizationメソッド使用）"""
-        from users.models import User
+        from apps.core.users.models import User
         
         org = self.get_organization_by_id(organization_id, organization_type)
         user = User.objects.get(id=user_id)
@@ -117,7 +117,7 @@ class OrganizationManager(models.Manager):
     
     def remove_user_from_organization(self, user_id, organization_id, role=None, organization_type=None):
         """ユーザー削除（動的処理でAbstractOrganizationメソッド使用）"""
-        from users.models import User
+        from apps.core.users.models import User
         
         org = self.get_organization_by_id(organization_id, organization_type)
         user = User.objects.get(id=user_id)
@@ -169,7 +169,7 @@ class AbstractOrganization(AbstractBaseModel):
     def get_all_users(self):
         """組織の全ユーザーを取得（統一API）"""
         from django.db.models import Q
-        from users.models import User
+        from apps.core.users.models import User
         return User.objects.filter(
             Q(id__in=self.members.all()) | Q(id__in=self.managers.all())
         ).distinct()

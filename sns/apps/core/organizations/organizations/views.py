@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from ninja import Router
 from .models import Class, School, Organization
-from users.schemas import UserProfileSchema, ClassSchema
+from apps.core.users.schemas import UserProfileSchema, ClassSchema
 from .schemas import ClassInfoSchema
 from .utils import OrganizationManagerService
 from shared.decorators import with_base_schema

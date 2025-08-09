@@ -9,7 +9,7 @@ import uuid
 import json
 
 from .models import PrivateMessage, RoomMessage, RoomType
-from users.models import UserProfile
+from apps.core.users.models import UserProfile
 
 User = get_user_model()
 

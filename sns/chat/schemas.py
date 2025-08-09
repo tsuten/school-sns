@@ -3,7 +3,7 @@ from datetime import datetime
 import uuid
 from enum import Enum
 from typing import Optional
-from users.schemas import UserProfileSchema
+from apps.core.users.schemas import UserProfileSchema
 from typing import Any
 from shared.base_schemas import BaseSchema, Status
 
