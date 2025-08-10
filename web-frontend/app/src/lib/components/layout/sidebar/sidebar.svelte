@@ -15,12 +15,12 @@
     let services = [
 		{
 			icon: House,
-			href: "/",
+			href: "/app",
 			label: "あなた"
 		},
 		{
 			icon: Bell,
-			href: "/notifications",
+			href: "/app/notifications",
 			label: "通知"
 		},
 /*		{
@@ -30,12 +30,12 @@
 		},*/
 		{
 			icon: MessageCircle,
-			href: "/messages",
+			href: "/app/messages",
 			label: "メッセージ"
 		},
 		{
 			icon: HeartHandshake,
-			href: "/circles",
+			href: "/app/circles",
 			label: "サークル"
 		},
 /*		{
@@ -50,7 +50,7 @@
 		},*/
 		{
 			icon: School,
-			href: "/school",
+			href: "/app/school",
 			label: "学校"
 		},
 /*		{
@@ -60,7 +60,7 @@
 		},*/
 		{
 			icon: Calendar,
-			href: "/calendar",
+			href: "/app/calendar",
 			label: "カレンダー"
 		},
 /*		{
@@ -91,7 +91,7 @@
     let bottom_services = [
 		{
 			icon: Settings,
-			href: "/settings",
+			href: "/app/settings",
 			label: "設定"
 		},
 	]

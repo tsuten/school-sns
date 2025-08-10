@@ -1,4 +1,4 @@
-import { apiClient, APIError } from '../lib/services/django.js';
+import { apiClient, APIError } from '$lib/services/django.js';
 
 /** @type {import('./$types').LayoutServerLoad} */
 export async function load({ cookies }) {

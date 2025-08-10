@@ -1,27 +1,29 @@
 <script>
-	import '../app.css';
+	import '../../app.css';
 	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip, PanelLeftOpen, PanelLeftClose } from 'lucide-svelte';
 	import State from './state.svelte';
-	import Modal from '../lib/components/utils/modal.svelte';
-	import UserInfo from '../lib/components/utils/userInfo.svelte';
-	import WidgetBase from '../lib/components/widgets/widgetBase.svelte';
-	import Notification from '../lib/components/widgets/notification.svelte';
-	import ToastContainer from '../lib/components/utils/ToastContainer.svelte';
-	import { setUserFromServerData, logout as authLogout, isAuthenticated, currentUser } from '../lib/stores/auth.js';
+	import Modal from '$lib/components/utils/modal.svelte';
+	import UserInfo from '$lib/components/utils/userInfo.svelte';
+	import WidgetBase from '$lib/components/widgets/widgetBase.svelte';
+	import Notification from '$lib/components/widgets/notification.svelte';
+	import ToastContainer from '$lib/components/utils/ToastContainer.svelte';
+	import { setUserFromServerData, logout as authLogout, isAuthenticated, currentUser } from '$lib/stores/auth.js';
 	import { onMount } from 'svelte';
-	import { apiClient } from '../lib/services/django.js';
-	import CalendarWidget from '../lib/components/widgets/prototype/calendarWidget.svelte';
-	import EventsWidget from '../lib/components/widgets/prototype/eventsWidget.svelte';
+	import { apiClient } from '$lib/services/django.js';
+	import CalendarWidget from '$lib/components/widgets/prototype/calendarWidget.svelte';
+	import EventsWidget from '$lib/components/widgets/prototype/eventsWidget.svelte';
 	import { Button, Input, Dropdown, DropdownItem } from 'flowbite-svelte';
-	import ServicesGridMenu from '../lib/components/card/topbar/servicesGridMenu.svelte';
-	import UserIcon from '../lib/components/utils/userIcon.svelte';
-	import NotificationDropdown from '../lib/components/card/topbar/notificationDropdown.svelte';
-	import Sidebar from '../lib/components/layout/sidebar/sidebar.svelte';
-	import { settingsStore } from '../lib/stores/serverSettingsStore.js';
+	import ServicesGridMenu from '$lib/components/card/topbar/servicesGridMenu.svelte';
+	import UserIcon from '$lib/components/utils/userIcon.svelte';
+	import NotificationDropdown from '$lib/components/card/topbar/notificationDropdown.svelte';
+	import Sidebar from '$lib/components/layout/sidebar/sidebar.svelte';
+	import { settingsStore } from '$lib/stores/serverSettingsStore.js';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	let { children, data } = $props();
 	
 	// サーバーから取得したデータをストアに設定
-	onMount(() => {
+	onMount(async () => {
 		console.log('Layout onMount - data:', data);
 		if (data?.user && data?.authenticated) {
 			console.log('Setting user info from server data:', data.user);
@@ -30,6 +32,16 @@
 		} else {
 			console.log('No authenticated user data, clearing user info');
 			setUserFromServerData(null, false);
+		}
+
+		try {
+			const setup_response = await apiClient.get('/setup/completion-rate');
+			console.log('Setup response:', setup_response);
+			if (setup_response.is_system_ready === false && !page.url.pathname.includes('/setup')) {
+				goto('/setup');
+			}
+		} catch (error) {
+			console.error('Setup error:', error);
 		}
 	});
 	
