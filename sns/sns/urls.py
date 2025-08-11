@@ -16,7 +16,7 @@ from circle.views import router as circle_router
 from emojis.views import router as emojis_router
 from announcement.views import router as announcement_router
 from apps.core.notifications.views import router as notifications_router
-from apps.core.organizations.organizations.views import router as organizations_router
+from apps.core.organizations.views import router as organizations_router
 from tests.views import router as tests_router
 from search.views import router as search_router
 from storage.views import router as storage_router

@@ -10,7 +10,7 @@ from django.core.validators import FileExtensionValidator
 from shared.abstract_models import AbstractBaseModel
 import uuid
 from apps.core.users.models import User
-from apps.core.organizations.organizations.models import OrganizationType
+from apps.core.organizations.models import OrganizationType
 
 
 try:
