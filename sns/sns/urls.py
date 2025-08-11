@@ -26,8 +26,10 @@ from pydantic import ValidationError as PydanticValidationError
 from ninja.errors import HttpError
 from relations.views import router as relations_router
 from setup.views import router as setup_router
+from api.dynamic_api_routing import DynamicAPIRouting
 
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
+api_v1 = NinjaExtraAPI(title='SNS API v1', version='1.0.0', docs=Redoc())
 
 # 例外ハンドラーを設定
 api.add_exception_handler(ValidationError, api_exception_handler)
@@ -35,33 +37,49 @@ api.add_exception_handler(PydanticValidationError, api_exception_handler)
 api.add_exception_handler(HttpError, api_exception_handler)
 api.add_exception_handler(Exception, api_exception_handler)
 
-api.add_router('posts', posts_router)
-api.add_router('users', users_router)
-api.add_router('polls', polls_router)
-api.add_router('events', events_router)
-api.add_router('calendar', calendar_router)
-api.add_router('chat', chat_router)
-api.add_router('circle', circle_router)
-api.add_router('emojis', emojis_router)
-api.add_router('announcement', announcement_router)
-api.add_router('notifications', notifications_router)
-api.add_router('organizations', organizations_router)
-api.add_router('tests', tests_router)
-api.add_router('pm', private_message_router)
-api.add_router('search', search_router)
-api.add_router('storage', storage_router)
-api.add_router('room_messages', room_messages_router)
-api.add_router('relations', relations_router)
-api.add_router('setup', setup_router)
-api.register_controllers(NinjaJWTDefaultController)
+# 動的APIルーティングを読み込み
+dynamic_router = DynamicAPIRouting.get_router()
+
+#new or old
+api_switcher = "old"
+
+if api_switcher == "old":
+    api.add_router('posts', posts_router)
+    api.add_router('users', users_router)
+    api.add_router('polls', polls_router)
+    api.add_router('events', events_router)
+    api.add_router('calendar', calendar_router)
+    api.add_router('chat', chat_router)
+    api.add_router('circle', circle_router)
+    api.add_router('emojis', emojis_router)
+    api.add_router('announcement', announcement_router)
+    api.add_router('notifications', notifications_router)
+    api.add_router('organizations', organizations_router)
+    api.add_router('tests', tests_router)
+    api.add_router('pm', private_message_router)
+    api.add_router('search', search_router)
+    api.add_router('storage', storage_router)
+    api.add_router('room_messages', room_messages_router)
+    api.add_router('relations', relations_router)
+    api.add_router('setup', setup_router)
+    api.register_controllers(NinjaJWTDefaultController)
+else:
+    api_v1.add_router('', dynamic_router)
+    api_v1.register_controllers(NinjaJWTDefaultController)
 
 # カスタム404ハンドラーを追加
 from django.urls import re_path
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', api.urls, name='api'),
-]
+if api_switcher == "old":
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('api/', api.urls, name='api'),
+    ]
+else:
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('api/v1/', api_v1.urls, name='api_v1'),
+    ]
 
 # 開発環境でのメディアファイル配信
 if settings.DEBUG:
