@@ -9,6 +9,7 @@
     import { browser } from "$app/environment";
     import UserChip from "../chips/userChip.svelte";
     import UserPopover from "$lib/components/popover/userPopover.svelte";
+    import DatetimeBadge from "$lib/components/badge/datetimeBadge.svelte";
     let { announcement } = $props();
 
     const user = $derived(browser ? ($currentUser?.user || null) : null);
@@ -68,8 +69,7 @@
                     <h1 class="text-lg font-bold">{announcement.title}</h1>
                 </div>
                 <div class="flex flex-row gap-2 items-center text-center justify-center text-gray-500 text-sm select-none">
-                    <Clock class="w-4 h-4"/>
-                    <p class="text-sm">{datetimeNormalize(announcement.created_at)}</p>
+                    <DatetimeBadge date={announcement.created_at} />
                 </div>
             </div>
             <div class="flex flex-row gap-1 items-center text-sm text-gray-500">
