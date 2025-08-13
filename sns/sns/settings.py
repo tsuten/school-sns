@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'storage',
     'relations',
     'setup',
+    'apps.memo',
 ]
 
 MIDDLEWARE = [

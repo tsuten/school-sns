@@ -40,6 +40,83 @@ class EnrollmentManager(models.Manager):
     
 class OrganizationManager(models.Manager):
 
+    def get_organization_by_user(self, user_id):
+        """ユーザーが所属する組織を取得"""
+        from apps.core.users.models import User
+        
+        try:
+            user = User.objects.get(id=user_id)
+            
+            # ユーザーが所属するクラスを取得
+            user_classes = Class.objects.filter(members=user)
+            if user_classes.exists():
+                # 複数のクラスに所属している場合は最初のクラスを返す
+                return user_classes.first()
+            
+            # ユーザーが所属する学校を取得（クラスに所属していない場合）
+            user_schools = School.objects.filter(members=user)
+            if user_schools.exists():
+                # 複数の学校に所属している場合は最初の学校を返す
+                return user_schools.first()
+            
+            # 組織に所属していない場合
+            return None
+            
+        except User.DoesNotExist:
+            raise ValidationError(f"User with id {user_id} not found")
+    
+    def get_organization_by_user_with_type(self, user_id):
+        """ユーザーが所属する組織とそのタイプを取得"""
+        from apps.core.users.models import User
+        
+        try:
+            user = User.objects.get(id=user_id)
+            
+            # ユーザーが所属するクラスを取得
+            user_classes = Class.objects.filter(members=user)
+            if user_classes.exists():
+                org = user_classes.first()
+                return {
+                    'organization': org,
+                    'type': OrganizationType.CLASS,
+                    'type_name': 'クラス'
+                }
+            
+            # ユーザーが所属する学校を取得（クラスに所属していない場合）
+            user_schools = School.objects.filter(members=user)
+            if user_schools.exists():
+                org = user_schools.first()
+                return {
+                    'organization': org,
+                    'type': OrganizationType.SCHOOL,
+                    'type_name': '学校'
+                }
+            
+            # 組織に所属していない場合
+            return None
+            
+        except User.DoesNotExist:
+            raise ValidationError(f"User with id {user_id} not found")
+    
+    def get_user_organizations(self, user_id):
+        """ユーザーが所属する全ての組織を取得"""
+        from apps.core.users.models import User
+        
+        try:
+            user = User.objects.get(id=user_id)
+            
+            result = {
+                'classes': list(Class.objects.filter(members=user)),
+                'schools': list(School.objects.filter(members=user)),
+                'total_count': 0
+            }
+            
+            result['total_count'] = len(result['classes']) + len(result['schools'])
+            return result
+            
+        except User.DoesNotExist:
+            raise ValidationError(f"User with id {user_id} not found")
+
     def get_organization_type_by_id(self, organization_id):
         """組織タイプを明示的に取得"""
         if Class.objects.filter(id=organization_id).exists():

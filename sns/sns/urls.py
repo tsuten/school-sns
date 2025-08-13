@@ -20,6 +20,8 @@ from apps.core.organizations.views import router as organizations_router
 from tests.views import router as tests_router
 from search.views import router as search_router
 from storage.views import router as storage_router
+from apps.memo.views import router as memo_router
+from feed.views import router as feed_router
 from shared.handlers import custom_404_handler, custom_500_handler, custom_403_handler, api_exception_handler, api_404_handler
 from ninja.errors import ValidationError
 from pydantic import ValidationError as PydanticValidationError
@@ -62,6 +64,8 @@ if api_switcher == "old":
     api.add_router('room_messages', room_messages_router)
     api.add_router('relations', relations_router)
     api.add_router('setup', setup_router)
+    api.add_router('memo', memo_router)
+    api.add_router('feed', feed_router)
     api.register_controllers(NinjaJWTDefaultController)
 else:
     api_v1.add_router('', dynamic_router)
