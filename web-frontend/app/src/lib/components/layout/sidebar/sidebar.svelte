@@ -1,6 +1,6 @@
 <script>
     import SidebarButton from "$lib/components/layout/sidebar/sidebar-button.svelte";
-    import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip} from 'lucide-svelte';
+    import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip, BookOpen, Rss, Clock, MessageSquareText} from 'lucide-svelte';
     import { apiClient } from "$lib/services/django";
     import { onMount } from "svelte";
     import { fade } from 'svelte/transition';
@@ -19,10 +19,17 @@
 			label: "あなた"
 		},
 		{
+			icon: Rss,
+			href: "/app/feed",
+			label: "フィード"
+		},
+/*
+		{
 			icon: Bell,
 			href: "/app/notifications",
 			label: "通知"
 		},
+*/
 /*		{
 			icon: ChartGantt,
 			href: "/timeline",
@@ -48,20 +55,42 @@
 			href: "/trending",
 			label: "トレンド"
 		},*/
+/*
 		{
 			icon: School,
 			href: "/app/school",
 			label: "学校"
 		},
+*/
 /*		{
 			icon: Tickets,
 			href: "/events",
 			label: "イベント"
 		},*/
 		{
+			icon: NotebookPen,
+			href: "/app/memo",
+			label: "メモ"
+		},
+		{
+			icon: BookOpen,
+			href: "/app/assignments",
+			label: "課題"
+		},
+		{
 			icon: Calendar,
 			href: "/app/calendar",
 			label: "カレンダー"
+		},
+		{
+			icon: Clock,
+			href: "/app/events",
+			label: "イベント"
+		},
+		{
+			icon: MessageSquareText,
+			href: "/app/forum",
+			label: "掲示板"
 		},
 /*		{
 			icon: Vote,

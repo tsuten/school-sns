@@ -291,7 +291,7 @@
     }
 </style>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 p-4 h-full overflow-y-scroll">
     
     <!-- カレンダーヘッダー -->
     <div class="flex items-center justify-between bg-white rounded-lg p-4 border border-gray-300">

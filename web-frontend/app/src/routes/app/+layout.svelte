@@ -1,6 +1,6 @@
 <script>
 	import '../../app.css';
-	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip, PanelLeftOpen, PanelLeftClose } from 'lucide-svelte';
+	import { House, Bell, User, Settings, MessageCircle, Calendar, LogOut, Crown, TrendingUp, Tickets, ChartGantt, Bookmark, Vote, Heart, Key, NotebookPen, School, University, Presentation, HeartHandshake, Grip, PanelLeftOpen, PanelLeftClose, Search } from 'lucide-svelte';
 	import State from './state.svelte';
 	import Modal from '$lib/components/utils/modal.svelte';
 	import UserInfo from '$lib/components/utils/userInfo.svelte';
@@ -72,7 +72,7 @@
 </script>
 
 <div class="flex flex-col h-screen w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-2 border-b flex-shrink-0">
+	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-2 border-b flex-shrink- relative">
 		<div>
 			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill onclick={() => showSidebar = !showSidebar}>
 				{#if showSidebar}
@@ -82,8 +82,11 @@
 				{/if}
 			</Button>
 		</div>
-		<div class="flex flex-row items-center gap-2">
-			<Input type="text" placeholder="検索" class="w-full h-8 rounded-sm"/>
+		<div class="flex flex-row items-center gap-2 absolute left-1/2 transform -translate-x-1/2 w-96">
+			<div class="relative w-full">
+				<Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+				<Input type="text" placeholder="検索" class="rounded-sm pl-9" />
+			</div>
 		</div>
 		<div class="flex flex-row items-center gap-4">
 			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill>
@@ -109,9 +112,10 @@
 				{@render children()}
 			</div>
 		</div>
+		<!--
 		<div class="flex flex-col w-3/7 w-80 h-full justify-between p-4">
 			<div class="h-full">
-			<!--<div class="border border-gray-300 rounded-lg m-3">
+				<div class="border border-gray-300 rounded-lg m-3">
 					<h2 class="text-gray-500 text-sm font-bold text-center py-2">トレンド<p>{trend_updated_at}</p></h2>
 					<div class="flex flex-col gap-1 p-2 items-center">
 						<ul class="flex flex-col gap-1 p-2">
@@ -125,7 +129,7 @@
 							<a href="/trending" class="border border-gray-300 rounded-lg p-2 text-gray-500 text-sm font-bold text-center">更にトレンドを見る</a>
 						</div>
 					</div>
-				</div>-->
+				</div>
 				<div class="flex flex-col gap-4 mb-4 h-full overflow-y-auto">
 					<Notification />
 					<CalendarWidget />
@@ -135,7 +139,6 @@
 				ウィジェットの設定
 			</button>
 		</div>
-
 		<Modal 
 			isOpen={editing_widget}
 			title="ウィジェットの設定"
@@ -187,6 +190,7 @@
 				</div>
 			{/snippet}
 		</Modal>
+		-->
 	</div>
 </div>
 

@@ -9,7 +9,7 @@
     import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
     import { initialize } from "$lib/stores/messageStore.js";
     import ChatHeader from "$lib/components/shared/chat/chatHeader.svelte";
-
+    import ProfilePageComponent from "$lib/components/page-components/profilePageComponent.svelte";
     let targetUser = $state(null);
     let userId = $state();
     let targetDisplayName = $state("");
@@ -34,7 +34,6 @@
             // 現在は基本的な情報のみ設定
             targetUser = await apiClient.get(`/users/profile/${targetUserId}`);
             console.log("対象ユーザー情報を取得しました:", targetUser);
-
         } catch (err) {
             console.error("対象ユーザー情報の取得に失敗しました:", err);
             targetUser = null;
@@ -87,6 +86,9 @@
     }
 </script>
 
+<div class="flex flex-row h-full w-full">
+
+<div class="flex flex-col h-full w-2/3">
 <ChatHeader
     logo={targetUser ? getProfileImage(targetUser) : null}
     title={targetUser ? getDisplayName(targetUser) : "ユーザー"}
@@ -129,6 +131,22 @@
             <Ellipsis class="h-5 w-5 text-gray-500" />
         </Button>
     </div>
-</ChatHeader>
-<ChatCore messages={$chatMessages} />
-<ChatInput onSend={handleMessageSend} />
+    </ChatHeader>
+    <ChatCore messages={$chatMessages} />
+    <ChatInput onSend={handleMessageSend} />
+</div>
+
+<div class="w-1/3 border-l border-gray-300">
+    {#if targetUser}
+        <div class="flex flex-col h-full w-full4">
+            <ProfilePageComponent user={targetUser} />
+        </div>
+    {:else}
+        <div class="flex justify-center items-center h-full">
+            <p>ユーザー情報を読み込み中...</p>
+        </div>
+    {/if}
+</div>
+
+
+</div>

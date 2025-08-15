@@ -28,10 +28,10 @@
 
 </script>
 
-<div class="w-full">
+<div class="w-full h-full">
     {#if userProfile}
         <!-- プロフィールヘッダー -->
-        <div class="relative w-full border-b border-gray-300">
+        <div class="relative w-full border-b border-gray-300 h-full">
             <!-- バナー背景 -->
             <div class="h-48 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 w-full">
                 <!-- バナー画像があれば表示 -->
@@ -42,7 +42,7 @@
             <div class="relative px-6 pb-6">
                 <!-- プロフィールアイコン（バナーに重なる位置・中央） -->
                 <div class="absolute -top-16 left-1/2 transform -translate-x-1/2">
-                    <div class="w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden">
+                    <div class="w-32 h-32 rounded-full border-5 border-white bg-white overflow-hidden">
                         {#if getProfileImage(userProfile)}
                             <img 
                                 src={getProfileImage(userProfile)} 
@@ -58,7 +58,7 @@
                 </div>
                 
                 <!-- ユーザー情報 -->
-                <div class="pt-20">
+                <div class="pt-18">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <!-- 名前とユーザー名（中央寄せ） -->
