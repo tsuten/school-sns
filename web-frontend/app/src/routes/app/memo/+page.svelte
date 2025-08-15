@@ -4,6 +4,7 @@
     import { apiClient } from "$lib/services/django";
     import { dateNormalize } from "$lib/utils/datetimeNormalize";
     import BaseCard from "$lib/components/utils/baseCard.svelte";
+    import MemoInput from "$lib/components/input/memoInput.svelte";
     /** @type {import('./$types').PageProps} */
     let { data } = $props();
 
@@ -109,7 +110,7 @@
 
 <svelte:window on:resize={handleResize} />
 
-<div class="p-6 h-full overflow-y-scroll">
+<div class="p-6 h-full overflow-y-scroll relative">
     <h1 class="text-2xl font-bold mb-6">メモギャラリー</h1>
     
     <div 
@@ -140,6 +141,9 @@
                 </BaseCard>
             {/each}
         {/if}
+    </div>
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 max-w-xl w-full">
+        <MemoInput />
     </div>
 </div>
 
