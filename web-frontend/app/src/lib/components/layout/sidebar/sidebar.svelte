@@ -150,25 +150,34 @@
 </div> -->
 <div>
 {#if showSidebar}
-<div class="flex items-start flex-col justify-between">
-    <div class="flex flex-col gap-1 p-2">
+<div class="flex items-center flex-col justify-between h-full min-w-40">
+    <div class="flex flex-col gap-1 p-2 justify-start w-full">
         {#each services as service}
-            <SidebarButton icon={service.icon} href={service.href} label={service.label} />
+            <a href={service.href} class="flex flex-row gap-2 items-center">
+                <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
+                    <service.icon size="20" />
+                </div>
+				<p class="text-sm text-gray-500">{service.label}</p>
+            </a>
         {/each}
-        <h2 class="text-gray-500 text-sm font-bold text-center py-2">あなたのクラス</h2>
+        <div class="border-t border-gray-300 my-2"></div>
         {#each your_classes as service}
-            <SidebarButton icon={service.icon} href={service.href} label={service.label} />
+            <a href={service.href} class="flex flex-row gap-2 items-center">
+                <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
+                    <service.icon size="20" />
+                </div>
+            </a>
         {/each}
     </div>
-    <div class="flex flex-col gap-1 p-2">
+    <div class="flex flex-col gap-1 p-2 justify-end w-full">
         {#each bottom_services as service}
-            <SidebarButton icon={service.icon} href={service.href} label={service.label} />
+            <button onclick={() => navigateToSettings(service.href)} class="flex flex-row gap-2 items-center">
+                <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
+                    <service.icon size="20" />
+                </div>
+				<p class="text-sm text-gray-500">{service.label}</p>
+            </button>
         {/each}
-        <button class="flex flex-row items-center w-40 justify-end gap-2 group" onclick={() => show_logout_modal = true}> <p class="text-sm text-gray-500">ログアウト</p>
-            <div class="w-13 h-13 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
-                <LogOut />
-            </div>
-        </button>
     </div>
 </div>
 {:else}
@@ -198,11 +207,6 @@
                 </div>
             </button>
         {/each}
-        <button class="flex flex-row items-center justify-center gap-2 group" onclick={() => show_logout_modal = true}>
-            <div class="w-10 h-10 hover:bg-gray-200 rounded-full flex items-center justify-center hover:cursor-pointer">
-                <LogOut size="20" />
-            </div>
-        </button>
     </div>
 </div>
 {/if}
