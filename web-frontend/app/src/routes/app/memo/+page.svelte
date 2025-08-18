@@ -1,15 +1,18 @@
 <script>
-    import { Modal } from "flowbite-svelte";
     import { onMount } from "svelte";
     import { apiClient } from "$lib/services/django";
-    import { dateNormalize } from "$lib/utils/datetimeNormalize";
+    import { dateNormalize, datetimeNormalize } from "$lib/utils/datetimeNormalize";
     import BaseCard from "$lib/components/utils/baseCard.svelte";
     import MemoInput from "$lib/components/input/memoInput.svelte";
+    import DatetimeBadge from "$lib/components/badge/datetimeBadge.svelte";
+    import DateBadge from "$lib/components/badge/dateBadge.svelte";
+    import { Clock } from "lucide-svelte";
+    import { Button } from "flowbite-svelte";
     /** @type {import('./$types').PageProps} */
     let { data } = $props();
 
-    let selectedMemo = null;
-    let showModal = false;
+    let selectedMemo = $state(null);
+    let showModal = $state(false);
     let memoContainer;
 
     let memos = $state([]);
@@ -48,6 +51,15 @@
     function closeModal() {
         showModal = false;
         selectedMemo = null;
+    }
+
+    async function updateMemo(memo) {
+        await apiClient.put(`/memo/${memo.id}`, {
+            title: memo.title,
+            content: memo.content
+        });
+        fetchMemos();
+        closeModal();
     }
 
     // Masonryレイアウトの初期化
@@ -111,8 +123,7 @@
 <svelte:window on:resize={handleResize} />
 
 <div class="p-6 h-full overflow-y-scroll relative">
-    <h1 class="text-2xl font-bold mb-6">メモギャラリー</h1>
-    
+    <h1 class="text-2xl font-bold mb-6">メモ</h1>
     <div 
         bind:this={memoContainer}
         class="relative w-full"
@@ -122,53 +133,68 @@
             <p class="text-center py-8">メモを読み込み中...</p>
         {:else}
             {#each memos as memo, index}
-                <BaseCard 
+                <div
                     class="memo-card absolute p-4 rounded-lg border border-gray-300 cursor-pointer transition-all duration-200"
                     role="button"
                     tabindex="0"
-                    onclick={() => openMemo(memo)}
                     onkeydown={(e) => e.key === 'Enter' && openMemo(memo)}
+                    onclick={() => openMemo(memo)}
                 >
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-lg font-semibold text-gray-800 line-clamp-2">{memo.title}</h3>
                         <span class="text-xs text-gray-600 bg-white bg-opacity-50 px-2 py-1 rounded-full">
-                            {dateNormalize(memo.created_at)}
+                            <DateBadge date={memo.created_at} />
                         </span>
                     </div>
-                    <div class="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-hidden">
+                    <div class="text-gray-700 whitespace-pre-wrap max-h-32 overflow-hidden">
                         {memo.content}
                     </div>
-                </BaseCard>
+                </div>
             {/each}
         {/if}
     </div>
     <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 max-w-xl w-full">
-        <MemoInput />
+        <MemoInput on:memoSent={fetchMemos} />
     </div>
 </div>
 
 {#if showModal && selectedMemo}
-    <Modal bind:open={showModal} on:close={closeModal} size="2xl">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">{selectedMemo.title}</h2>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">{dateNormalize(selectedMemo.created_at)}</span>
+    <!-- オーバーレイ背景 -->
+    <div class="fixed inset-0 z-40" style="background-color: rgba(0, 0, 0, 0.3);" onclick={() => showModal = false}></div>
+    
+    <!-- モーダル -->
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+        <div class="p-6 bg-white rounded-lg border border-gray-300 w-xl max-h-xl overflow-y-auto flex flex-col gap-4 justify-between">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <input 
+                        id="modal-title" 
+                        type="text" 
+                        bind:value={selectedMemo.title}
+                        class="w-full px-3 py-2 bg-transparent text-gray-900 placeholder-gray-500 border-none focus:border-none focus:outline-none focus:ring-0"
+                    />
+                </div>
+                
+                <div>
+                    <textarea 
+                        id="modal-content" 
+                        bind:value={selectedMemo.content}
+                        rows="6"
+                        class="w-full px-3 py-2 bg-transparent text-gray-900 placeholder-gray-500 resize-y min-h-[100px] border-none focus:border-none focus:outline-none focus:ring-0"
+                    ></textarea>
                 </div>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <div class="whitespace-pre-wrap text-gray-700 font-sans">{selectedMemo.content}</div>
-            </div>
-            <div class="flex justify-end mt-6">
-                <button 
-                    class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                    onclick={closeModal}
-                >
-                    閉じる
-                </button>
+            
+            <div class="flex flex-row gap-2 justify-between items-center pt-4 border-t border-gray-200">
+                <div class="flex flex-row gap-2 items-center text-gray-500">
+                    <DatetimeBadge date={selectedMemo.created_at} />
+                </div>
+                <Button onclick={() => updateMemo(selectedMemo)} color="blue" class="hover:cursor-pointer">
+                    更新
+                </Button>
             </div>
         </div>
-    </Modal>
+    </div>
 {/if}
 
 <style>
