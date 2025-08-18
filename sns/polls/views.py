@@ -18,53 +18,86 @@ def create_poll(request, poll_data: CreatePollSchema):
     return PollSchema(
         id=poll.id,
         question=poll.question,
+        description=poll.description,
         choices=[
             ChoiceSchema(
                 id=choice.id,
                 choice_text=choice.choice_text,
-                vote_count=choice.vote_count
+                vote_count=choice.vote_count,
+                is_voted_by_user=False  # 新規作成時は投票していない
             ) for choice in poll.poll_choices.all()
         ],
+        organization_id=poll.organization.id,
+        user_id=poll.user.id,
+        username=poll.user.username,
         created_at=poll.created_at,
         updated_at=poll.updated_at
     )
 
-@router.get("/", response=List[PollSchema])
+@router.get("/", response=List[PollSchema], auth=JWTAuth())
 def get_polls(request):
     """すべての投票を取得"""
     polls = Poll.objects.prefetch_related('poll_choices').all()
+    
+    # ユーザーがログインしている場合、投票履歴を取得
+    user_votes = {}
+    if request.user.is_authenticated:
+        user_votes = {
+            vote.choice.poll.id: vote.choice.id 
+            for vote in Vote.objects.filter(user=request.user).select_related('choice__poll')
+        }
+    
     return [
         PollSchema(
             id=poll.id,
             question=poll.question,
+            description=poll.description,
             choices=[
                 ChoiceSchema(
                     id=choice.id,
                     choice_text=choice.choice_text,
-                    vote_count=choice.vote_count
+                    vote_count=choice.vote_count,
+                    is_voted_by_user=user_votes.get(poll.id) == choice.id
                 ) for choice in poll.poll_choices.all()
             ],
             organization_id=poll.organization.id,
+            user_id=poll.user.id,
+            username=poll.user.username,
             created_at=poll.created_at,
             updated_at=poll.updated_at
         ) for poll in polls
     ]
 
-@router.get("/{poll_id}", response=PollSchema)
+@router.get("/{poll_id}", response=PollSchema, auth=JWTAuth())
 def get_poll(request, poll_id: uuid.UUID):
     """特定の投票を取得"""
     poll = get_object_or_404(Poll.objects.prefetch_related('poll_choices'), id=poll_id)
+    
+    # ユーザーがログインしている場合、投票履歴を取得
+    user_voted_choice_id = None
+    if request.user.is_authenticated:
+        user_vote = Vote.objects.filter(
+            user=request.user, 
+            choice__poll=poll
+        ).select_related('choice').first()
+        if user_vote:
+            user_voted_choice_id = user_vote.choice.id
+    
     return PollSchema(
         id=poll.id,
         question=poll.question,
+        description=poll.description,
         choices=[
             ChoiceSchema(
                 id=choice.id,
                 choice_text=choice.choice_text,
-                vote_count=choice.vote_count
+                vote_count=choice.vote_count,
+                is_voted_by_user=user_voted_choice_id == choice.id
             ) for choice in poll.poll_choices.all()
         ],
         organization_id=poll.organization.id,
+        user_id=poll.user.id,
+        username=poll.user.username,
         created_at=poll.created_at,
         updated_at=poll.updated_at
     )

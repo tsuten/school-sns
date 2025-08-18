@@ -9,6 +9,7 @@ class ChoiceSchema(Schema):
     id: uuid.UUID
     choice_text: str
     vote_count: Optional[int] = 0
+    is_voted_by_user: Optional[bool] = False
 
 class CreateChoiceSchema(Schema):
     choice_text: str
@@ -16,8 +17,11 @@ class CreateChoiceSchema(Schema):
 class PollSchema(Schema):
     id: uuid.UUID
     question: str
+    description: str
     choices: List[ChoiceSchema]
     organization_id: uuid.UUID
+    user_id: uuid.UUID
+    username: str
     created_at: datetime
     updated_at: datetime
 

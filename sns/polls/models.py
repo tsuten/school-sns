@@ -22,6 +22,7 @@ class Poll(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_polls', null=True, blank=True)
     organization = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='organization_polls', null=True, blank=True)
     question = models.CharField(max_length=200)
+    description = models.TextField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
