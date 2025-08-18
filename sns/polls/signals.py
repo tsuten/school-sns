@@ -9,11 +9,11 @@ def update_vote_count_on_save(sender, instance, created, **kwargs):
     """投票が作成または更新された時に選択肢の投票数を更新"""
     choice = instance.choice
     choice.vote_count = choice.choice_votes.count()
-    choice.save()
+    choice.save(update_fields=['vote_count'])
 
 @receiver(post_delete, sender=Vote)
 def update_vote_count_on_delete(sender, instance, **kwargs):
     """投票が削除された時に選択肢の投票数を更新"""
     choice = instance.choice
     choice.vote_count = choice.choice_votes.count()
-    choice.save()
+    choice.save(update_fields=['vote_count'])
