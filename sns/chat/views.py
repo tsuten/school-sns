@@ -19,6 +19,7 @@ from .schemas import (
     WhoSentMessage,
     UsersHaveHistoryWithUserOutputSchema,
 )
+from apps.core.organizations.utils import OrganizationManagerService
 
 # viewsに直接ビジネスロジックを書いているので後々サービス層作ってそこに移行
 
@@ -356,3 +357,99 @@ def update_message(request, message_id: uuid.UUID, payload: MessageUpdateInputSc
     except Exception as e:
         from ninja.errors import HttpError
         raise HttpError(400, f"メッセージの更新に失敗しました: {str(e)}")
+    
+@router.get("/room-list", auth=JWTAuth())
+def get_room_list(request):
+    """ルーム一覧を取得"""
+    try:
+        current_user = request.user
+        
+        # 自分が送信または受信したメッセージがあるユーザーを取得
+        sent_to_users = PrivateMessage.objects.filter(
+            sender=current_user, is_deleted=False
+        ).values_list('receiver', flat=True).distinct()
+        
+        received_from_users = PrivateMessage.objects.filter(
+            receiver=current_user, is_deleted=False
+        ).values_list('sender', flat=True).distinct()
+        
+        # 重複を除いてユーザーIDのセットを作成
+        user_ids = set(sent_to_users) | set(received_from_users)
+        user_ids.discard(None)  # null値を除外
+        
+        conversations = []
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(id=user_id)
+                latest_message = PrivateMessage.objects.get_latest_message_between_users(current_user, user)
+                unread_count = PrivateMessage.objects.filter(
+                    sender=user, receiver=current_user, is_read=False, is_deleted=False
+                ).count()
+                
+                # ユーザーの所属組織情報を取得
+                user_organizations = OrganizationManagerService.get_user_organizations_with_role(str(user.id))
+                
+                # 組織情報を整形
+                organizations_info = {
+                    'classes': {
+                        'managed': [
+                            {
+                                'id': str(org['organization'].id),
+                                'name': org['organization'].name,
+                                'role': org['role'],
+                                'grade_number': getattr(org['organization'], 'grade_number', None),
+                                'class_number': getattr(org['organization'], 'class_number', None),
+                                'school_name': org['organization'].school.name if hasattr(org['organization'], 'school') and org['organization'].school else None
+                            } for org in user_organizations['classes']['managed']
+                        ],
+                        'member': [
+                            {
+                                'id': str(org['organization'].id),
+                                'name': org['organization'].name,
+                                'role': org['role'],
+                                'grade_number': getattr(org['organization'], 'grade_number', None),
+                                'class_number': getattr(org['organization'], 'class_number', None),
+                                'school_name': org['organization'].school.name if hasattr(org['organization'], 'school') and org['organization'].school else None
+                            } for org in user_organizations['classes']['member']
+                        ]
+                    },
+                    'schools': {
+                        'managed': [
+                            {
+                                'id': str(org['organization'].id),
+                                'name': org['organization'].name,
+                                'role': org['role'],
+                                'location': org['organization'].location
+                            } for org in user_organizations['schools']['managed']
+                        ],
+                        'member': [
+                            {
+                                'id': str(org['organization'].id),
+                                'name': org['organization'].name,
+                                'role': org['role'],
+                                'location': org['organization'].location
+                            } for org in user_organizations['schools']['member']
+                        ]
+                    }
+                }
+                
+                conversations.append({
+                    'user_id': user.id,
+                    'username': user.username,
+                    'display_name': getattr(user, 'display_name', user.username),
+                    'last_message': latest_message.content if latest_message else '',
+                    'last_message_time': latest_message.created_at if latest_message else None,
+                    'unread_count': unread_count,
+                    'organizations': organizations_info
+                })
+            except User.DoesNotExist:
+                continue
+        
+        # 最新メッセージの時間順でソート
+        conversations.sort(key=lambda x: x['last_message_time'] or '', reverse=True)
+        
+        return conversations
+        
+    except Exception as e:
+        from ninja.errors import HttpError
+        raise HttpError(400, f"会話一覧の取得に失敗しました: {str(e)}")

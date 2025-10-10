@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from datetime import datetime
 from django.db.models import Q
+from shared.abstract_models import AbstractBaseModel
 
 class CalendarManager(models.Manager):
     def get_calendar_by_user(self, user):
@@ -58,5 +59,52 @@ class Schedule(models.Model):
 
     objects = ScheduleManager()
 
+    def __str__(self):
+        return self.title
+    
+class NewScheduleManager(models.Manager):
+    def get_schedules_by_user(self, user):
+        try:
+            print(f"Manager - User: {user}")
+            print(f"Manager - User ID: {user.id}")
+            print(f"Manager - User type: {type(user)}")
+            print(f"Manager - User class: {user.__class__}")
+            print(f"Manager - User model: {user._meta.model}")
+            
+            # モデルの情報を確認
+            print(f"Model: {self.model}")
+            print(f"Model fields: {[f.name for f in self.model._meta.fields]}")
+            
+            # クエリセットの基本情報を確認
+            queryset = self.get_queryset()
+            print(f"Base queryset: {queryset}")
+            print(f"Queryset model: {queryset.model}")
+            
+            # フィルタを適用
+            filtered_queryset = queryset.filter(user=user, is_deleted=False)
+            print(f"Filtered queryset: {filtered_queryset}")
+            print(f"SQL query: {filtered_queryset.query}")
+            
+            return filtered_queryset
+        except Exception as e:
+            print(f"Error in get_schedules_by_user: {e}")
+            print(f"Error type: {type(e)}")
+            import traceback
+            traceback.print_exc()
+            raise
+    
+    def get_schedule_by_id(self, schedule_id, user):
+        return self.get_queryset().filter(id=schedule_id, user=user, is_deleted=False).first()
+    
+class NewSchedule(AbstractBaseModel):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    is_all_day = models.BooleanField(default=False)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    
+    objects = NewScheduleManager()
+    
     def __str__(self):
         return self.title

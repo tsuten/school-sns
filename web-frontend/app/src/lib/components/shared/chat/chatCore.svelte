@@ -2,6 +2,7 @@
     import { Crown, User, Info, Reply, Copy, Trash2, Edit, Clock, Ellipsis, MoreVertical } from 'lucide-svelte';
     import { Badge, Button, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-svelte';
     import BaseCard from '$lib/components/utils/baseCard.svelte';
+    import { getMediaURL, apiClient } from '$lib/services/django';
 
     // プロパティ（外部から受け取るデータ）
     let {
@@ -12,13 +13,16 @@
         loadMoreMessages = null,
         onMessageAction = null,
         showUserInfo = true,
-        allowActions = true,
+        allowActions = false,
         typingUsers = new Set(),
         onlineUsers = new Set(),
-        getUserIcon = null // (user) => iconComponent のような関数
+        getUserIcon = null, // (user) => iconComponent のような関数
+        targetUserId = null, // 相手ユーザーのID
+        targetUser = null // 相手ユーザーの情報
     } = $props();
 
     let messagesContainer = $state();
+    let profileImages = $state(new Map()); // プロフィール画像のキャッシュ
 
     // メッセージが更新されたら自動スクロール（最下部へ）
     $effect(() => {
@@ -28,6 +32,29 @@
             }, 10);
         }
     });
+
+    async function getPfpFromId(id) {
+        if (!id) return null;
+        
+        // キャッシュに既にある場合はそれを返す
+        if (profileImages.has(id)) {
+            return profileImages.get(id);
+        }
+        
+        try {
+            console.log(`Fetching profile for user: ${id}`); // デバッグ用
+            const response = await apiClient.get(`/users/profile/${id}`);
+            console.log(`Profile response:`, response); // デバッグ用
+            const pfp = response.pfp;
+            // キャッシュに保存
+            profileImages.set(id, pfp);
+            return pfp;
+        } catch (error) {
+            console.error(`Error fetching profile for user ${id}:`, error);
+            // エラーの場合はデフォルト画像のパスを返す
+            return null;
+        }
+    }
 
     function formatTime(timestamp) {
         return new Date(timestamp).toLocaleTimeString('ja-JP', {
@@ -130,8 +157,45 @@
         return null;
     }
 
+    // ユーザーIDを取得する関数
+    function getUserId(message) {
+        console.log('getUserId called with message:', message); // デバッグ用
+        
+        // メッセージのsent_byフィールドに基づいてユーザーIDを判定
+        if (message.sent_by === 'target_user') {
+            // 相手ユーザーのメッセージの場合
+            console.log('Message is from target_user, using targetUserId:', targetUserId); // デバッグ用
+            return targetUserId;
+        } else if (message.sent_by === 'request_user') {
+            // 自分のメッセージの場合
+            console.log('Message is from request_user, using currentUser:', currentUser); // デバッグ用
+            console.log('currentUser.user:', currentUser?.user); // デバッグ用
+            return currentUser?.user?.id || currentUser?.user?.user_id;
+        }
+        
+        // フォールバック: 古い形式のメッセージに対応
+        if (message.user?.id) return message.user.id;
+        if (message.user?.user_id) return message.user.user_id;
+        if (message.sender?.id) return message.sender.id;
+        if (message.sender?.user_id) return message.sender.user_id;
+        
+        console.log('No user ID found for message'); // デバッグ用
+        return null;
+    }
+
     // 処理されたメッセージ（日付通知を含む）
-    let processedMessages = $derived(insertDateNotifications(messages));
+    let processedMessages = $derived.by(() => {
+        console.log('Processing messages:', messages); // デバッグ用
+        console.log('targetUserId:', targetUserId); // デバッグ用
+        console.log('currentUser:', currentUser); // デバッグ用
+        console.log('currentUser.user:', currentUser?.user); // デバッグ用
+        console.log('currentUser.user.id:', currentUser?.user?.id); // デバッグ用
+        console.log('currentUser.user.user_id:', currentUser?.user?.user_id); // デバッグ用
+        console.log('targetUser:', targetUser); // デバッグ用
+        console.log('targetUser.display_name:', targetUser?.display_name); // デバッグ用
+        console.log('targetUser.user_username:', targetUser?.user_username); // デバッグ用
+        return insertDateNotifications(messages);
+    });
 </script>
 
     <div class="flex-1 overflow-y-auto space-y-2 p-4 h-full" bind:this={messagesContainer}>
@@ -191,7 +255,7 @@
                     if (message.isNotification) return false;
                     
                     // 自分のメッセージの場合は常にfalse（アイコンと名前は表示しない）
-                    if (message.isOwn) return false;
+                    if (message.isOwn || message.sent_by === 'request_user') return false;
                     
                     // 最初のメッセージの場合は常に表示
                     if (index === 0) return true;
@@ -199,7 +263,7 @@
                     const prevMessage = processedMessages[index - 1];
                     
                     // 前のメッセージが自分のメッセージまたは通知の場合は表示
-                    if (prevMessage.isOwn || prevMessage.isNotification) return true;
+                    if (prevMessage.isOwn || prevMessage.sent_by === 'request_user' || prevMessage.isNotification) return true;
                     
                     const currentTime = new Date(message.created_at || message.timestamp);
                     const prevTime = new Date(prevMessage.created_at || prevMessage.timestamp);
@@ -216,6 +280,8 @@
                 })()}
                 {@const userIcon = getMessageUserIcon(message)}
                 {@const userBadge = getMessageUserBadge(message)}
+                {@const userId = getUserId(message)}
+                {@const debugInfo = console.log('Displaying user icon for message:', message, 'userId:', userId)}
                 
                 <!-- 通知の場合は中央表示 -->
                 {#if message.isNotification}
@@ -241,11 +307,19 @@
                     </div>
                 {:else}
                     <!-- 通常のメッセージ表示 -->
-                    <div class="flex {message.isOwn ? 'justify-end' : 'justify-start'} group gap-2">
-                        <div class="flex flex-col {message.isOwn ? 'items-end' : 'items-start'} max-w-sm lg:max-w-md">
-                            {#if !message.isOwn && shouldShowUserInfo && showUserInfo}
+                    <div class="flex {(message.isOwn || message.sent_by === 'request_user') ? 'justify-end' : 'justify-start'} group gap-2">
+                        <div class="flex flex-col {(message.isOwn || message.sent_by === 'request_user') ? 'items-end' : 'items-start'} max-w-sm lg:max-w-md">
+                            {#if !(message.isOwn || message.sent_by === 'request_user') && shouldShowUserInfo && showUserInfo}
                                 <div class="flex items-center gap-2 mb-1 ml-10">
-                                    <span class="text-xs font-medium text-gray-700">{message.user?.username || message.user || message.sender?.user_username || message.sender || 'Unknown'}</span>
+                                    <span class="text-xs font-medium text-gray-700">
+                                        {#if message.sent_by === 'target_user'}
+                                            {targetUser?.display_name || targetUser?.user_username || `User ${targetUserId?.slice(0, 8)}...`}
+                                        {:else if message.sent_by === 'request_user'}
+                                            {currentUser?.user?.display_name || currentUser?.user?.user_username || 'You'}
+                                        {:else}
+                                            {message.user?.username || message.user || message.sender?.user_username || message.sender || 'Unknown'}
+                                        {/if}
+                                    </span>
                                     {#if userBadge}
                                         <svelte:component this={userBadge} class="w-3 h-3 text-yellow-500" />
                                     {/if}
@@ -255,18 +329,28 @@
                                         </span>
                                     {/if}
                                 </div>
-                            {:else if message.isOwn && shouldShowTime}
+                            {:else if (message.isOwn || message.sent_by === 'request_user') && shouldShowTime}
                                 <span class="text-xs text-gray-500 mb-1">
                                     {formatTime(message.created_at || message.timestamp)}
                                 </span>
                             {/if}
                             
                             <div class="flex items-center gap-2 relative">
-                                {#if !message.isOwn && showUserInfo}
+                                {#if !(message.isOwn || message.sent_by === 'request_user') && showUserInfo}
                                     <div class="flex flex-col items-center">
                                         {#if shouldShowUserInfo}
-                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <svelte:component this={userIcon} class="w-4 h-4 text-blue-600" />
+                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                {#await getPfpFromId(userId)}
+                                                    <div class="w-8 h-8 bg-blue-100 animate-pulse"></div>
+                                                {:then pfp}
+                                                    {#if pfp}
+                                                        <img src={getMediaURL(pfp)} alt={message.user?.username || message.user || 'User'} class="w-8 h-8 object-cover" />
+                                                    {:else}
+                                                        <svelte:component this={userIcon} class="w-4 h-4 text-blue-600" />
+                                                    {/if}
+                                                {:catch}
+                                                    <svelte:component this={userIcon} class="w-4 h-4 text-blue-600" />
+                                                {/await}
                                             </div>
                                         {:else}
                                             <!-- アイコンのスペースを確保 -->
@@ -276,7 +360,7 @@
                                 {/if}
                                 
                                 <div class="
-                                    {message.isOwn 
+                                    {(message.isOwn || message.sent_by === 'request_user')
                                         ? 'bg-blue-500 text-white rounded-sm' 
                                         : 'bg-white text-gray-800 rounded-sm border border-gray-200'
                                     } 
@@ -295,7 +379,7 @@
                                             <DropdownItem class="hover:cursor-pointer w-full flex items-center" onclick={() => handleMessageAction('copy', message)}>
                                                 <Copy class="w-4 h-4 mr-2" />コピー
                                             </DropdownItem>
-                                            {#if message.isOwn || (currentUser && currentUser.is_admin)}
+                                            {#if (message.isOwn || message.sent_by === 'request_user') || (currentUser && currentUser.is_admin)}
                                                 <DropdownDivider />
                                                 <DropdownItem class="hover:cursor-pointer w-full flex items-center" onclick={() => handleMessageAction('edit', message)}>
                                                     <Edit class="w-4 h-4 mr-2" />編集

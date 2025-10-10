@@ -53,6 +53,27 @@ const addMessage = (data) => {
     }
 };
 
+// 自分が送信したメッセージを先頭に追加する関数
+export const addOwnMessage = (content, receiver_id) => {
+    const config = get(chatConfig);
+    
+    if (config.type === 'private' && config.room_id == receiver_id) {
+        const message = {
+            id: crypto.randomUUID(),
+            content: content,
+            created_at: new Date().toISOString(),
+            sent_by: 'request_user', // 自分が送信したメッセージ
+            type: 'message',
+            isOwn: true // 自分のメッセージであることを示すフラグ
+        };
+        
+        // メッセージを先頭に追加
+        chatMessages.update((messages) => [message, ...messages]);
+        
+        return message; // 作成したメッセージを返す
+    }
+};
+
 // 変数更新用購読ハンドラ
 latestMessage.subscribe((data) => {
     try {

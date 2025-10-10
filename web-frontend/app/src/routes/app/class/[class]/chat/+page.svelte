@@ -12,7 +12,7 @@
     
     $effect(() => {
         if (browser && classId) {
-            InitializeMessages("/chat/class-messages/" + classId, "/class/" + classId);
+            InitializeMessages("/room-messages/class/" + classId, "/class/" + classId);
             
             return () => {
                 disconnectFromChatWS("/class/" + classId);
@@ -25,6 +25,6 @@
     <InPageSideBar data={$messages} currentCircleId={classId} />
     <div class="flex-1 flex flex-col relative h-full w-full">
         <ChatCore messages={$messages} />
-        <ChatInput apiPath="/chat/class-messages/" />
+        <ChatInput apiPath="/room-messages/class/" />
     </div>
 </div>

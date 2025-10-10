@@ -238,7 +238,7 @@ def remove_friend(request, data: RemoveFriendSchema):
 def list_friend_requests(request):
     try:
         pending_friend_requests = FriendRequest.objects.get_pending_friend_requests(request.user)
-        result = [UserBasicSchema(id=friend_request.from_user.id, username=friend_request.from_user.username).dict() for friend_request in pending_friend_requests]
+        result = [UserBasicSchema(id=friend_request.from_user.id, username=friend_request.from_user.username, request_id=friend_request.id).dict() for friend_request in pending_friend_requests]
         return {"status": "success", "data": result}
     except Exception as e:
         return {'status': 'error', 'error': f'フレンドリクエストの取得中にエラーが発生しました: {e}'}
@@ -248,7 +248,7 @@ def list_friend_requests(request):
 def list_sent_friend_requests(request):
     try:
         sent_friend_requests = FriendRequest.objects.get_sent_friend_requests(request.user)
-        result = [UserBasicSchema(id=friend_request.to_user.id, username=friend_request.to_user.username).dict() for friend_request in sent_friend_requests]
+        result = [UserBasicSchema(id=friend_request.to_user.id, username=friend_request.to_user.username, request_id=friend_request.id).dict() for friend_request in sent_friend_requests]
         return {"status": "success", "data": result}
     except Exception as e:
         return {'status': 'error', 'error': f'送信済みフレンドリクエストの取得中にエラーが発生しました: {e}'}

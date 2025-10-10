@@ -3,6 +3,7 @@
     import DatetimeBadge from "$lib/components/badge/datetimeBadge.svelte";
     import UserChip from "$lib/components/card/chips/userChip.svelte";
     import { apiClient } from "$lib/services/django";
+    import { theme } from "$lib/theme.js";
     let { poll } = $props();
 
     // 投票者の合計数を計算
@@ -22,17 +23,17 @@
 <BaseCard>
     <div class="flex flex-col gap-2 text-center">
         <div class="flex flex-row gap-2 items-center text-center justify-start">
-            <h1 class="text-lg font-bold flex">{poll.question}</h1>
-            <div class="text-gray-500">
+            <h1 class="text-lg font-bold flex {$theme.text.primary}">{poll.question}</h1>
+            <div class="{$theme.text.tertiary}">
                 <DatetimeBadge date={poll.created_at} />
             </div>
         </div>
         <div class="flex flex-row gap-4">
             <div class="flex flex-col gap-2 justify-between items-start flex-1">
-                <p>{poll.description}</p>
+                <p class="{$theme.text.secondary}">{poll.description}</p>
                 <div class="flex flex-row gap-2 items-center text-center justify-between w-full">
                     <UserChip user={poll.username} />
-                    <p class="text-sm text-gray-600">投票数: {totalVotes}</p>
+                    <p class="text-sm {$theme.text.tertiary}">投票数: {totalVotes}</p>
                 </div>
             </div>
 
@@ -40,7 +41,11 @@
                 {#each poll.choices as choice}
                     <button 
                         onclick={() => vote(choice.id)} 
-                        class="px-4 py-2 rounded-sm border-1 border-gray-300 hover:cursor-pointer {choice.is_voted_by_user ? 'bg-blue-500 text-white' : 'bg-white text-black'}"
+                        class="px-4 py-2 rounded-sm border-1 hover:cursor-pointer transition-colors duration-200 {
+                            choice.is_voted_by_user 
+                                ? 'bg-blue-500 text-white border-blue-500' 
+                                : `${$theme.input.background} ${$theme.input.border} ${$theme.input.text} hover:${$theme.button.secondary}`
+                        }"
                     >
                         {choice.choice_text}
                     </button>

@@ -20,11 +20,18 @@
 	import { settingsStore } from '$lib/stores/serverSettingsStore.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import DomainInHeader from '$lib/components/layout/header/domainInHeader.svelte';
+	import { initializeTheme, theme } from '$lib/theme.js';
 	let { children, data } = $props();
+	
 	
 	// サーバーから取得したデータをストアに設定
 	onMount(async () => {
 		console.log('Layout onMount - data:', data);
+		
+		// テーマシステムを初期化
+		initializeTheme();
+		
 		if (data?.user && data?.authenticated) {
 			console.log('Setting user info from server data:', data.user);
 			// サーバーデータの構造を確認してからストアに設定
@@ -71,8 +78,9 @@
 	let showSidebar = $state(true);
 </script>
 
-<div class="flex flex-col h-screen w-full">
-	<div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-2 border-b flex-shrink- relative">
+<div class="flex flex-col h-screen w-full {$theme.text.primary} {$theme.background.primary}">
+	<DomainInHeader />
+	<!-- <div name="topbar" class="text-center flex flex-row items-center justify-between border-gray-300 p-2 border-b flex-shrink- relative">
 		<div>
 			<Button color="light" class="hover:cursor-pointer border-none !p-2" pill onclick={() => showSidebar = !showSidebar}>
 				{#if showSidebar}
@@ -103,11 +111,11 @@
 			</Dropdown>
 			<UserIcon />
 		</div>
-	</div>
+	</div> -->
 	<div class="flex justify-between flex-1 min-h-0 overflow-hidden">
-		<Sidebar bind:showSidebar={showSidebar} />
+		<!-- <Sidebar bind:showSidebar={showSidebar} /> -->
 
-		<div class="w-full border-x border-gray-300 h-full">	
+		<div class="w-full {$theme.border.primary} h-full">	
 			<div class="page-transition page-transition-in h-full">
 				{@render children()}
 			</div>

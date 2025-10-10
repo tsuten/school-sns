@@ -62,8 +62,10 @@ INSTALLED_APPS = [
     'search',
     'storage',
     'relations',
-    'setup',
     'apps.memo',
+    'admin_module',
+    'activity',
+    'assignments',
 ]
 
 MIDDLEWARE = [

@@ -34,3 +34,8 @@ def create_event(request, payload: EventCreateInputSchema):
         published=payload.published
     )
     return event
+
+@router.get('/event-list', auth=JWTAuth(), response=List[EventSchema])
+def get_event_list(request):
+    events = Event.objects.get_queryset()
+    return events

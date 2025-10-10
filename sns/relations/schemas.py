@@ -1,5 +1,6 @@
 from ninja import Schema
 import uuid
+from typing import Optional
 from .models import RelationManagementType
 from datetime import datetime
 
@@ -24,6 +25,7 @@ class RemoveFriendSchema(Schema):
 class UserBasicSchema(Schema):
     id: uuid.UUID
     username: str
+    request_id: Optional[uuid.UUID] = None
 
 class RelationManagementEntrySchema(Schema):
     id: uuid.UUID

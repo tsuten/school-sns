@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from ninja import NinjaAPI, Redoc
 from posts.views import router as posts_router
 from apps.core.users.views import router as users_router
+from admin_module.views import router as admin_router
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_extra import NinjaExtraAPI
 from polls.views import router as polls_router
@@ -27,8 +28,9 @@ from ninja.errors import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from ninja.errors import HttpError
 from relations.views import router as relations_router
-from setup.views import router as setup_router
-from api.dynamic_api_routing import DynamicAPIRouting
+from assignments.views import router as assignments_router
+from activity.views import router as activity_router
+# from api.dynamic_api_routing import DynamicAPIRouting
 
 api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
 api_v1 = NinjaExtraAPI(title='SNS API v1', version='1.0.0', docs=Redoc())
@@ -40,7 +42,7 @@ api.add_exception_handler(HttpError, api_exception_handler)
 api.add_exception_handler(Exception, api_exception_handler)
 
 # 動的APIルーティングを読み込み
-dynamic_router = DynamicAPIRouting.get_router()
+# dynamic_router = DynamicAPIRouting.get_router()
 
 #new or old
 api_switcher = "old"
@@ -48,6 +50,7 @@ api_switcher = "old"
 if api_switcher == "old":
     api.add_router('posts', posts_router)
     api.add_router('users', users_router)
+    api.add_router('admin', admin_router)
     api.add_router('polls', polls_router)
     api.add_router('events', events_router)
     api.add_router('calendar', calendar_router)
@@ -63,12 +66,13 @@ if api_switcher == "old":
     api.add_router('storage', storage_router)
     api.add_router('room_messages', room_messages_router)
     api.add_router('relations', relations_router)
-    api.add_router('setup', setup_router)
     api.add_router('memo', memo_router)
     api.add_router('feed', feed_router)
+    api.add_router('assignments', assignments_router)
+    api.add_router('activity', activity_router)
     api.register_controllers(NinjaJWTDefaultController)
 else:
-    api_v1.add_router('', dynamic_router)
+    # api_v1.add_router('', dynamic_router)
     api_v1.register_controllers(NinjaJWTDefaultController)
 
 # カスタム404ハンドラーを追加

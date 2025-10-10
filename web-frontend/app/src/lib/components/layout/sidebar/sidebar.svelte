@@ -40,11 +40,13 @@
 			href: "/app/messages",
 			label: "メッセージ"
 		},
+/*
 		{
 			icon: HeartHandshake,
 			href: "/app/circles",
 			label: "サークル"
 		},
+*/
 /*		{
 			icon: Bookmark,
 			href: "/bookmark",

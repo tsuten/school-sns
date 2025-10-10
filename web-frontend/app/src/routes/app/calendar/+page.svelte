@@ -5,14 +5,14 @@
     import { ChevronLeft, ChevronRight } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import { apiClient } from '$lib/services/django.js';
-    import { getSchedulesFromMultipleCalendars } from './getSchedules.js';
+    import { getNewSchedules } from './getSchedules.js';
+    import ScheduleForm from '$lib/components/input/scheduleForm.svelte';
     
     dayjs.locale('ja');
 
     const { data } = $props();
 
     let currentDate = $state(dayjs());
-    let calendars = $state([]);
     let schedules = $state([]);
     let isLoading = $state(true);
     let error = $state(null);
@@ -27,70 +27,62 @@
     const totalDays = $derived(endOfWeek.diff(startOfWeek, 'day') + 1);
     const calendarDays = $derived(Array.from({ length: totalDays }, (_, i) => startOfWeek.add(i, 'day')));
     
-    // カレンダーデータを取得する関数
-    async function fetchCalendars() {
+    // スケジュールを取得する関数
+    async function fetchSchedules() {
         try {
             isLoading = true;
             error = null;
             
-            const response = await apiClient.get('/calendar/calendars');
-            calendars = response || [];
+            const year = currentDate.year();
+            const month = currentDate.month() + 1; // dayjsは0ベースなので+1
             
-            console.log('カレンダーデータを取得しました:', calendars);
+            console.log('NewSchedule取得開始:', { year, month });
             
-            // カレンダー取得後、スケジュールも取得
-            await fetchSchedules();
+            const fetchedSchedules = await getNewSchedules(year, month);
+            schedules = fetchedSchedules;
             
+            console.log('取得したNewSchedule:', schedules);
         } catch (err) {
-            console.error('カレンダーデータの取得に失敗しました:', err);
-            error = err.message || 'カレンダーデータの取得に失敗しました';
-            
-            // フォールバックデータ
-            calendars = [
-                {
-                    id: '1',
-                    name: 'デフォルトカレンダー',
-                    description: 'APIエラー時のフォールバックカレンダー',
-                    created_at: '2021-01-01T00:00:00Z',
-                    updated_at: '2021-01-01T00:00:00Z'
-                }
-            ];
+            console.error('NewScheduleの取得に失敗しました:', err);
+            error = err.message || 'スケジュールの取得に失敗しました';
+            schedules = [];
         } finally {
             isLoading = false;
         }
     }
     
-    // スケジュールを取得する関数
-    async function fetchSchedules() {
-        try {
-            const calendarIds = calendars.map(calendar => calendar.id);
-            const year = currentDate.year();
-            const month = currentDate.month() + 1; // dayjsは0ベースなので+1
-            
-            console.log('スケジュール取得開始:', { calendarIds, year, month });
-            
-            const fetchedSchedules = await getSchedulesFromMultipleCalendars(calendarIds, year, month);
-            schedules = fetchedSchedules;
-            
-            console.log('取得したスケジュール:', schedules);
-        } catch (err) {
-            console.error('スケジュールの取得に失敗しました:', err);
-            schedules = [];
+    // スケジュール作成完了時の処理
+    function handleScheduleCreated(newSchedule) {
+        console.log('新しいスケジュールが作成されました:', newSchedule);
+        
+        // 作成されたスケジュールを現在のリストに追加（即座に表示）
+        if (newSchedule && newSchedule.id) {
+            schedules = [...schedules, newSchedule];
         }
+        
+        // カレンダー情報を再取得して最新状態を保証
+        setTimeout(() => {
+            fetchSchedules();
+        }, 100);
     }
     
     // 指定した日のスケジュールを取得する関数（開始日のスケジュールのみ）
     function getSchedulesForDay(day) {
         return schedules.filter(schedule => {
-            const scheduleStartDate = dayjs(schedule.start_time);
-            return scheduleStartDate.isSame(day, 'day');
+            if (schedule.start_time) {
+                const scheduleStartDate = dayjs(schedule.start_time);
+                return scheduleStartDate.isSame(day, 'day');
+            }
+            return false;
         });
     }
     
     // 指定した日がスケジュールの継続日かどうかを判定する関数
     function isScheduleContinuationDay(day, schedule) {
+        if (!schedule.start_time || !schedule.end_time) return false;
+        
         const scheduleStartDate = dayjs(schedule.start_time);
-        const scheduleEndDate = schedule.end_time ? dayjs(schedule.end_time) : scheduleStartDate;
+        const scheduleEndDate = dayjs(schedule.end_time);
         
         // 開始日より後で、終了日以前の日かどうか
         return day.isAfter(scheduleStartDate, 'day') && 
@@ -124,15 +116,19 @@
     
     // スケジュールの表示期間を計算する関数
     function getScheduleDuration(schedule) {
+        if (!schedule.start_time || !schedule.end_time) return 1;
+        
         const startDate = dayjs(schedule.start_time);
-        const endDate = schedule.end_time ? dayjs(schedule.end_time) : startDate;
+        const endDate = dayjs(schedule.end_time);
         return endDate.diff(startDate, 'day') + 1;
     }
     
     // スケジュールの位置タイプを判定する関数
     function getSchedulePositionType(day, schedule) {
+        if (!schedule.start_time || !schedule.end_time) return 'single';
+        
         const scheduleStartDate = dayjs(schedule.start_time);
-        const scheduleEndDate = schedule.end_time ? dayjs(schedule.end_time) : scheduleStartDate;
+        const scheduleEndDate = dayjs(schedule.end_time);
         
         if (day.isSame(scheduleStartDate, 'day') && day.isSame(scheduleEndDate, 'day')) {
             return 'single'; // 1日のみのスケジュール
@@ -167,45 +163,19 @@
         }
     }
     
-    // コンポーネントマウント時にカレンダーデータを取得
+    // コンポーネントマウント時にスケジュールを取得
     onMount(() => {
-        fetchCalendars();
+        fetchSchedules();
     });
     
     // 月が変更されたときにスケジュールを再取得
     $effect(() => {
-        if (calendars.length > 0) {
-            fetchSchedules();
-        }
+        fetchSchedules();
     });
     
     // 副作用：状態変更時のログ出力
     $effect(() => {
         console.log('currentDate changed:', currentDate.format('YYYY-MM-DD'));
-    });
-    
-    $effect(() => {
-        console.log('startOfMonth changed:', startOfMonth.format('YYYY-MM-DD'));
-    });
-    
-    $effect(() => {
-        console.log('endOfMonth changed:', endOfMonth.format('YYYY-MM-DD'));
-    });
-    
-    $effect(() => {
-        console.log('startOfWeek changed:', startOfWeek.format('YYYY-MM-DD'));
-    });
-    
-    $effect(() => {
-        console.log('endOfWeek changed:', endOfWeek.format('YYYY-MM-DD'));
-    });
-    
-    $effect(() => {
-        console.log('totalDays changed:', totalDays);
-    });
-    
-    $effect(() => {
-        console.log('calendarDays changed:', calendarDays.map(day => day.format('YYYY-MM-DD')));
     });
     
     // 曜日のヘッダー
@@ -291,7 +261,7 @@
     }
 </style>
 
-<div class="flex flex-col gap-4 p-4 h-full overflow-y-scroll">
+<div class="flex flex-col gap-4 p-4 h-full overflow-y-scroll max-w-7xl mx-auto">
     
     <!-- カレンダーヘッダー -->
     <div class="flex items-center justify-between bg-white rounded-lg p-4 border border-gray-300">
@@ -316,86 +286,60 @@
         </button>
     </div>
     
-    <!-- カレンダー本体 -->
-    <div class="bg-white rounded-lg border border-gray-300">
-        <!-- 曜日ヘッダー -->
-        <div class="grid grid-cols-7 gap-1 mb-2">
-            {#each weekdays as weekday}
-                <div class="h-10 flex items-center justify-center text-sm font-semibold text-gray-600">
-                    {weekday}
-                </div>
-            {/each}
-        </div>
-        
-        <!-- 日付グリッド -->
-        <div class="grid grid-cols-7 w-full">
-            {#each calendarDays as day}
-                <div class={getDayClass(day)}>
-                    <!-- 日付 -->
-                    <div class="font-semibold mb-1 {day.isSame(today, 'day') ? 'text-blue-600' : ''}">
-                        {day.format('D')}
-                    </div>
-                    
-                    <!-- 開始日のスケジュール表示 -->
-                    {#each getSchedulesForDay(day) as schedule, index}
-                        <div class="{getScheduleBarClass(day, schedule, index)} schedule-bar start" title={`${schedule.title} (${getScheduleDuration(schedule)}日間)`}>
-                            {schedule.title}
-                        </div>
-                    {/each}
-                    
-                    <!-- 継続中のスケジュール表示 -->
-                    {#each getContinuationSchedulesForDay(day) as schedule}
-                        {@const positionType = getSchedulePositionType(day, schedule)}
-                        {@const scheduleIndex = getScheduleIndex(day, schedule)}
-                        <div class="{getScheduleBarClass(day, schedule, scheduleIndex)} schedule-bar {positionType}" title={`${schedule.title} (継続中)`}>
-                            {#if positionType === 'end'}
-                                &nbsp;
-                            {:else}
-                                &nbsp;
-                            {/if}
-                        </div>
-                    {/each}
-                </div>
-            {/each}
-        </div>
-    </div>
-
-    <!-- カレンダー一覧 -->
-    <div class="bg-white rounded-lg p-4 border border-gray-300">
-        <h3 class="text-lg font-semibold mb-4">カレンダー一覧</h3>
-        
-        {#if isLoading}
-            <div class="flex items-center justify-center py-8">
-                <p class="text-gray-500">カレンダーを読み込み中...</p>
-            </div>
-        {:else if error}
-            <div class="flex flex-col items-center justify-center py-8">
-                <p class="text-red-500 mb-2">エラー: {error}</p>
-                <button 
-                    class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    onclick={fetchCalendars}
-                >
-                    再試行
-                </button>
-            </div>
-        {:else}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#each calendars as calendar}
-                    <div class="border border-gray-300 rounded-lg p-4 hover:bg-gray-50">
-                        <h4 class="font-semibold text-lg mb-2">{calendar.name}</h4>
-                        <p class="text-gray-600 text-sm mb-2">{calendar.description}</p>
-                        <div class="text-xs text-gray-400">
-                            <p>作成日: {new Date(calendar.created_at).toLocaleDateString('ja-JP')}</p>
-                            <p>更新日: {new Date(calendar.updated_at).toLocaleDateString('ja-JP')}</p>
-                        </div>
+    <!-- メインコンテンツ（カレンダー + フォーム） -->
+    <div class="flex gap-6">
+        <!-- カレンダー本体 -->
+        <div class="flex-1 bg-white rounded-lg border border-gray-300">
+            <!-- 曜日ヘッダー -->
+            <div class="grid grid-cols-7 gap-1 mb-2">
+                {#each weekdays as weekday}
+                    <div class="h-10 flex items-center justify-center text-sm font-semibold text-gray-600">
+                        {weekday}
                     </div>
                 {/each}
             </div>
-        {/if}
+            
+            <!-- 日付グリッド -->
+            <div class="grid grid-cols-7 w-full">
+                {#each calendarDays as day}
+                    <div class={getDayClass(day)}>
+                        <!-- 日付 -->
+                        <div class="font-semibold mb-1 {day.isSame(today, 'day') ? 'text-blue-600' : ''}">
+                            {day.format('D')}
+                        </div>
+                        
+                        <!-- 開始日のスケジュール表示 -->
+                        {#each getSchedulesForDay(day) as schedule, index}
+                            <div class="{getScheduleBarClass(day, schedule, index)} schedule-bar start" title={`${schedule.title} (${getScheduleDuration(schedule)}日間)`}>
+                                {schedule.title}
+                            </div>
+                        {/each}
+                        
+                        <!-- 継続中のスケジュール表示 -->
+                        {#each getContinuationSchedulesForDay(day) as schedule}
+                            {@const positionType = getSchedulePositionType(day, schedule)}
+                            {@const scheduleIndex = getScheduleIndex(day, schedule)}
+                            <div class="{getScheduleBarClass(day, schedule, scheduleIndex)} schedule-bar {positionType}" title={`${schedule.title} (継続中)`}>
+                                {#if positionType === 'end'}
+                                    &nbsp;
+                                {:else}
+                                    &nbsp;
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {/each}
+            </div>
+        </div>
+        
+        <!-- スケジュール作成フォーム -->
+        <div class="w-80">
+            <ScheduleForm on:scheduleCreated={handleScheduleCreated} />
+        </div>
     </div>
-    
+
     <!-- スケジュール情報（デバッグ用） -->
-    {#if schedules.length > 0}
+    <!--{#if schedules.length > 0}
         <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
             <h3 class="text-lg font-semibold mb-2">取得したスケジュール（{schedules.length}件）</h3>
             <p class="text-sm text-gray-600 mb-2">※ 詳細はブラウザのコンソールをご確認ください</p>
@@ -403,6 +347,6 @@
                 {schedules.map(s => s.title).join(', ')}
             </div>
         </div>
-    {/if}
+    {/if} -->
 </div>
 

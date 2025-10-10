@@ -11,17 +11,15 @@
         TicketCheck,
     } from "lucide-svelte";
     import EventCard from "$lib/components/page-components/eventCard.svelte";
-    import EventForm from "$lib/components/page-components/eventForm.svelte";
+    import EventInput from "$lib/components/input/eventInput.svelte";
     import Tab from "$lib/components/page-components/tab.svelte";
     import { apiClient } from "$lib/services/django";
     import { fly } from 'svelte/transition';
-
-    // サーバーから取得したデータを受け取る
-    export let data;
+    import { onMount } from 'svelte';
 
     // APIから取得したイベントデータ
-    $: nextEvents = data.nextEvents || [];
-    $: heldEvents = data.heldEvents || [];
+    let nextEvents = [];
+    let heldEvents = [];
 
     let tabdata = [
         {
@@ -48,33 +46,29 @@
         });
     }
 
-    let showForm = false;
-    let showEventForm = false;
-
-    function openEventForm() {
-        showEventForm = true;
-    }
-
-    function closeEventForm() {
-        showEventForm = false;
-    }
-
-    function openForm() {
-        showForm = true;
-    }
-
-    function closeForm() {
-        showForm = false;
-    }
-
     async function fetchData() {
-        // APIから最新データを取得
-        const heldRes = await apiClient.get("/events/held_events");
-        const nextRes = await apiClient.get("/events/next_events");
-        // 取得したデータで nextEvents, heldEvents を更新
-        heldEvents = heldRes || [];
-        nextEvents = nextRes || [];
+        try {
+            // 並行してAPIからデータを取得
+            const [heldRes, nextRes] = await Promise.all([
+                apiClient.get("/events/held_events"),
+                apiClient.get("/events/next_events")
+            ]);
+            
+            // 取得したデータで nextEvents, heldEvents を更新
+            heldEvents = heldRes || [];
+            nextEvents = nextRes || [];
+        } catch (error) {
+            console.error('イベントデータの取得に失敗しました:', error);
+            // エラーが発生した場合は空の配列を設定
+            heldEvents = [];
+            nextEvents = [];
+        }
     }
+
+    // ページロード時にデータを取得
+    onMount(() => {
+        fetchData();
+    });
 
     function handleDataAdded() {
         fetchData(); // 子から通知が来たら再フェッチ！
@@ -97,6 +91,11 @@
 <Tab tabsData={tabdata} />
 
 <div class="flex flex-col gap-2 h-full p-2">
+    <!-- イベント作成フォーム -->
+    <EventInput on:eventSent={handleDataAdded} />
+
+    <hr class="border-gray-300 my-4" />
+
     <!-- 現在進行中のイベント -->
     {#if heldEvents.length > 0}
         <div class="flex flex-col gap-2">
@@ -121,19 +120,6 @@
         <hr class="border-gray-300 my-4" />
     {/if}
 
-    <!-- EventForm を最上位レイヤーに配置 -->
-    {#if showForm}
-        <div class="fixed inset-0 flex items-end justify-center z-[100] p-4">
-            <div
-                class="bg-white rounded-lg w-full max-w-[68vw] max-h-[70vh] overflow-y-auto shadow-2xl"
-                in:fly={{ y: 200, duration: 400 }}
-                out:fly={{ y: 200, duration: 400 }}
-            >
-                <EventForm on:added={handleDataAdded} onClose={closeForm} />
-            </div>
-        </div>
-    {/if}
-
     <!-- 今後のイベント -->
     <div class="flex flex-col gap-2 h-full">
         <p class="text-lg font-bold">今後のイベント</p>
@@ -150,16 +136,5 @@
                 <EventCard {event} />
             {/each}
         {/if}
-
-        <!-- フローティングボタン -->
-        <div class="flex justify-end items-end h-full p-2">
-            <button
-                class="fixed bottom-4 right-70 w-12 h-12 bg-sky-500 text-white rounded-full hover:bg-sky-600 hover:cursor-pointer flex items-center justify-center z-50 shadow-lg transition-colors duration-200"
-                onclick={openForm}
-                aria-label="新しいイベントを作成"
-            >
-                <Plus class="w-6 h-6 text-white" />
-            </button>
-        </div>
     </div>
 </div>

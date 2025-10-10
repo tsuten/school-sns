@@ -1,7 +1,8 @@
 <script>
+    import { theme } from "$lib/theme.js";
     let { children, class: className = "" } = $props();
 </script>
 
-<div class="flex flex-col bg-white p-4 rounded-sm border border-gray-300 {className}">
+<div class="w-full flex flex-col p-4 rounded-sm {$theme.card.background} {$theme.border.primary} {className}">
     {@render children()}
 </div>

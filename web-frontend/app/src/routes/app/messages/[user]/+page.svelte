@@ -4,12 +4,13 @@
     import { onDestroy } from "svelte";
     import { apiClient, getMediaURL } from "$lib/services/django.js";
     import { page } from "$app/stores";
-    import { chatMessages, chatConfig } from "$lib/stores/messageStore.js";
+    import { chatMessages, chatConfig, addOwnMessage } from "$lib/stores/messageStore.js";
     import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
     import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
     import { initialize } from "$lib/stores/messageStore.js";
     import ChatHeader from "$lib/components/shared/chat/chatHeader.svelte";
     import ProfilePageComponent from "$lib/components/page-components/profilePageComponent.svelte";
+    import { currentUser } from "$lib/stores/auth.js";
     let targetUser = $state(null);
     let userId = $state();
     let targetDisplayName = $state("");
@@ -17,6 +18,8 @@
     let targetUserName = $state("");
     let targetUserPfp = $state(null);
     let showMenu = $state(false);
+
+    $inspect("chatMessages", $chatMessages);
 
     // ヘルパー関数
     function getProfileImage(user) {
@@ -74,13 +77,26 @@
         console.log("メッセージを送信します", content, userId);
 
         try {
-            const response = await apiClient.post("/chat/messages", {
+            // 先にローカルにメッセージを追加（楽観的更新）
+            const localMessage = addOwnMessage(content, userId);
+            
+            const response = await apiClient.post("/pm/messages", {
                 content: content,
                 receiver_id: userId,
             });
             console.log("メッセージが送信されました:", response);
+            
+            // 成功時は何もしない（既にローカルに追加済み）
+            // 失敗時はローカルメッセージを削除する処理を追加することも可能
+            
         } catch (error) {
             console.error("メッセージの送信に失敗しました:", error);
+            
+            // 失敗時はローカルメッセージを削除
+            if (localMessage) {
+                chatMessages.update((messages) => messages.filter(msg => msg.id !== localMessage.id));
+            }
+            
             throw error; // エラーを再スローして chatInput でハンドリング
         }
     }
@@ -88,65 +104,65 @@
 
 <div class="flex flex-row h-full w-full">
 
-<div class="flex flex-col h-full w-2/3">
-<ChatHeader
-    logo={targetUser ? getProfileImage(targetUser) : null}
-    title={targetUser ? getDisplayName(targetUser) : "ユーザー"}
-    subtitle={targetUser ? `@${targetUser.user_username}` : "読み込み中..."}
->
-    <div class="flex flex-row items-center gap-2">
-        {#if showMenu}
+    <div class="flex flex-col h-full w-full">
+    <ChatHeader
+        logo={targetUser ? getProfileImage(targetUser) : null}
+        title={targetUser ? getDisplayName(targetUser) : "ユーザー"}
+        subtitle={targetUser ? `@${targetUser.user_username}` : "読み込み中..."}
+    >
+        <div class="flex flex-row items-center gap-2">
+            <!-- {#if showMenu}
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <Siren class="h-5 w-5 text-gray-500" />
+                </Button>
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <Ban class="h-5 w-5 text-gray-500" />
+                </Button>
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <BellOff class="h-5 w-5 text-gray-500" />
+                </Button>
+            {/if}
             <Button
                 pill={true}
                 color="light"
                 class="p-2! hover:cursor-pointer"
                 id="chat-menu-button"
+                onclick={() => (showMenu = !showMenu)}
             >
-                <Siren class="h-5 w-5 text-gray-500" />
-            </Button>
-            <Button
-                pill={true}
-                color="light"
-                class="p-2! hover:cursor-pointer"
-                id="chat-menu-button"
-            >
-                <Ban class="h-5 w-5 text-gray-500" />
-            </Button>
-            <Button
-                pill={true}
-                color="light"
-                class="p-2! hover:cursor-pointer"
-                id="chat-menu-button"
-            >
-                <BellOff class="h-5 w-5 text-gray-500" />
-            </Button>
-        {/if}
-        <Button
-            pill={true}
-            color="light"
-            class="p-2! hover:cursor-pointer"
-            id="chat-menu-button"
-            onclick={() => (showMenu = !showMenu)}
-        >
-            <Ellipsis class="h-5 w-5 text-gray-500" />
-        </Button>
+                <Ellipsis class="h-5 w-5 text-gray-500" />
+            </Button> -->
+        </div>
+        </ChatHeader>
+        <ChatCore messages={$chatMessages} currentUser={$currentUser} targetUserId={userId} targetUser={targetUser} />
+        <ChatInput onSend={handleMessageSend} />
     </div>
-    </ChatHeader>
-    <ChatCore messages={$chatMessages} />
-    <ChatInput onSend={handleMessageSend} />
-</div>
 
-<div class="w-1/3 border-l border-gray-300">
-    {#if targetUser}
-        <div class="flex flex-col h-full w-full4">
-            <ProfilePageComponent user={targetUser} />
-        </div>
-    {:else}
-        <div class="flex justify-center items-center h-full">
-            <p>ユーザー情報を読み込み中...</p>
-        </div>
-    {/if}
-</div>
+    <div class="min-w-80 border-l border-gray-300 h-full">
+        {#if targetUser}
+            <div class="flex flex-col h-full w-full">
+                <ProfilePageComponent user={targetUser} />
+            </div>
+        {:else}
+            <div class="flex justify-center items-center h-full w-full">
+                <p>ユーザー情報を読み込み中...</p>
+            </div>
+        {/if}
+    </div>
 
 
 </div>

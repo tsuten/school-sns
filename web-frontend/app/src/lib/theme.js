@@ -9,6 +9,14 @@ const themeConfig = {
         tertiary: "gray-200",
         quaternary: "gray-300",
         quinary: "gray-400",
+
+        background: {
+            primary: "bg-white",
+            secondary: "bg-gray-100",
+            tertiary: "bg-gray-200",
+            quaternary: "bg-gray-300",
+            quinary: "bg-gray-400",
+        },
         
         // テキスト色
         text: {
@@ -52,6 +60,14 @@ const themeConfig = {
         tertiary: "gray-800",
         quaternary: "gray-700",
         quinary: "gray-600",
+        
+        background: {
+            primary: "bg-gray-900",
+            secondary: "bg-gray-800",
+            tertiary: "bg-gray-700",
+            quaternary: "bg-gray-600",
+            quinary: "bg-gray-500",
+        },
         
         // テキスト色
         text: {
