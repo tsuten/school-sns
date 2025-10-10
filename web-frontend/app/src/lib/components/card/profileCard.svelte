@@ -2,11 +2,13 @@
     import BaseCard from '$lib/components/utils/baseCard.svelte';
     import { Calendar, MapPin, LinkIcon, Camera, Edit3, Save, MoreVertical, Cake, AlertTriangle, Trash2, Siren, User } from 'lucide-svelte';
     import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
-    import { apiClient } from '$lib/services/django';
+    import { apiClient, getMediaURL } from '$lib/services/django';
     import { onMount } from 'svelte';
     import { page } from '$app/stores';
     import { dateNormalize } from '$lib/utils/datetimeNormalize';
     import { browser } from '$app/environment';
+    import DateBadge from '$lib/components/badge/dateBadge.svelte';
+    import { theme } from '$lib/theme.js';
     
     let isEditing = $state(false);
     let isLoading = $state(false);
@@ -39,7 +41,7 @@
     // プロフィール画像のURL処理（サーバーサイドレンダリング時は安全にアクセス）
     const profileImageUrl = $derived(
         browser && user?.pfp ? 
-            (user.pfp.startsWith('http') ? user.pfp : `http://127.0.0.1:8000${user.pfp}`) : 
+            (user.pfp.startsWith('http') ? user.pfp : getMediaURL(user.pfp)) : 
             null
     );
 
@@ -66,7 +68,7 @@
     <BaseCard>
         <div class="flex items-center justify-center p-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <span class="ml-2 text-gray-600">読み込み中...</span>
+            <span class="ml-2 {$theme.text.tertiary}">読み込み中...</span>
         </div>
     </BaseCard>
 {:else if error}
@@ -85,14 +87,14 @@
                     <img 
                         src={profileImageUrl} 
                         alt="プロフィール画像" 
-                        class="w-24 h-24 rounded-full object-cover border-4 border-gray-100"
+                        class="w-24 h-24 rounded-full object-cover border-4 {$theme.border.secondary}"
                         onerror={() => {
                             console.error('Failed to load profile image:', profileImageUrl);
                         }}
                     />
                 {:else}
-                    <div class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-100">
-                        <User class="w-12 h-12 text-gray-400" />
+                    <div class="w-24 h-24 rounded-full {$theme.tertiary} flex items-center justify-center border-4 {$theme.border.secondary}">
+                        <User class="w-12 h-12 {$theme.text.quinary}" />
                     </div>
                 {/if}
             </div>
@@ -100,21 +102,20 @@
             <!-- 基本情報 -->
             <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                    <h2 class="text-2xl font-bold text-gray-900">{user.display_name || username || 'ユーザー'}</h2>
+                    <h2 class="text-2xl font-bold {$theme.text.primary}">{user.display_name || username || 'ユーザー'}</h2>
                     {#if username}
-                        <span class="text-gray-500">@{username}</span>
+                        <span class="{$theme.text.tertiary}">@{username}</span>
                     {/if}
                 </div>
                 {#if user.bio}
-                    <p class="text-gray-600 whitespace-pre-wrap line-clamp-3">{user.bio}</p>
+                    <p class="whitespace-pre-wrap line-clamp-3 {$theme.text.secondary}">{user.bio}</p>
                 {/if}
                 
                 <!-- メタ情報 -->
-                <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
+                <div class="flex flex-wrap gap-4 mt-3 text-sm {$theme.text.tertiary}">
                     {#if user.created_at && dateNormalize(user.created_at)}
                         <div class="flex items-center gap-1">
-                            <Calendar class="w-4 h-4" />
-                            {dateNormalize(user.created_at)}に参加
+                            参加日: <DateBadge date={user.created_at} />
                         </div>
                     {/if}
                     {#if user.birthday && dateNormalize(user.birthday)}
@@ -141,6 +142,7 @@
             </div>
 
             <!-- 編集ボタン -->
+            <!--
             <div class="flex gap-2 justify-start items-start">
                 <Button color="light" size="xs" class="p-1 hover:cursor-pointer">
                     <MoreVertical class="w-4 h-4" />
@@ -152,11 +154,12 @@
                     </DropdownItem>
                 </Dropdown>
             </div>
+            -->
         </div>
     </BaseCard>
 {:else}
     <BaseCard>
-        <div class="flex items-center justify-center p-8 text-gray-500">
+        <div class="flex items-center justify-center p-8 {$theme.text.tertiary}">
             <User class="w-8 h-8 mr-2" />
             <span>ユーザー情報がありません</span>
         </div>

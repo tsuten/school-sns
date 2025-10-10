@@ -1,5 +1,5 @@
 from ninja import Schema
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime
 
@@ -8,7 +8,8 @@ from datetime import datetime
 class ChoiceSchema(Schema):
     id: uuid.UUID
     choice_text: str
-    vote_count: int
+    vote_count: Optional[int] = 0
+    is_voted_by_user: Optional[bool] = False
 
 class CreateChoiceSchema(Schema):
     choice_text: str
@@ -16,7 +17,11 @@ class CreateChoiceSchema(Schema):
 class PollSchema(Schema):
     id: uuid.UUID
     question: str
+    description: str
     choices: List[ChoiceSchema]
+    organization_id: uuid.UUID
+    user_id: uuid.UUID
+    username: str
     created_at: datetime
     updated_at: datetime
 
@@ -29,3 +34,7 @@ class VoteSchema(Schema):
     choice_id: uuid.UUID
     user_id: uuid.UUID
     created_at: datetime
+    updated_at: datetime
+
+class ErrorResponse(Schema):
+    error: str

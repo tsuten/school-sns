@@ -1,5 +1,5 @@
 <script>
-    import WidgetBase from '../../utils/widgetBase.svelte';
+    import WidgetBase from '$lib/components/utils/widgetBase.svelte';
     import { Calendar, MapPin, Clock } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import { apiClient } from '$lib/services/django.js';

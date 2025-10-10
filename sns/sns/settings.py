@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-$rhggovbf*bm_q9qrl+4uvz1@+2cq70f*(_n10@7$0ky3$gf*q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,12 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'watson',
+    'django_cleanup.apps.CleanupConfig',
     'posts',
     'channels',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'users',
+    'apps.core.users',
     'ninja_jwt',
     'ninja_extra',
     'polls',
@@ -53,9 +55,15 @@ INSTALLED_APPS = [
     'chat',
     'circle',
     'emojis',
-    'enrollments',
+    'apps.core.organizations',
     'announcement',
-    'notifications',
+    'apps.core.notifications',
+    'apps.core.bookmark',
+    'search',
+    'relations',
+    'storage',
+    'setup',
+    'bookmark',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +71,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -108,7 +115,7 @@ SIMPLE_JWT = {
 from ninja_jwt.settings import api_settings as ninja_jwt_api_settings
 
 NINJA_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # SIMPLE_JWTと統一
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -210,3 +217,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+
+# Custom error handlers
+HANDLER404 = 'shared.handlers.custom_404_handler'
+HANDLER500 = 'shared.handlers.custom_500_handler'
+HANDLER403 = 'shared.handlers.custom_403_handler'

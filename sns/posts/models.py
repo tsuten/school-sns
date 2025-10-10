@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
+from watson import search as watson
 
 class PostManager(models.Manager):
     def get_queryset(self):
@@ -114,3 +115,7 @@ class Like(models.Model):
         indexes = [
             models.Index(fields=['created_at']),
         ]
+
+
+# django-watson 検索対象モデルの登録
+watson.register(Post, fields=('title', 'content'))

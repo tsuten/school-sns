@@ -1,59 +1,104 @@
-"""
-URL configuration for sns project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from ninja import NinjaAPI, Redoc
 from posts.views import router as posts_router
-from users.views import router as users_router
+from apps.core.users.views import router as users_router
+from admin_module.views import router as admin_router
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_extra import NinjaExtraAPI
 from polls.views import router as polls_router
 from events.views import router as events_router
 from calendar_module.views import router as calendar_router
-from chat.views import router as chat_router
+from chat.views import router as chat_router, private_message_router
+from chat.room_messages_views import router as room_messages_router
 from circle.views import router as circle_router
 from emojis.views import router as emojis_router
 from announcement.views import router as announcement_router
-from notifications.views import router as notifications_router
-from enrollments.views import router as enrollments_router
+from apps.core.notifications.views import router as notifications_router
+from apps.core.organizations.views import router as organizations_router
 from tests.views import router as tests_router
-api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
-api.add_router('posts', posts_router)
-api.add_router('users', users_router)
-api.add_router('polls', polls_router)
-api.add_router('events', events_router)
-api.add_router('calendar', calendar_router)
-api.add_router('chat', chat_router)
-api.add_router('circle', circle_router)
-api.add_router('emojis', emojis_router)
-api.add_router('announcement', announcement_router)
-api.add_router('notifications', notifications_router)
-api.add_router('enrollments', enrollments_router)
-api.add_router('tests', tests_router)
-api.register_controllers(NinjaJWTDefaultController)
+from search.views import router as search_router
+from storage.views import router as storage_router
+from apps.memo.views import router as memo_router
+from feed.views import router as feed_router
+from shared.handlers import custom_404_handler, custom_500_handler, custom_403_handler, api_exception_handler, api_404_handler
+from ninja.errors import ValidationError
+from pydantic import ValidationError as PydanticValidationError
+from ninja.errors import HttpError
+from bookmark.views import router as bookmark_router
+from relations.views import router as relations_router
+from assignments.views import router as assignments_router
+from activity.views import router as activity_router
+# from api.dynamic_api_routing import DynamicAPIRouting
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', api.urls, name='api'),
-]
+api = NinjaExtraAPI(title='SNS API', version='1.0.0', docs=Redoc())
+api_v1 = NinjaExtraAPI(title='SNS API v1', version='1.0.0', docs=Redoc())
+
+# 例外ハンドラーを設定
+api.add_exception_handler(ValidationError, api_exception_handler)
+api.add_exception_handler(PydanticValidationError, api_exception_handler)
+api.add_exception_handler(HttpError, api_exception_handler)
+api.add_exception_handler(Exception, api_exception_handler)
+
+# 動的APIルーティングを読み込み
+# dynamic_router = DynamicAPIRouting.get_router()
+
+#new or old
+api_switcher = "old"
+
+if api_switcher == "old":
+    api.add_router('posts', posts_router)
+    api.add_router('users', users_router)
+    api.add_router('admin', admin_router)
+    api.add_router('polls', polls_router)
+    api.add_router('events', events_router)
+    api.add_router('calendar', calendar_router)
+    api.add_router('chat', chat_router)
+    api.add_router('circle', circle_router)
+    api.add_router('emojis', emojis_router)
+    api.add_router('announcement', announcement_router)
+    api.add_router('notifications', notifications_router)
+    api.add_router('organizations', organizations_router)
+    api.add_router('tests', tests_router)
+    api.add_router('pm', private_message_router)
+    api.add_router('search', search_router)
+    api.add_router('storage', storage_router)
+    api.add_router('room_messages', room_messages_router)
+    api.add_router('relations', relations_router)
+    api.add_router('memo', memo_router)
+    api.add_router('feed', feed_router)
+    api.add_router('assignments', assignments_router)
+    api.add_router('activity', activity_router)
+    api.register_controllers(NinjaJWTDefaultController)
+else:
+    # api_v1.add_router('', dynamic_router)
+    api_v1.register_controllers(NinjaJWTDefaultController)
+
+# カスタム404ハンドラーを追加
+from django.urls import re_path
+
+if api_switcher == "old":
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('api/', api.urls, name='api'),
+    ]
+else:
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('api/v1/', api_v1.urls, name='api_v1'),
+    ]
 
 # 開発環境でのメディアファイル配信
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# カスタム404ハンドラーを最後に追加
+urlpatterns.append(re_path(r'^.*$', api_404_handler, name='api_404'))
+
+# カスタム404ハンドラー
+handler404 = 'shared.handlers.custom_404_handler'
+handler500 = 'shared.handlers.custom_500_handler'
+handler403 = 'shared.handlers.custom_403_handler'

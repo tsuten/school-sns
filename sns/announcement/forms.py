@@ -1,6 +1,6 @@
 from django import forms
 from .models import Announcement
-from enrollments.models import School, Class
+from apps.core.organizations.models import School, Class
 
 class PostToChoiceField(forms.ChoiceField):
     """学校とクラスを統合したドロップダウンフィールド"""
@@ -8,13 +8,17 @@ class PostToChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         choices = [('', '配信先を選択してください')]
         
-        # 学校の選択肢を追加
-        for school in School.objects.all():
-            choices.append((f"school_{school.id}", f"学校: {school.name}"))
-        
-        # クラスの選択肢を追加
-        for class_obj in Class.objects.all():
-            choices.append((f"class_{class_obj.id}", f"クラス: {class_obj.name}"))
+        # TODO: 一時的にコメントアウト - django-watson セットアップ後に有効化
+        try:
+            # 学校の選択肢を追加
+            for school in School.objects.all():
+                choices.append((f"school_{school.id}", f"学校: {school.name}"))
+            
+            # クラスの選択肢を追加
+            for class_obj in Class.objects.all():
+                choices.append((f"class_{class_obj.id}", f"クラス: {class_obj.name}"))
+        except:
+            pass  # データベース未作成時はスキップ
         
         kwargs['choices'] = choices
         super().__init__(*args, **kwargs)

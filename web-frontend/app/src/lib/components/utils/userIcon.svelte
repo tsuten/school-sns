@@ -1,7 +1,7 @@
 <script>
     import { User } from "lucide-svelte";
     import { isAuthenticated, currentUser } from "$lib/stores/auth.js";
-
+    import { Button, Dropdown, DropdownItem } from "flowbite-svelte";
     // サイズクラスのマッピング
     const sizeClasses = {
         sm: {
@@ -40,7 +40,7 @@
 
 {#if $isAuthenticated && userData}
         <!-- アバター/アイコン -->
-        <div class="flex-shrink-0">
+        <Button class="">
             {#if profileImageUrl}
                 <img 
                     src={profileImageUrl} 
@@ -55,7 +55,12 @@
                     <User class="{currentSize.icon} text-gray-500" />
                 </div>
             {/if}
-        </div>
+        </Button>
+        <Dropdown simple>
+            <DropdownItem>
+                プロフィール
+            </DropdownItem>
+        </Dropdown>
 {:else}
     <!-- 未認証時の表示 -->
     <div class="flex gap-2 opacity-50">

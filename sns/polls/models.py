@@ -1,17 +1,17 @@
 from django.db import models
 from django.conf import settings
 import uuid
-from django.db.models import Sum
 from django.core.exceptions import ValidationError
+from apps.core.organizations.models import Class
 
 class PollManager(models.Manager):
-    def create_poll(self, question, choices):
+    def create_poll(self, question, choices, user):
         if len(choices) > 5:
             raise ValidationError('投票には最大5つまでの選択肢しか設定できません。')
         if len(choices) < 2:
             raise ValidationError('投票には最低2つの選択肢が必要です。')
         
-        poll = self.model(question=question)
+        poll = self.model(question=question, user=user)
         poll.save()
         for choice in choices:
             Choice.objects.create(poll=poll, choice_text=choice)
@@ -19,7 +19,10 @@ class PollManager(models.Manager):
 
 class Poll(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_polls', null=True, blank=True)
+    organization = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='organization_polls', null=True, blank=True)
     question = models.CharField(max_length=200)
+    description = models.TextField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -46,12 +49,25 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.choice_text
-    
-# logic complicated, idk what i'm doing here
+
 class VoteManager(models.Manager):
-    def get_total_vote_count(self, choice):
-        return self.filter(choice=choice).count()
-    
+    def vote_for_choice(self, user, choice):
+        """特定の選択肢に投票する（既存の投票があれば更新）"""
+        # 同じ投票内での既存の投票をチェック
+        existing_vote = self.filter(
+            user=user, 
+            choice__poll=choice.poll
+        ).first()
+        
+        if existing_vote:
+            # 既存の投票を更新
+            existing_vote.choice = choice
+            existing_vote.save()
+            return existing_vote
+        else:
+            # 新しい投票を作成
+            return self.create(user=user, choice=choice)
+
 class Vote(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, unique=True, default=uuid.uuid4)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_votes')
@@ -62,7 +78,8 @@ class Vote(models.Model):
     objects = VoteManager()
 
     class Meta:
-        unique_together = ('user', 'choice')  # 同じユーザーが同じ選択肢に重複投票を防ぐ
+        # データベースレベルでの制約は削除（アプリケーションレベルで制御）
+        pass
 
     def __str__(self):
         return f"{self.choice.poll.question} - {self.choice.choice_text}"

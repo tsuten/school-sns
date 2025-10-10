@@ -1,41 +1,103 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 
-import { messages } from '$lib/stores/unifiedBaseWSStore.js';
+import { messages, latestMessage } from '$lib/stores/unifiedBaseWSStore.js';
 import { apiClient } from '$lib/services/django.js';
+
+export const chatConfig = writable({
+    type: null,
+    room_id: null,
+});
 
 export const chatMessages = writable([]);
 
-// データを取得する関数
-function fetchMessages() {
-    messages.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            if (data.type == 'chat') {
-                const message = {
-                    type: data.type || '',
-                    content: data.content || '',
-                    sender: {
-                        id: data.sender?.id || '',
-                        username: data.sender?.username || '',
-                        displayName: data.sender?.displayName || '',
-                        icon: data.sender?.icon || ''
-                    },
-                    created_at: data.created_at,
-                    timestamp: data.timestamp
-                };
-                // 接続エラー時の処理
-                socket.onerror = (error) => {
-                    console.error('WebSocketエラー:', error);
-                };
+// メッセージ削除処理
+const deleteMessage = (messageId) => {
+    chatMessages.update((messages) => messages.filter(message => message.id !== messageId));
+};
 
-                // メッセージを追加
-                messageList.update(list => [...list, message]);
-            }
-        } catch (error) {
-            console.error('WebSocketデータを取得できませんでした:', error);
-        }
+// メッセージ復元処理
+const restoreMessage = (data) => {
+    const config = get(chatConfig);
+    console.log("Restore data:", data);
+    console.log("Config:", config);
+    
+    if (config.type === 'private' && config.room_id == data.sender.id) {
+        const message = {
+            id: data.id || crypto.randomUUID(),
+            content: data.content,
+            created_at: data.created_at,
+            sender: data.sender,
+            type: 'message'
+        };
+        chatMessages.update((messages) => [...messages, message]);
+        console.log("Message restored:", message);
     }
 };
+
+// メッセージ追加処理
+const addMessage = (data) => {
+    const config = get(chatConfig);
+    console.log("chatConfig", config.type);
+    console.log("data.data.sender.id", data.data.sender.id);
+    console.log("chatConfig.room_id", config.room_id);
+    
+    if (config.type === 'private' && config.room_id == data.data.sender.id) {
+        const message = {
+            id: data.data.id || crypto.randomUUID(), // IDを追加
+            content: data.data.content,
+            created_at: data.data.created_at,
+            sender: data.data.sender,
+            type: 'message'
+        };
+        chatMessages.update((messages) => [...messages, message]);
+    }
+};
+
+// 自分が送信したメッセージを先頭に追加する関数
+export const addOwnMessage = (content, receiver_id) => {
+    const config = get(chatConfig);
+    
+    if (config.type === 'private' && config.room_id == receiver_id) {
+        const message = {
+            id: crypto.randomUUID(),
+            content: content,
+            created_at: new Date().toISOString(),
+            sent_by: 'request_user', // 自分が送信したメッセージ
+            type: 'message',
+            isOwn: true // 自分のメッセージであることを示すフラグ
+        };
+        
+        // メッセージを先頭に追加
+        chatMessages.update((messages) => [message, ...messages]);
+        
+        return message; // 作成したメッセージを返す
+    }
+};
+
+// 変数更新用購読ハンドラ
+latestMessage.subscribe((data) => {
+    try {
+        if (data.type === 'message') {
+            // operationがdeleteの場合、メッセージを削除
+            if (data.operation === 'delete' && data.data && data.data.id) {
+                deleteMessage(data.data.id);
+                return;
+            }
+            
+            // operationがrestoreの場合、メッセージを復元
+            if (data.operation === 'restore' && data.data) {
+                restoreMessage(data.data);
+                return;
+            }
+            
+            // メッセージを追加
+            addMessage(data);
+        }
+    } catch (error) {
+        console.error('WebSocketデータの解析に失敗しました:', error);
+    }
+})
+
 // グループに加入する
 const JoinAnnouncementsGroup = async (announcements_id) => {
     try {
@@ -62,12 +124,12 @@ function fetchMoreMessage() {
 }
 
 function fetchInitialMessages(user_id) {
-    apiClient.get(`/chat/messages/${user_id}`).then(response => {
-        chatMessages.set(response.messages);
+    apiClient.get(`/pm/messages/${user_id}`).then(response => {
+        chatMessages.set(response.data.messages)
     });
 }
 
 export function initialize(user_id) {
-    console.log("messageStoreを初期化します");
     fetchInitialMessages(user_id);
 }
+

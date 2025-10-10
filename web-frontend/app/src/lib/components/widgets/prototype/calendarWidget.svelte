@@ -1,5 +1,5 @@
 <script>
-    import WidgetBase from '../../utils/widgetBase.svelte';
+    import WidgetBase from '$lib/components/utils/widgetBase.svelte';
     import { Calendar, ChevronLeft, ChevronRight } from 'lucide-svelte';
 
     let currentDate = $state(new Date());

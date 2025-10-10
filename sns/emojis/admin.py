@@ -5,19 +5,23 @@ from .models import Emoji
 
 @admin.register(Emoji)
 class EmojiAdmin(admin.ModelAdmin):
-    list_display = ('emoji_display', 'name', 'circle', 'slug', 'created_at')
-    list_filter = ('circle', 'created_at')
-    search_fields = ('name', 'slug', 'circle__name')
+    list_display = ('emoji_display', 'name', 'organization_type', 'organization_name', 'created_by', 'created_at')
+    list_filter = ('organization_type', 'content_type', 'created_at')
+    search_fields = ('name', 'slug', 'organization_type')
     list_per_page = 50
-    ordering = ('circle', 'name')
-    readonly_fields = ('slug', 'created_at', 'updated_at')
+    ordering = ('organization_type', 'name')
+    readonly_fields = ('slug', 'organization_type', 'created_at', 'updated_at')
     
     fieldsets = (
         ('基本情報', {
-            'fields': ('name', 'circle', 'image')
+            'fields': ('name', 'created_by', 'image')
+        }),
+        ('組織設定', {
+            'fields': ('content_type', 'object_id'),
+            'description': 'GenericForeignKeyで組織を指定します。organization_typeは自動設定されます。'
         }),
         ('自動生成フィールド', {
-            'fields': ('slug',),
+            'fields': ('slug', 'organization_type'),
             'classes': ('collapse',)
         }),
         ('タイムスタンプ', {
@@ -43,6 +47,11 @@ class EmojiAdmin(admin.ModelAdmin):
     emoji_display.short_description = '絵文字'
     emoji_display.admin_order_field = 'name'
 
+    def organization_name(self, obj):
+        """組織名を表示"""
+        return obj.organization_name
+    organization_name.short_description = '組織名'
+    
     def get_queryset(self, request):
         """クエリセットの最適化"""
-        return super().get_queryset(request).select_related('circle')
+        return super().get_queryset(request).select_related('created_by', 'content_type')

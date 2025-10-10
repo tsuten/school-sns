@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 import uuid
 from django.utils import timezone
+from watson import search as watson
 
 class EventManager(models.Manager):
     def get_queryset(self):
@@ -67,3 +68,7 @@ class WhoWantsToParticipate(models.Model):
 
     class Meta:
         unique_together = ('event', 'user')
+
+
+# django-watson 検索対象モデルの登録
+watson.register(Event, fields=('title', 'description', 'location'))

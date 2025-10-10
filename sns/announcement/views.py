@@ -4,7 +4,7 @@ from .models import Announcement
 from .schemas import AnnouncementPostSchema, AnnouncementResponseSchema
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
-from enrollments.models import School, Class
+from apps.core.organizations.models import School, Class
 from typing import List
 
 router = Router(tags=['announcement'])

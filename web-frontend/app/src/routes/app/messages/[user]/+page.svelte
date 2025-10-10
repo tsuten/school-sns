@@ -1,0 +1,167 @@
+<script>
+    import { Button } from "flowbite-svelte";
+    import { Siren, Ellipsis, Ban, BellOff } from "lucide-svelte";
+    import { onDestroy } from "svelte";
+    import { apiClient, getMediaURL } from "$lib/services/django.js";
+    import { page } from "$app/stores";
+    import { chatMessages, chatConfig, addOwnMessage, initializeMessageStore } from "$lib/stores/datastore/messageDatastore.ts";
+    import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
+    import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
+    import ChatHeader from "$lib/components/shared/chat/chatHeader.svelte";
+    import ProfilePageComponent from "$lib/components/page-components/profilePageComponent.svelte";
+    import { currentUser } from "$lib/stores/auth.js";
+    let targetUser = $state(null);
+    let userId = $state();
+    let targetDisplayName = $state("");
+    let targetUserId = $state("");
+    let targetUserName = $state("");
+    let targetUserPfp = $state(null);
+    let showMenu = $state(false);
+
+    $inspect("chatMessages", $chatMessages);
+
+    // ヘルパー関数
+    function getProfileImage(user) {
+        return user?.pfp ? getMediaURL(user.pfp) : null;
+    }
+
+    function getDisplayName(user) {
+        return user?.display_name || user?.user_username || "Unknown User";
+    }
+
+    // 対象ユーザー情報を取得する関数（APIから直接取得）
+    async function loadTargetUser(targetUserId) {
+        try {
+            // TODO: 個別ユーザー情報取得のAPIエンドポイントを実装
+            // 現在は基本的な情報のみ設定
+            targetUser = await apiClient.get(`/users/profile/${targetUserId}`);
+            console.log("対象ユーザー情報を取得しました:", targetUser);
+        } catch (err) {
+            console.error("対象ユーザー情報の取得に失敗しました:", err);
+            targetUser = null;
+        }
+    }
+
+    // URLパラメータの変更を監視
+    $effect(() => {
+        const targetUserId = $page.params.user;
+        if (targetUserId && targetUserId !== userId) {
+            userId = targetUserId;
+            initializeMessageStore(targetUserId);
+            loadTargetUser(targetUserId);
+
+            // chatConfigを更新
+            chatConfig.set({
+                type: "private",
+                room_id: targetUserId,
+            });
+        }
+    });
+
+    // コンポーネント破棄時にchatConfigをクリア
+    onDestroy(() => {
+        chatConfig.set({
+            type: null,
+            room_id: null,
+        });
+    });
+
+    // メッセージ送信処理
+    async function handleMessageSend(content) {
+        if (!userId) {
+            console.error("送信先ユーザーが指定されていません");
+            return;
+        }
+
+        console.log("メッセージを送信します", content, userId);
+
+        try {
+            // 先にローカルにメッセージを追加（楽観的更新）
+            const localMessage = addOwnMessage(content, userId);
+            
+            const response = await apiClient.post("/pm/messages", {
+                content: content,
+                receiver_id: userId,
+            });
+            console.log("メッセージが送信されました:", response);
+            
+            // 成功時は何もしない（既にローカルに追加済み）
+            // 失敗時はローカルメッセージを削除する処理を追加することも可能
+            
+        } catch (error) {
+            console.error("メッセージの送信に失敗しました:", error);
+            
+            // 失敗時はローカルメッセージを削除
+            if (localMessage) {
+                chatMessages.update((messages) => messages.filter(msg => msg.id !== localMessage.id));
+            }
+            
+            throw error; // エラーを再スローして chatInput でハンドリング
+        }
+    }
+</script>
+
+<div class="flex flex-row h-full w-full">
+
+    <div class="flex flex-col h-full w-full">
+    <ChatHeader
+        logo={targetUser ? getProfileImage(targetUser) : null}
+        title={targetUser ? getDisplayName(targetUser) : "ユーザー"}
+        subtitle={targetUser ? `@${targetUser.user_username}` : "読み込み中..."}
+    >
+        <div class="flex flex-row items-center gap-2">
+            <!-- {#if showMenu}
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <Siren class="h-5 w-5 text-gray-500" />
+                </Button>
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <Ban class="h-5 w-5 text-gray-500" />
+                </Button>
+                <Button
+                    pill={true}
+                    color="light"
+                    class="p-2! hover:cursor-pointer"
+                    id="chat-menu-button"
+                >
+                    <BellOff class="h-5 w-5 text-gray-500" />
+                </Button>
+            {/if}
+            <Button
+                pill={true}
+                color="light"
+                class="p-2! hover:cursor-pointer"
+                id="chat-menu-button"
+                onclick={() => (showMenu = !showMenu)}
+            >
+                <Ellipsis class="h-5 w-5 text-gray-500" />
+            </Button> -->
+        </div>
+        </ChatHeader>
+        <ChatCore messages={$chatMessages} currentUser={$currentUser} targetUserId={userId} targetUser={targetUser} />
+        <ChatInput onSend={handleMessageSend} />
+    </div>
+
+    <div class="min-w-80 border-l border-gray-300 h-full">
+        {#if targetUser}
+            <div class="flex flex-col h-full w-full">
+                <ProfilePageComponent user={targetUser} />
+            </div>
+        {:else}
+            <div class="flex justify-center items-center h-full w-full">
+                <p>ユーザー情報を読み込み中...</p>
+            </div>
+        {/if}
+    </div>
+
+
+</div>

@@ -1,10 +1,20 @@
 import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
-from users.models import User
-from enrollments.models import School, Class
+from django.utils import timezone
+from apps.core.users.models import User
+from shared.abstract_models import AbstractBaseModel
+from apps.core.organizations.models import School, Class, Organization, OrganizationType
+from watson import search as watson
 
 class AnnouncementManager(models.Manager):
+
+    def get_announcements_by_organization(self, organization_id):
+        organization_type = Organization.objects.get_organization_type_by_id(organization_id)
+        if organization_type == OrganizationType.SCHOOL or organization_type == OrganizationType.CLASS:
+            return self.get_queryset().filter(is_deleted=False, post_to=organization_id).order_by('-created_at')
+        else:
+            return self.get_queryset().filter(is_deleted=False).order_by('-created_at')
 
     def get_announcements(self, id):
         return self.get_queryset().filter(is_deleted=False, post_to=id).order_by('-created_at')
@@ -86,3 +96,7 @@ class Announcement(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+# django-watson 検索対象モデルの登録
+watson.register(Announcement, fields=('title', 'content'))

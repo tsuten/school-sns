@@ -1,6 +1,6 @@
 <script>
     import BaseCard from "$lib/components/utils/baseCard.svelte";
-    import { Button } from "flowbite-svelte";
+    import { Button, Popover } from "flowbite-svelte";
     import { Check, Star, User, Clock } from "lucide-svelte";
     import { datetimeNormalize } from "$lib/utils/datetimeNormalize";
     import { apiClient } from "$lib/services/django";
@@ -8,6 +8,8 @@
     import { currentUser } from "$lib/stores/auth";
     import { browser } from "$app/environment";
     import UserChip from "../chips/userChip.svelte";
+    import UserPopover from "$lib/components/popover/userPopover.svelte";
+    import DatetimeBadge from "$lib/components/badge/datetimeBadge.svelte";
     let { announcement } = $props();
 
     const user = $derived(browser ? ($currentUser?.user || null) : null);
@@ -67,8 +69,7 @@
                     <h1 class="text-lg font-bold">{announcement.title}</h1>
                 </div>
                 <div class="flex flex-row gap-2 items-center text-center justify-center text-gray-500 text-sm select-none">
-                    <Clock class="w-4 h-4"/>
-                    <p class="text-sm">{datetimeNormalize(announcement.created_at)}</p>
+                    <DatetimeBadge date={announcement.created_at} />
                 </div>
             </div>
             <div class="flex flex-row gap-1 items-center text-sm text-gray-500">
@@ -82,10 +83,18 @@
         <div class="flex flex-row gap-2 justify-between items-end">
             <div class="flex flex-row gap-2 items-center text-gray-500 text-sm text-center">
                 <UserChip user={announcement.posted_by} />
+                <UserPopover user_id={announcement.posted_by_id} />
             </div>
             <div class="flex flex-row gap-2 items-center items-end">
                 {#if announcement.users_read.length > 0}
-                    <p class="text-gray-500 text-sm">既読: {announcement.users_read.length}</p>
+                    <div class="flex flex-row gap-2 items-center hover:cursor-pointer hover:bg-gray-100 rounded-sm p-1 select-none">
+                        <p class="text-gray-500 text-sm">既読: {announcement.users_read.length}</p>
+                    </div>
+                    <Popover placement="bottom-start" trigger="click">
+                        {#each announcement.users_read as user}
+                            <p>{user}</p>
+                        {/each}
+                    </Popover>
                 {/if}
                 {#if isRead}
                     <Button class="bg-green-300 hover:bg-green-300 gap-2 items-center self-end rounded-sm">

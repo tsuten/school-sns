@@ -3,8 +3,9 @@ from datetime import datetime
 import uuid
 from enum import Enum
 from typing import Optional
-from users.schemas import UserProfileSchema
+from apps.core.users.schemas import UserProfileSchema
 from typing import Any
+from shared.base_schemas import BaseSchema, Status
 
 class WhoSentMessage(Enum):
     REQUEST_USER = "request_user"
@@ -38,6 +39,15 @@ class MessageCreateOutputSchema(Schema):
     content: str
     created_at: datetime
 
+class MessageUpdateInputSchema(Schema):
+    content: str
+
+class MessageUpdateOutputSchema(Schema):
+    success: bool
+    message_id: uuid.UUID
+    content: str
+    updated_at: datetime
+
 class MessageReadInputSchema(Schema):
     message_id: uuid.UUID
 
@@ -60,12 +70,16 @@ class UserWithLatestMessageSchema(Schema):
 class UsersHaveHistoryWithUserOutputSchema(Schema):
     users: list[UserWithLatestMessageSchema]
 
-class ClassMessageSchema(Schema):
+class RoomMessageSchema(Schema):
     id: uuid.UUID
-    sender: Optional[UserProfileSchema] = None
+    sender_id: uuid.UUID
+    room_type: str
+    room_id: uuid.UUID
     content: str
     created_at: datetime
     updated_at: datetime
 
-class ClassMessageListOutputSchema(Schema):
-    messages: list[ClassMessageSchema]
+class RoomMessageCreateSchema(Schema):
+    room_type: str
+    room_id: uuid.UUID
+    content: str
