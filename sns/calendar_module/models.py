@@ -108,3 +108,11 @@ class NewSchedule(AbstractBaseModel):
     
     def __str__(self):
         return self.title
+    
+class NewCalendar(AbstractBaseModel):
+    type = models.CharField(max_length=255, choices=[('personal', 'Personal'), ('class', 'Class'), ('school', 'School'), ('organization', 'Organization'), ('other', 'Other')])
+    description = models.TextField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name

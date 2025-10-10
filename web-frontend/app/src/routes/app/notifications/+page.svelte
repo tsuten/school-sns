@@ -7,39 +7,39 @@
     let { data } = $props();
 
     let notifications = $state([]);
-    let isFilter = $state(false);
-    let filterTyped = $state();
-    let filteredNotifications = $state([]);
+    // let isFilter = $state(false);
+    // let filterTyped = $state();
+    // let filteredNotifications = $state([]);
 
 // 一度コピーを作成してからreverse
-    let reversedNotifications = $derived([...$wsNotifications].reverse());
+    let reversedNotifications = $state([...$wsNotifications].reverse());
 
     // 何をしているのかわからない関数
-    function notificationsFilter(type){
-        if (isFilter == true && filterTyped == type ) {
-            isFilter = false;
-            return;
-        }
+    // function notificationsFilter(type){
+    //     if (isFilter == true && filterTyped == type ) {
+    //         isFilter = false;
+    //         return;
+    //     }
         
-        // filteredを初期化
-        filteredNotifications = []
-        for (const notification of reversedNotifications) {
-            // 気合でフィルタリング
-            if (notification.type == type){
-                filteredNotifications.push(notification)
-            }
-         }
-        console.log(filteredNotifications)
-        // フィルタリングが行われたので表示のためにtrue
-        isFilter = true
-        filterTyped = type
-    }
+    //     // filteredを初期化
+    //     filteredNotifications = []
+    //     for (const notification of reversedNotifications) {
+    //         // 気合でフィルタリング
+    //         if (notification.type == type){
+    //             filteredNotifications.push(notification)
+    //         }
+    //      }
+    //     console.log(filteredNotifications)
+    //     // フィルタリングが行われたので表示のためにtrue
+    //     isFilter = true
+    //     filterTyped = type
+    // }
 
 </script>
 
 <Page>
     <div class="flex flex-col gap-4">
-        <div class="flex gap-4 justify-center">
+        <!-- <div class="flex gap-4 justify-center">
             <button
                 class="hover:scale-110 transition text-center"
                 onclick={() => (notificationsFilter("message"))}
@@ -49,22 +49,20 @@
             <button class="hover:scale-110 transition text-center" onclick={() => (notificationsFilter("announcement"))}>
                 <OctagonAlert />
             </button>
-        </div>
+        </div> -->
                  
-        {#if isFilter == false}
-            {#each reversedNotifications as notification}
-                <NotificationCard notification={notification} />
-            {/each}
+        {#each reversedNotifications as notification}
+            <NotificationCard notification={notification} />
+        {/each}
             <!-- {#each notifications as i}
                 <NotificationCard notification={i} />
             {/each} -->
-        {:else}
+        <!-- {:else}
             {#each filteredNotifications as notification}
                 <NotificationCard notification={notification} />
             {/each}
-            <!-- {#each filteredNotifications as i}
+            {#each filteredNotifications as i}
                 <NotificationCard notification={i} />
             {/each} -->
-        {/if}
     </div>
 </Page>

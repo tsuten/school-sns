@@ -24,11 +24,6 @@
             icon: UsersRound
         },
         {
-            label: "ファイル",
-            href: `/class/${$page.params.class}/files`,
-            icon: FileText
-        },
-        {
             label: "情報",
             href: `/class/${$page.params.class}/info`,
             icon: Info
@@ -57,7 +52,7 @@
     });
 </script>
 
-<div class="flex flex-col">
+<div class="flex flex-col h-full overflow-hidden">
     <div class="">
         <Tab tabsData={tabs} />
     </div>

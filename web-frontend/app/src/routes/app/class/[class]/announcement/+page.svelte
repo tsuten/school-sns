@@ -14,7 +14,9 @@
 </script>
 
 <Page>
-    {#each $announcements as announcement}
-        <AnnouncementCard announcement={announcement} />
-    {/each}
+    <div class="flex flex-col gap-4">
+        {#each $announcements as announcement}
+            <AnnouncementCard announcement={announcement} />
+        {/each}
+    </div>
 </Page>

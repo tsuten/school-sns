@@ -20,6 +20,7 @@ class AnnouncementResponseSchema(Schema):
     created_at: datetime
     updated_at: datetime
     posted_by: str  # ユーザー名
+    posted_by_id: uuid.UUID  # ユーザーID
     post_to: uuid.UUID  # 配信先のID
     users_read: List[str]  # 既読したユーザー名のリスト
     
@@ -35,6 +36,7 @@ class AnnouncementResponseSchema(Schema):
             created_at=announcement.created_at,
             updated_at=announcement.updated_at,
             posted_by=announcement.posted_by.username,
+            posted_by_id=announcement.posted_by.id,
             post_to=announcement.post_to,
             users_read=[user.username for user in announcement.read.all()],
         )

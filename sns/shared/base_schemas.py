@@ -1,6 +1,7 @@
 from ninja import Schema
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 class Status(Enum):
     SUCCESS = "success"
@@ -16,6 +17,7 @@ class BaseResponseSchema(Schema):
     """API レスポンス用のベーススキーマ"""
     status: str
     timestamp: datetime
+    data: Any
 
 class WebsocketBaseSchema(Schema):
     type: str

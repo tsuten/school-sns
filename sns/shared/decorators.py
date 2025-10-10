@@ -15,21 +15,24 @@ def with_base_schema(func):
     レスポンスにBaseSchemaの構造（status, timestamp, data）を自動的に適用するデコレータ
     """
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(request, *args, **kwargs):
         try:
-            # 元の関数を実行
-            result = func(*args, **kwargs)
+            result = func(request, *args, **kwargs)
             
-            # 既にBaseSchemaの構造になっている場合はそのまま返す
-            if isinstance(result, dict) and 'status' in result and 'timestamp' in result:
-                return result
-            
-            # BaseSchemaの構造を適用
-            return {
-                'status': Status.SUCCESS.value,
-                'timestamp': timezone.now(),
-                'data': result
-            }
+            # ビュー関数の結果が辞書であり、かつ'status'キーが'error'である場合は、最上位のステータスもエラーにする
+            if isinstance(result, dict) and result.get('status') == Status.ERROR.value:
+                return {
+                    'status': Status.ERROR.value,
+                    'timestamp': timezone.now(),
+                    'data': result.get('data'), # 内部エラーレスポンスのdataをそのまま渡す
+                    'error': result.get('error') # 内部エラーレスポンスのerrorをそのまま渡す
+                }
+            else:
+                return {
+                    'status': Status.SUCCESS.value,
+                    'timestamp': timezone.now(),
+                    'data': result,
+                }
         except (InvalidToken, TokenError) as e:
             # 認証エラーの場合はBaseSchemaの構造で返す
             return {
@@ -57,30 +60,42 @@ def with_base_schema(func):
                 'error': 'No Resource Found',
                 'not_found_error': 'The requested resource does not exist'
             }
-        except (ValidationError, PydanticValidationError) as e:
-            # バリデーションエラーの場合はBaseSchemaの構造で返す
+        except PydanticValidationError as e:
             return {
                 'status': Status.ERROR.value,
                 'timestamp': timezone.now(),
-                'data': None,
+                'data': e.errors(),
                 'error': 'Validation Error'
             }
+        except ValidationError as e:
+            # DjangoのValidationErrorはerrors属性を持たない場合があるため、str()で変換
+            return {
+                'status': Status.ERROR.value,
+                'timestamp': timezone.now(),
+                'data': str(e),
+                'error': 'Validation Error'
+            }
+        except Exception as e:
+            # 予期せぬエラーの処理
+            import traceback
+            from django.conf import settings
+            response_data = {
+                'status': Status.ERROR.value,
+                'timestamp': timezone.now(),
+                'data': None,
+                'error': 'Internal Server Error',
+                'detail': str(e),
+            }
+            if settings.DEBUG:
+                response_data['traceback'] = traceback.format_exc()
+            return response_data
         except HttpError as e:
             # HttpErrorの場合はBaseSchemaの構造で返す
             return {
                 'status': Status.ERROR.value,
                 'timestamp': timezone.now(),
                 'data': None,
-                'error': str(e)
-            }
-        except Exception as e:
-            # その他のエラーの場合もBaseSchemaの構造で返す
-            return {
-                'status': Status.ERROR.value,
-                'timestamp': timezone.now(),
-                'data': None,
-                'error': 'Server Error',
-                'server_error': str(e)
+                'error': e.message
             }
     
     return wrapper 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-from .models import Class, School
+from .models import Class, School, Organization
 
 class ClassAdmin(admin.ModelAdmin):
     list_display = ('name', 'school', 'grade_number', 'class_number', 'has_logo', 'get_managers_count', 'get_students_count', 'created_at')
@@ -102,3 +102,4 @@ class SchoolAdmin(admin.ModelAdmin):
 
 admin.site.register(Class, ClassAdmin)
 admin.site.register(School, SchoolAdmin)
+admin.site.register(Organization)

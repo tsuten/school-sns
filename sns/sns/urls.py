@@ -27,6 +27,7 @@ from shared.handlers import custom_404_handler, custom_500_handler, custom_403_h
 from ninja.errors import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from ninja.errors import HttpError
+from bookmark.views import router as bookmark_router
 from relations.views import router as relations_router
 from assignments.views import router as assignments_router
 from activity.views import router as activity_router

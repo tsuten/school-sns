@@ -234,3 +234,5 @@ migrations.backup/
 
 # Custom
 # Add your custom ignores here
+
+scripts/*

@@ -51,12 +51,11 @@ def custom_403_handler(request, exception=None):
 
 def api_exception_handler(request, exc):
     """API用の統一的な例外ハンドラー"""
-    if isinstance(exc, (ValidationError, PydanticValidationError)) or (hasattr(exc, 'detail') and isinstance(exc.detail, list)):
-        # バリデーションエラーとDjango Ninjaの型エラーを処理
+    if isinstance(exc, ValidationError):
         return JsonResponse({
             'status': Status.ERROR.value,
             'timestamp': timezone.now(),
-            'data': None,
+            'data': str(exc),
             'error': 'Validation Error'
         }, status=422)
     elif isinstance(exc, HttpError):
@@ -64,10 +63,22 @@ def api_exception_handler(request, exc):
             'status': Status.ERROR.value,
             'timestamp': timezone.now(),
             'data': None,
-            'error': str(exc)
+            'error': exc.message
         }, status=exc.status_code)
     else:
-        return custom_500_handler(request, exc)
+        # 予期せぬエラーの処理
+        import traceback
+        from django.conf import settings
+        response_data = {
+            'status': Status.ERROR.value,
+            'timestamp': timezone.now(),
+            'data': None,
+            'error': 'Internal Server Error',
+            'detail': str(exc),
+        }
+        if settings.DEBUG:
+            response_data['traceback'] = traceback.format_exc()
+        return JsonResponse(response_data, status=500)
 
 def api_404_handler(request, exception=None):
     """APIエンドポイント用の404ハンドラー"""

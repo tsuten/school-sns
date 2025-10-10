@@ -71,6 +71,11 @@ class UserProfileManager(models.Manager):
         profile.save()
         return profile
     
+    def get_user_settings(self, user_id):
+        user = User.objects.get(id=user_id)
+        settings = UserSettings.objects.get(user=user)
+        return settings
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     display_name = models.CharField(max_length=50, blank=True)

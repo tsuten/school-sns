@@ -4,10 +4,9 @@
     import { onDestroy } from "svelte";
     import { apiClient, getMediaURL } from "$lib/services/django.js";
     import { page } from "$app/stores";
-    import { chatMessages, chatConfig, addOwnMessage } from "$lib/stores/messageStore.js";
+    import { chatMessages, chatConfig, addOwnMessage, initializeMessageStore } from "$lib/stores/datastore/messageDatastore.ts";
     import ChatCore from "$lib/components/shared/chat/chatCore.svelte";
     import ChatInput from "$lib/components/shared/chat/chatInput.svelte";
-    import { initialize } from "$lib/stores/messageStore.js";
     import ChatHeader from "$lib/components/shared/chat/chatHeader.svelte";
     import ProfilePageComponent from "$lib/components/page-components/profilePageComponent.svelte";
     import { currentUser } from "$lib/stores/auth.js";
@@ -48,7 +47,7 @@
         const targetUserId = $page.params.user;
         if (targetUserId && targetUserId !== userId) {
             userId = targetUserId;
-            initialize(targetUserId);
+            initializeMessageStore(targetUserId);
             loadTargetUser(targetUserId);
 
             // chatConfigを更新

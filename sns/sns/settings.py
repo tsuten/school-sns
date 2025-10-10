@@ -60,12 +60,10 @@ INSTALLED_APPS = [
     'apps.core.notifications',
     'apps.core.bookmark',
     'search',
-    'storage',
     'relations',
-    'apps.memo',
-    'admin_module',
-    'activity',
-    'assignments',
+    'storage',
+    'setup',
+    'bookmark',
 ]
 
 MIDDLEWARE = [
